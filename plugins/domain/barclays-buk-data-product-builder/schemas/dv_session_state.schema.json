@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dv_session_state.schema.json",
+  "title": "DV Session State",
+  "description": "Schema for output/dv_session_state.json — persisted state across all DV plugin commands. Tracks phases, per-table validation artifacts, generated files, and report status.",
+  "type": "object",
+  "required": ["session_id", "created_at", "engine", "source_session_path", "phases"],
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "pattern": "^dv_\\d{8}_\\d{6}$",
+      "description": "Unique session identifier (format: dv_<YYYYMMDD_HHMMSS>)"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 session creation timestamp"
+    },
+    "engine": {
+      "type": "string",
+      "enum": ["athena", "databricks"],
+      "description": "SQL engine for validation query rendering"
+    },
+    "source_session_path": {
+      "type": "string",
+      "description": "Path to the directory containing mapping_parsed.json and intent_identification.json. 'session/' when DE pipeline was used, 'session/dv/' when standalone Excel mode was used."
+    },
+    "input_mode": {
+      "type": "string",
+      "enum": ["de_pipeline", "standalone_excel"],
+      "default": "de_pipeline",
+      "description": "How this DV session was initialized. de_pipeline = from existing DE pipeline artifacts in session/. standalone_excel = lightweight parse of mapping Excel with output in session/dv/."
+    },
+    "source_excel_path": {
+      "type": ["string", "null"],
+      "description": "Path to the mapping Excel file used in standalone_excel mode. Null in de_pipeline mode."
+    },
+    "domain_knowledge_path": {
+      "type": ["string", "null"],
+      "description": "Path to the domain knowledge markdown file provided via --domain-knowledge. Null if not provided."
+    },
+    "target_environment": {
+      "type": ["string", "null"],
+      "enum": ["dev", "preprd", "prd", "uat", null],
+      "description": "Target Databricks environment for catalog resolution. Set by /dv-generate --env when engine=databricks. Null for Athena engine."
+    },
+    "databricks_catalog_resolution": {
+      "type": ["object", "null"],
+      "default": null,
+      "description": "Resolved Databricks catalog/schema values. Populated by /dv-generate Step 0.5 when engine=databricks. Null for Athena engine or before /dv-generate runs.",
+      "properties": {
+        "source_catalog": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Resolved Unity Catalog name for source tables. Default per environment from databricks-tenancy skill Source Catalogs table (e.g., '077382350852_buk_data_products' for dev). May be overridden by the matched tenancy row's Source Catalog column if it differs from the default."
+        },
+        "target_catalog": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Resolved Unity Catalog name for target table (per-tenancy per-environment from tenancy registry Write/Target Catalog column, or user-provided)"
+        },
+        "target_schema": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Target schema (= target_database from mapping_parsed.json, exact value, no transformation). Identical to how databricks-artefact-agent handles target.schema."
+        },
+        "resolution_method": {
+          "type": "string",
+          "enum": ["de_session_state", "tenancy_registry", "user_provided"],
+          "description": "How target_catalog was resolved. de_session_state = from existing DE session state env_config/dbx_config. tenancy_registry = matched target_database in registry, extracted Write/Target Catalog. user_provided = user supplied via AskUserQuestion prompt."
+        },
+        "tenancy_name": {
+          "type": ["string", "null"],
+          "description": "Matched Feature Team Name from tenancy registry. Null if resolved via domain knowledge or user input."
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["dev", "preprd", "prd", "uat"],
+          "description": "The environment used for resolution (same as target_environment)"
+        }
+      }
+    },
+    "phases": {
+      "type": "object",
+      "required": ["dv_init", "dv_generate", "dv_report"],
+      "description": "Tracks progress through the 3-phase DV pipeline",
+      "properties": {
+        "dv_init": {
+          "type": "object",
+          "required": ["status"],
+          "description": "Phase 1: Initialize DV workspace, ingest mapping, build validation contracts",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["pending", "in_progress", "completed", "failed", "skipped"],
+              "default": "pending",
+              "description": "Current phase status"
+            },
+            "started_at": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when phase started"
+            },
+            "completed_at": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when phase completed"
+            },
+            "error": {
+              "type": ["string", "null"],
+              "description": "Error message if status is 'failed'"
+            }
+          }
+        },
+        "dv_generate": {
+          "type": "object",
+          "required": ["status"],
+          "description": "Phase 2: Generate validation plans and render engine-specific SQL",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["pending", "in_progress", "completed", "failed", "skipped"],
+              "default": "pending",
+              "description": "Current phase status"
+            },
+            "started_at": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when phase started"
+            },
+            "completed_at": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when phase completed"
+            },
+            "error": {
+              "type": ["string", "null"],
+              "description": "Error message if status is 'failed'"
+            }
+          }
+        },
+        "dv_report": {
+          "type": "object",
+          "required": ["status"],
+          "description": "Phase 3: Ingest user-provided results and generate the validation report",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["pending", "in_progress", "completed", "failed", "skipped"],
+              "default": "pending",
+              "description": "Current phase status"
+            },
+            "started_at": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when phase started"
+            },
+            "completed_at": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when phase completed"
+            },
+            "error": {
+              "type": ["string", "null"],
+              "description": "Error message if status is 'failed'"
+            }
+          }
+        }
+      }
+    },
+    "tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["target_database", "target_table", "table_type"],
+        "properties": {
+          "target_database": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*_db$",
+            "description": "Target database name"
+          },
+          "target_table": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "Target table name"
+          },
+          "table_type": {
+            "type": "string",
+            "enum": ["NonTransactional_SCD1", "NonTransactional_SCD2", "Transactional"],
+            "description": "Target table type classification"
+          },
+          "contract_path": {
+            "type": ["string", "null"],
+            "description": "Path to the generated dv_validation_contract JSON for this table"
+          },
+          "plan_path": {
+            "type": ["string", "null"],
+            "description": "Path to the generated dv_validation_plan JSON for this table"
+          },
+          "sql_directory": {
+            "type": ["string", "null"],
+            "description": "Directory containing rendered SQL files for this table's checks"
+          },
+          "check_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of validation checks generated for this table"
+          },
+          "not_evaluated_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of checks marked NOT_EVALUATED (e.g., crypto columns, empty source tables)"
+          },
+          "quality_validation_result": {
+            "type": ["string", "null"],
+            "enum": ["passed", "failed", "passed_with_warnings", null],
+            "default": null,
+            "description": "Per-table quality validation result from dv-sql-quality-validator (Step 4b)"
+          }
+        }
+      },
+      "description": "Per-table validation artifact tracking"
+    },
+    "generated_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of all file paths generated during the DV session (contracts, plans, SQL files, reports)"
+    },
+    "report_path": {
+      "type": ["string", "null"],
+      "description": "Path to the final validation report. Null until dv_report phase completes."
+    },
+    "dv_safety_validation_result": {
+      "type": ["string", "null"],
+      "enum": ["passed", "failed", null],
+      "default": null,
+      "description": "Result of the SQL safety validator run during dv_generate. Set to 'passed' when all SQL files pass safety checks, 'failed' after 2 self-heal retries are exhausted. Null until safety validation runs."
+    },
+    "dv_safety_violations": {
+      "type": ["array", "null"],
+      "default": null,
+      "items": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "Path to the SQL file containing the violation"
+          },
+          "rule_id": {
+            "type": "string",
+            "pattern": "^SAFETY-\\d{2}$",
+            "description": "Safety rule ID (e.g., SAFETY-01)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["blocker", "warning"],
+            "description": "Violation severity level"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Line number where the violation was found"
+          },
+          "match": {
+            "type": "string",
+            "description": "The matched text that triggered the violation"
+          }
+        },
+        "required": ["file", "rule_id", "severity"]
+      },
+      "description": "Array of safety rule violations found during dv_generate. Null until safety validation runs. Empty array when all files pass."
+    },
+    "dv_quality_validation_result": {
+      "type": ["string", "null"],
+      "enum": ["passed", "failed", "passed_with_warnings", null],
+      "default": null,
+      "description": "Result of the SQL quality validator run during dv_generate Step 4b. Set to 'passed' when all SQL files pass quality checks, 'passed_with_warnings' when only warning-level violations exist, 'failed' after 2 self-heal retries are exhausted on blocker violations. Null until quality validation runs."
+    },
+    "dv_quality_violations": {
+      "type": ["array", "null"],
+      "default": null,
+      "items": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "Path to the SQL file containing the violation"
+          },
+          "rule_id": {
+            "type": "string",
+            "pattern": "^QUALITY-\\d{2}$",
+            "description": "Quality rule ID (e.g., QUALITY-01)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["blocker", "warning"],
+            "description": "Violation severity level"
+          },
+          "details": {
+            "type": "string",
+            "description": "Human-readable description of the violation"
+          },
+          "check_id": {
+            "type": ["string", "null"],
+            "pattern": "^(ER|SCD2|NC|DC|DT|BR)-\\d{2}$",
+            "description": "Plan check_id affected by the violation, if applicable (e.g., for QUALITY-01 missing-check violations)"
+          }
+        },
+        "required": ["file", "rule_id", "severity", "details"]
+      },
+      "description": "Array of quality rule violations found during dv_generate Step 4b. Null until quality validation runs. Empty array when all files pass."
+    },
+    "dv_quality_coverage_summary": {
+      "type": ["object", "null"],
+      "default": null,
+      "description": "Coverage metrics from the quality validator summarizing plan-to-SQL fidelity and rule evaluation results.",
+      "properties": {
+        "plan_checks_total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of checks in the validation plan"
+        },
+        "plan_checks_rendered": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of plan checks found in rendered SQL"
+        },
+        "plan_checks_missing": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of plan check_ids not found in rendered SQL"
+        },
+        "quality_rules_evaluated": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of quality rules evaluated (some may be skipped by engine_scope or precondition)"
+        },
+        "quality_rules_passed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of quality rules that passed"
+        },
+        "quality_rules_warned": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of quality rules that produced warning-level violations"
+        },
+        "quality_rules_failed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of quality rules that produced blocker-level violations"
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "engine": { "const": "databricks" }
+    },
+    "required": ["engine"]
+  },
+  "then": {
+    "required": ["session_id", "created_at", "engine", "source_session_path", "phases", "databricks_catalog_resolution"],
+    "properties": {
+      "databricks_catalog_resolution": {
+        "type": "object",
+        "required": ["source_catalog", "target_catalog", "target_schema", "resolution_method", "environment"],
+        "description": "When engine is databricks, catalog resolution MUST be completed before /dv-generate can proceed past Step 0.5."
+      }
+    }
+  }
+}

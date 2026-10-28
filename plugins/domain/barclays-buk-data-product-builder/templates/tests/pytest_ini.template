@@ -1,0 +1,18 @@
+[pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts =
+    --tb=short
+    --strict-markers
+    -q
+    --cov={{module_name}}
+    --cov-report=term-missing
+    --cov-fail-under=90
+markers =
+    unit: Fast unit tests (no Spark I/O)
+    integration: Integration tests requiring SparkSession
+    glue: Glue-specific tests
+    databricks: Databricks-specific tests
+    slow: Tests marked slow (excluded from CI quick pass)

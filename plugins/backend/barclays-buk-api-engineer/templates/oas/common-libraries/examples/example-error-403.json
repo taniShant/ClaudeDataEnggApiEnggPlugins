@@ -1,0 +1,11 @@
+{
+  "value": {
+    "errors": [
+      {
+        "id": "9709-4675-2456-7801",
+        "code": "ACCESS_FORBIDDEN",
+        "title": "The user is not permitted to access the requested operation and it cannot be completed."
+      }
+    ]
+  }
+}

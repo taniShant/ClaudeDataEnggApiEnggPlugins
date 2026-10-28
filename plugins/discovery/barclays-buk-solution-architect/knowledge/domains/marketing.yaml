@@ -1,0 +1,65 @@
+schema_version: '1.0'
+domain:
+  id: dom.marketing
+  name: Marketing
+  description: The Marketing Domain provides the bank with customer engagement capability as an orchestrated system; it plans engagement in line with business objectives, targets and personalises communications using governed decisioning and contact policies, delivers coordinated experiences across channels, and measures and improves outcomes. It does so by orchestrating, not owning, the underlying customer data and product propositions, ensuring that the bank can engage customers effectively and securely at scale.
+  owner: cdao
+  bian_links:
+    - title: Customer Campaign Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=46174"
+    - title: Customer Campaign Execution
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=40236"
+    - title: Product Matching
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=44814"
+    - title: Prospect Campaign Design
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=39556"
+    - title: Prospect Campaign Execution
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=47050"
+    - title: Prospect Campaign Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=32462"
+    - title: Customer Offer
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=39968"
+    - title: Discount Pricing
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=34416"
+  sub_domains:
+  - id: sub.mkt.campaign-management
+    name: Campaign Management
+    description: This subdomain owns how the bank plans, targets, and delivers customer engagement.This area ensures that the right customers receive the right messages, offers, and experiences at the right time across all channels, in a compliant and measurable way. It does not own customer data or products, but orchestrates their use to drive growth, retention, and customer satisfaction.
+    capabilities:
+    - id: cap.mkt.manage-campaigns
+      name: Manage Campaigns
+      description: Sets the intent and guardrails for campaigns before any customer is contacted.Ensures campaigns have clear goals, funding, approvals, and regulatory sign-off before execution begins.
+    - id: cap.mkt.manage-audiences
+      name: Manage Audiences
+      description: Decides who is eligible to be contacted and who must not be contacted. Creates and manages customer audiences based on data, rules, and policies before campaigns are executed.
+    - id: cap.mkt.orchestrate-campaign
+      name: Orchestrate Campaign
+      description: Controls when, how often, and in what order customers are engaged. Coordinates campaigns across channels to avoid over-contacting customers and to create coherent journeys.
+    - id: cap.mkt.execute-campaign
+      name: Execute Campaign
+      description: Delivers the approved messages and experiences to customers. Executes campaigns through each channel without deciding who or what to target.Execution platforms deliver interactions; they do not decide strategy or eligibility.
+  - id: sub.mkt.data-collection-and-analytics
+    name: Data Collection and Analytics
+    description: This sub domain owns the marketing capability that captures and analyses customer and interaction data to generate insights that drive targeted, effective, and measurable marketing decisions.
+    capabilities:
+    - id: cap.mkt.collect-electronic-consent
+      name:  Collect Electronic Consent
+      description: Enables the capture, maintenance, and validation of customer marketing consent preferences to ensure communications are compliant with electronic communications regulations and customer choices.
+    - id: cap.mkt.tag-management
+      name: Tag Management
+      description: Provides a controlled way to manage tracking tags across digital channels, enabling consistent data capture while reducing operational risk and improving governance.
+    - id: cap.mkt.collect-events
+      name: Collect Events
+      description: Captures customer and prospect interactions across channels such as digital journeys, campaigns, and touchpoints to create a consistent record of behavioural activity.
+    - id: cap.mkt.performance-analytics
+      name: Performance Analytics
+      description: Analyses marketing and channel activity to measure effectiveness, track outcomes, and support data-driven optimisation of campaigns and customer engagement strategies.
+    - id: cap.mkt.collect-contact-history
+      name: Collect Contact History
+      description: Maintains a consolidated view of marketing communications and interactions delivered to each customer, supporting insight, control, and regulatory transparency.
+    - id: cap.mkt.channel-contact-policy
+      name: Channel Contact Policy
+      description: Defines and applies channel-specific contact rules to ensure customers are approached in appropriate ways, through suitable channels, and at acceptable frequencies.
+    - id: cap.mkt.contact-exclusions-and-rulesets
+      name: Contact Exclusions and Rulesets
+      description: Applies business and regulatory rules to suppress or exclude customers from marketing activity based on eligibility, consent status, vulnerability, or specific business conditions.

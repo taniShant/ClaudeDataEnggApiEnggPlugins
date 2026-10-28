@@ -1,0 +1,49 @@
+{
+  "$schema": "sttm-plugin/v1/extended",
+  "target_source": {
+    "format": "excel",
+    "artifact": "input/target_schema.xlsx"
+  },
+  "target": {
+    "database": "fdp_uk_payments_db",
+    "table": "payment_transaction",
+    "table_description": "Foundation Data Product - deduplicated payment transaction events from Teradata source",
+    "table_type": "Transactional",
+    "columns": [
+      {"name": "payment_id", "description": "Unique payment identifier", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "payment_amount", "description": "Payment amount in GBP, zero when null", "datatype": "decimal(18,2)", "nullable": "N", "key_column": "N"},
+      {"name": "payment_description", "description": "Cleaned payment description text", "datatype": "string", "nullable": "Y", "key_column": "N"},
+      {"name": "payment_date", "description": "Date the payment was processed", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "dw_bus_dt", "description": "Business date partition column", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "dw_lod_tmp", "description": "Data warehouse load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "e_pay_db",
+      "table": "payment_raw",
+      "ddl_hint": "CREATE SET TABLE e_pay_db.payment_raw, NO FALLBACK, NO BEFORE JOURNAL, NO AFTER JOURNAL",
+      "dialect": "teradata",
+      "columns": [
+        {"name": "pay_id", "datatype": "VARCHAR(50)"},
+        {"name": "pay_amt", "datatype": "DECIMAL(18,2)"},
+        {"name": "pay_desc", "datatype": "VARCHAR(255)"},
+        {"name": "pay_dt", "datatype": "DATE"},
+        {"name": "load_ts", "datatype": "TIMESTAMP"},
+        {"name": "batch_seq", "datatype": "INTEGER"}
+      ]
+    }
+  ],
+  "code": {
+    "type": "sql",
+    "dialect": "teradata",
+    "content": "LOCKING ROW FOR ACCESS SELECT pay_id AS payment_id, CAST(ZEROIFNULL(pay_amt) AS DECIMAL(18,2)) AS payment_amount, OREPLACE(pay_desc, 'LEGACY_', '') AS payment_description, pay_dt AS payment_date FROM e_pay_db.payment_raw QUALIFY ROW_NUMBER() OVER (PARTITION BY pay_id ORDER BY load_ts DESC) = 1"
+  },
+  "configuration": {
+    "load_type": "Day1",
+    "partition_columns": ["dw_bus_dt"],
+    "audit_columns": {"load_timestamp": "dw_lod_tmp"},
+    "source_dialect": "teradata",
+    "dialect_notes": "Source SQL uses Teradata-specific functions: QUALIFY (window filter), ZEROIFNULL (null-to-zero coercion), OREPLACE (string replacement), LOCKING ROW FOR ACCESS (read lock hint). These must be translated to ANSI/Spark equivalents in business_logic."
+  }
+}

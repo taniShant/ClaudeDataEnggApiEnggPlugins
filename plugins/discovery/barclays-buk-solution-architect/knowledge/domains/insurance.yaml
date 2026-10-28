@@ -1,0 +1,124 @@
+schema_version: '1.0'
+domain:
+  id: dom.insurance
+  name: Insurance
+  description: "The Insurance domain provides the core capabilities required to offer and service a range of protection products that support customer financial wellbeing. It is designed to safeguard customers' financial wellbeing across multiple life scenarios such as life protection and travel cover. The Insurance domain covers customer journeys from quote and application through policy setup, document creation, billing, and servicing. It also supports packaged insurance within Barclays packs, ensuring correct eligibility, accurate billing, and consistent data exchange with providers. By delivering simple and reliable protection journeys, the Insurance domain enhances customer value, strengthens long term relationships, and contributes to Barclays wider non interest income strategy."
+  owner: msi
+  sub_domains:
+  - id: sub.ins.insurance-billing-and-payments
+    name: Insurance Billing and Payments
+    description: Insurance Billing and Payments calculates and collects premiums and settles with providers, encompassing premium determination, billing production, payment collection, pack charge allocation, and financial reconciliation, enabling accurate customer charging and complete financial settlement outcomes.
+    capabilities:
+    - id: cap.ins.calculate-insurance-premiums
+      name: Calculate Insurance Premiums
+      description: Calculates insurance premiums encompassing base rates, fees, taxes, and permitted adjustments, enabling accurate premium amounts to support quoting, billing, and policy maintenance across the Insurance domain.
+    - id: cap.ins.generate-insurance-premium-bills
+      name: Generate Insurance Premium Bills
+      description: Generates premium bills encompassing billing schedules, amounts due, and billing events, enabling clear premium demands that support timely customer payment and consistent financial records.
+    - id: cap.ins.collect-insurance-premium-payments
+      name: Collect Insurance Premium Payments
+      description: Collects insurance premium payments encompassing payment allocation, arrears recognition, and failed payment outcomes, enabling continued cover where eligible and clear next steps where premiums are not successfully collected.
+    - id: cap.ins.allocate-insurance-pack-charges
+      name: Allocate Insurance Pack Charges
+      description: Allocates insurance pack charges encompassing calculation and distribution of insurance costs within account pack charging, enabling correct customer charging, pack entitlement alignment, and accurate downstream settlement with insurance providers.
+    - id: cap.ins.reconcile-insurance-provider-accounts
+      name: Reconcile Insurance Provider Accounts
+      description: Reconciles insurance provider accounts encompassing premium and claim settlement positions, payment confirmations, and discrepancy resolution, enabling financial accuracy and complete settlement outcomes between Barclays and insurance providers.
+  - id: sub.ins.insurance-claims-management
+    name: Insurance Claims Management
+    description: Insurance Claims Management supports customer claims journeys while coordinating with providers, encompassing claim initiation, claim progression coordination, customer updates, and dispute handling, enabling timely and transparent claim outcomes aligned to policy cover.
+    capabilities:
+    - id: cap.ins.initiate-insurance-claims
+      name: Initiate Insurance Claims
+      description: Initiates insurance claims encompassing capture of claim notification, policy reference, claimant details, and initial evidence needs, enabling claim registration and readiness for provider assessment and processing.
+    - id: cap.ins.manage-insurance-claim-progression
+      name: Manage Insurance Claim Progression
+      description: Manages insurance claim progression encompassing exchange of required claim information, coordination of claim stages, and settlement alignment with providers, enabling timely movement from notification to decision and settlement with consistent outcomes for customers.
+    - id: cap.ins.provide-insurance-claim-status-updates
+      name: Provide Insurance Claim Status Updates
+      description: Provides insurance claim status updates encompassing stage visibility, decisions, and next steps, enabling customer transparency and informed action throughout the claim journey until closure or escalation.
+    - id: cap.ins.resolve-insurance-claim-disputes
+      name: Resolve Insurance Claim Disputes
+      description: Resolves insurance claim disputes encompassing review of evidence, provider engagement, decision explanation, and agreed next steps, enabling consistent dispute outcomes and clear customer communications for escalated claim scenarios.
+  - id: sub.ins.insurance-document-management
+    name: Insurance Document Management
+    description: Insurance Document Management produces and maintains insurance documentation encompassing customer communications and evidential records, enabling clear policy understanding, operational continuity, and audit ready document retention across the Insurance domain.
+    capabilities:
+    - id: cap.ins.generate-insurance-documents
+      name: Generate Insurance Documents
+      description: Generates insurance documents encompassing policy schedules, certificates, endorsements, notices, and policy summaries, enabling timely fulfilment of customer and operational documentation needs aligned to policy and servicing events.
+    - id: cap.ins.distribute-insurance-documents
+      name: Distribute Insurance Documents
+      description: Distributes insurance documents encompassing delivery of required policy communications and notices, enabling customers to receive the right information at the right time and supporting consistent operational evidence of document issuance.
+    - id: cap.ins.maintain-insurance-document-records
+      name: Maintain Insurance Document Records
+      description: Maintains records of issued insurance documents encompassing retention, classification, and managed access, enabling customer and colleague reference, evidential audit needs, and consistent retention outcomes across the policy lifecycle.
+  - id: sub.ins.insurance-policy-administration
+    name: Insurance Policy Administration
+    description: Insurance Policy Administration establishes and services policies after acceptance, encompassing policy inception, policy state changes, and policy data stewardship, enabling ongoing cover administration and consistent handoffs to documents, billing, and provider coordination.
+    capabilities:
+    - id: cap.ins.establish-insurance-policies
+      name: Establish Insurance Policies
+      description: Establishes insurance policies encompassing policy inception, assignment of policy identifiers, and confirmation of cover and effective dates, enabling active cover and fulfilment of required policy documentation once an application is accepted.
+    - id: cap.ins.process-insurance-policy-changes
+      name: Process Insurance Policy Changes
+      description: Processes insurance policy servicing requests encompassing changes, renewals, cancellations, reinstatements, and customer instructions, enabling accurate policy state updates and consistent outcomes across the policy term.
+    - id: cap.ins.maintain-insurance-policy-data
+      name: Maintain Insurance Policy Data
+      description: Maintains insurance policy data encompassing policy status, cover details, customer details, and key events, enabling accurate servicing, reporting, and reconciliation, and supporting consistent information exchange with insurance providers when required.
+  - id: sub.ins.insurance-policy-enquiries
+    name: Insurance Policy Enquiries
+    description: Insurance Policy Enquiries supports insurance related customer support and issue handling, encompassing enquiry handling, complaint resolution, and servicing access, enabling consistent customer outcomes and clear routing to provider owned fulfilment where appropriate.
+    capabilities:
+    - id: cap.ins.support-insurance-policy-enquiries
+      name: Support Insurance Policy Enquiries
+      description: Supports insurance policy enquiries encompassing product understanding, policy clarification, cover interpretation, and claims guidance, enabling customers to make informed decisions and progress confidently across insurance journeys.
+    - id: cap.ins.resolve-insurance-policy-issues
+      name: Resolve Insurance Policy Issues
+      description: Resolves insurance policy issues encompassing complaint investigation, service recovery actions, and correction of errors, enabling fair outcomes, consistent remediation, and reduced repeat contact for insurance related problems.
+    - id: cap.ins.provide-insurance-service-access
+      name: Provide Insurance Service Access
+      description: Provides access to insurance services encompassing request acceptance, visibility of case progress, and consistent servicing outcomes, enabling customers and colleagues to obtain insurance support in a consistent way across the insurance journey.
+  - id: sub.ins.insurance-product-management
+    name: Insurance Product Management
+    description: Insurance Product Management defines and governs insurance product offerings encompassing cover options, customer terms, pricing parameters, and portfolio change control, enabling consistent propositions and controlled evolution of products across the Insurance domain.
+    capabilities:
+    - id: cap.ins.maintain-insurance-product-definitions
+      name: Maintain Insurance Product Definitions
+      description: Maintains insurance product definitions encompassing cover options, rules, pricing parameters, and customer terms and conditions, enabling consistent product behaviour, clear customer understanding, and reliable use of product information across insurance journeys.
+    - id: cap.ins.determine-insurance-product-eligibility
+      name: Determine Insurance Product Eligibility
+      description: Determines insurance product eligibility encompassing customer and account attributes, product rules, and pack entitlements, enabling consistent access decisions and preventing unsuitable offers from progressing into quoting or application activities.
+    - id: cap.ins.manage-insurance-product-lifecycle
+      name: Manage Insurance Product Lifecycle
+      description: Manages the insurance product lifecycle encompassing launches, changes, withdrawals, and product versioning, enabling a controlled product portfolio, consistent customer outcomes, and predictable downstream impact across quoting, policy, and billing processes.
+  - id: sub.ins.insurance-provider-partnership
+    name: Insurance Provider Partnership
+    description: Insurance Provider Partnership enables provider participation in insurance journeys, encompassing partner onboarding, business information exchange, and performance monitoring, enabling reliable collaboration and clear accountability across provider delivered insurance services.
+    capabilities:
+    - id: cap.ins.onboard-insurance-providers
+      name: Onboard Insurance Providers
+      description: Onboards insurance providers encompassing participation agreement, required information exchange arrangements, and operational readiness, enabling new providers to support insurance products and journeys with clear roles, responsibilities, and service expectations.
+    - id: cap.ins.provide-insurance-provider-information
+      name: Provide Insurance Provider Information
+      description: Provision of required insurance information encompassing quote, policy, billing, and claim data, enabling accurate and timely interactions with insurance providers across end to end insurance journeys.
+    - id: cap.ins.monitor-insurance-provider-service-levels
+      name: Monitor Insurance Provider Service Levels
+      description: Monitors insurance provider service levels encompassing performance measures, outcome quality, and exception trends, enabling governance of service consistency and early identification of customer impact risks.
+  - id: sub.ins.insurance-quote-and-application
+    name: Insurance Quote and Application
+    description: Insurance Quote and Application supports the journey from quote request to completed application, encompassing quote provision, application capture, and underwriting decisioning, enabling clear progression from quote to application and a defined handoff to Policy Administration when an application is accepted.
+    capabilities:
+    - id: cap.ins.provide-insurance-premium-quotes
+      name: Provide Insurance Premium Quotes
+      description: Provides insurance premium quotes encompassing customer details, coverage choices, and relevant risk factors, enabling customers and colleagues to compare options and make informed purchase decisions before an application is submitted.
+    - id: cap.ins.process-insurance-applications
+      name: Process Insurance Applications
+      description: Processes insurance applications encompassing capture and validation of required applicant details, declarations, and coverage selections, enabling complete underwriting assessment and smooth progression to underwriting decision outcomes.
+    - id: cap.ins.assess-insurance-underwriting-risk
+      name: Assess Insurance Underwriting Risk
+      description: Assesses insurance underwriting risk encompassing evaluation of risk indicators and supporting evidence, enabling proportionate outcomes such as standard acceptance, referral, decline, or special terms aligned to product intent.
+    - id: cap.ins.determine-insurance-underwriting-decision
+      name: Determine Insurance Underwriting Decision
+      description: Determines underwriting decisions encompassing assessment outputs, underwriting rules, and permitted product terms, enabling clear acceptance or decline outcomes and defined conditions that trigger policy establishment or closure of the application.
+  

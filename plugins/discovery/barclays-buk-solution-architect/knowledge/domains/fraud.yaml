@@ -1,0 +1,90 @@
+schema_version: '1.0'
+domain:
+  id: dom.fraud
+  name: Fraud
+  description: "The Fraud domain in BUK (Barclays UK) focuses on identifying, preventing, and managing fraudulent activities to protect the bank and its customers. This domain encompasses various aspects of fraud management, including fraud detection, prevention, investigation, and compliance with regulatory requirements."
+  owner: capl
+  bian_links:
+    -
+      title: Fraud Model
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=41042"
+    -
+      title: Fraud Resolution
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=44725"
+  sub_domains:
+    -
+      id: sub.frd.fraud-analytics-and-controls
+      name: Fraud Analytics and Controls
+      description: "Development and maintenance of fraud analytics capabilities, intelligence infrastructure, regulatory controls, and technology platforms through model development, signal integration, compliance management, and continuous modernization, providing foundational capabilities that enable effective fraud detection, regulatory adherence, and operational excellence across the fraud domain."
+      capabilities:
+        -
+          id: cap.frd.develop-fraud-detection-models
+          name: Develop Fraud Detection Models
+          description: "Development and maintenance of fraud detection models, rules, and algorithms through analysis of historical fraud patterns, transaction behaviors, and emerging threats, creating machine learning models, decision trees, and rule sets that continuously improve fraud detection capabilities and adapt to evolving fraud techniques across all products and channels."
+        -
+          id: cap.frd.maintain-fraud-controls-and-technology
+          name: Maintain Fraud Controls and Technology
+          description: "Maintenance of fraud regulatory controls, technology platforms, and operational infrastructure including Payment Systems Regulator compliance, control testing, audit trails, governance frameworks, legacy system replacement, platform modernization, and process automation, ensuring regulatory adherence, operational effectiveness, and continuous improvement of fraud capabilities while reducing technical debt."
+        -
+          id: cap.frd.manage-fraud-servicing-operations
+          name: Manage Fraud Servicing Operations
+          description: "Management of fraud servicing data, operational processes, and cross-functional coordination including case information management, evidence storage, system integration, operational efficiency initiatives, and delivery team coordination, ensuring effective operational execution, data quality, appropriate access controls, and continuous service improvement across fraud operations."
+        -
+          id: cap.frd.provide-fraud-intelligence-signals
+          name: Provide Fraud Intelligence Signals
+          description: "Provision of fraud intelligence signals including device fingerprinting, behavioral analytics, payment intelligence, telephony risk scoring, and third-party fraud data through integrated signal platforms, enriching fraud detection with real-time and batch intelligence from internal and external sources to support risk assessment and decisioning across fraud prevention operations."
+    -
+      id: sub.frd.fraud-case-resolution
+      name: Fraud Case Resolution
+      description: "Resolution of fraud cases and customer disputes through structured investigation processes, evidence analysis, liability determination, remediation actions, and external intelligence sharing, ensuring thorough case handling from detection through resolution including refunds, account closures, and regulatory reporting while maintaining compliance and customer fairness."
+      capabilities:
+        -
+          id: cap.frd.manage-fraud-investigations
+          name: Manage Fraud Investigations
+          description: "Management of fraud cases and customer disputes from initiation through resolution, encompassing case setup, evidence collection, forensic analysis, liability determination, investigation coordination, and resolution actions, ensuring thorough investigation and appropriate outcomes for both bank-detected fraud and customer-reported disputes across all fraud typologies."
+        -
+          id: cap.frd.process-fraud-remediation
+          name: Process Fraud Remediation
+          description: "Processing of fraud remediation actions including customer refunds, balance adjustments, transaction reversals, fraud-related account closures, and funds repatriation through automated and manual financial controls, ensuring timely resolution of confirmed fraud while maintaining accurate financial records, audit trails, and regulatory compliance."
+        -
+          id: cap.frd.report-fraud-intelligence
+          name: Report Fraud Intelligence
+          description: "Reporting of confirmed fraud cases, intelligence, and patterns to external fraud databases, industry consortia, payment schemes, law enforcement, and regulatory bodies including CIFAS, Hunter, suspicious activity reports, and scheme networks, enabling industry-wide fraud prevention collaboration and fulfilling regulatory reporting obligations."
+    -
+      id: sub.frd.fraud-customer-services
+      name: Fraud Customer Services
+      description: "Provision of customer-facing fraud services through multi-channel support, proactive notifications, digital self-service capabilities, and investigation collaboration, enabling effective customer communication throughout fraud prevention and resolution lifecycles while delivering education, guidance, and convenient access to fraud-related services and information."
+      capabilities:
+        -
+          id: cap.frd.provide-digital-fraud-services
+          name: Provide Digital Fraud Services
+          description: "Provision of digital self-service capabilities for fraud and scam management including online claim submission, case tracking, evidence upload, dispute initiation, document access, and digital communication channels, enabling customer convenience while improving operational efficiency in fraud case handling and reducing colleague-assisted service interactions."
+        -
+          id: cap.frd.provide-fraud-notifications
+          name: Provide Fraud Notifications
+          description: "Provision of fraud-related notifications, alerts, and communications to customers through digital channels, SMS, email, post, and in-app messaging, delivering suspected fraud alerts, scam warnings, case status updates, required actions, account closure notices, and fraud prevention guidance, enabling timely customer awareness and appropriate responses to fraud risks."
+        -
+          id: cap.frd.support-fraud-customer-interactions
+          name: Support Fraud Customer Interactions
+          description: "Support for customer interactions related to fraud including enquiry handling, outbound contact for investigations, scam intervention conversations, vulnerability assessments, evidence collection, and educational guidance through telephony, digital, and written channels, ensuring effective customer communication and appropriate outcomes throughout fraud prevention and resolution processes."
+    -
+      id: sub.frd.fraud-risk-management
+      name: Fraud Risk Management
+      description: "Management of fraud risk across customer lifecycle and transaction activities through real-time assessment, pattern detection, preventive interventions, and authentication controls, enabling proactive identification and mitigation of fraudulent activities including application fraud, transaction fraud, scams, money mule schemes, and account takeover attempts while balancing risk mitigation with customer experience."
+      capabilities:
+        -
+          id: cap.frd.assess-fraud-risk
+          name: Assess Fraud Risk
+          description: "Assessment of fraud risk across applications, transactions, accounts, and customer activities through real-time analysis of behavioral patterns, device intelligence, transaction characteristics, and fraud indicators, enabling risk-based decisioning for approvals, declines, referrals, and enhanced controls across all product and channel contexts."
+        -
+          id: cap.frd.detect-fraud-patterns
+          name: Detect Fraud Patterns
+          description: "Detection of fraudulent activity patterns including money mule behavior, account takeover attempts, card fraud schemes, and anomalous account usage through continuous monitoring of transactions, authentication events, and customer behavior, enabling proactive intervention before losses occur and identification of emerging fraud threats."
+        -
+          id: cap.frd.prevent-fraud-attacks
+          name: Prevent Fraud Attacks
+          description: "Prevention of fraud through intervention controls including transaction blocking, payment warnings, scam alerts, wallet provisioning restrictions, and real-time customer engagement at point of risk, protecting customers from authorized push payment scams, card fraud, and account compromise while maintaining service quality and minimizing friction."
+        -
+          id: cap.frd.verify-customer-authentication
+          name: Verify Customer Authentication
+          description: "Verification of customer identity and authorization through multi-factor authentication, biometric validation, identity proofing, risk-based authentication controls, and impersonation detection, ensuring genuine customer authorization for account access and high-risk activities while preventing unauthorized access and social engineering attacks."

@@ -1,0 +1,257 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PhysicalModel",
+  "description": "Schema for a physical data model. Captures the platform-specific implementation of a logical model including tables, columns, indexes, storage configuration, partitioning, encryption, and a DDL draft.",
+  "type": "object",
+  "required": [
+    "model_id",
+    "logical_model_ref",
+    "platform",
+    "platform_version",
+    "catalog",
+    "database_name",
+    "schema_name",
+    "created_by",
+    "created_at",
+    "tables"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "model_id": {
+      "type": "string",
+      "description": "Unique identifier for this physical model."
+    },
+    "logical_model_ref": {
+      "type": "string",
+      "description": "Reference to the logical model this physical model implements."
+    },
+    "platform": {
+      "type": "string",
+      "description": "Target data platform (e.g. Snowflake, BigQuery, PostgreSQL, Databricks)."
+    },
+    "platform_version": {
+      "type": "string",
+      "description": "Version of the target platform."
+    },
+    "catalog": {
+      "type": "string",
+      "description": "Catalog name in the target platform, if applicable."
+    },
+    "database_name": {
+      "type": "string",
+      "description": "Database name in the target platform."
+    },
+    "schema_name": {
+      "type": "string",
+      "description": "Schema name in the target platform."
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Identity of the person or agent that created this physical model."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this physical model was created."
+    },
+    "tables": {
+      "type": "array",
+      "description": "Tables defined in this physical model.",
+      "items": {
+        "type": "object",
+        "required": [
+          "table_id",
+          "name",
+          "logical_entity_ref",
+          "storage_format",
+          "compression",
+          "partitioning",
+          "clustering_columns",
+          "distribution_strategy",
+          "retention_policy",
+          "encryption",
+          "columns"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "table_id": {
+            "type": "string",
+            "description": "Unique identifier for this table within the model."
+          },
+          "name": {
+            "type": "string",
+            "description": "Physical table name."
+          },
+          "logical_entity_ref": {
+            "type": "string",
+            "description": "Reference to the logical entity this table implements."
+          },
+          "storage_format": {
+            "type": "string",
+            "description": "Storage format (e.g. parquet, orc, avro, native)."
+          },
+          "compression": {
+            "type": "string",
+            "description": "Compression algorithm applied to the table storage (e.g. snappy, gzip, zstd, none)."
+          },
+          "partitioning": {
+            "type": "object",
+            "description": "Partitioning configuration for this table.",
+            "required": ["strategy", "columns"],
+            "additionalProperties": false,
+            "properties": {
+              "strategy": {
+                "type": "string",
+                "description": "Partitioning strategy (e.g. range, list, hash, none)."
+              },
+              "columns": {
+                "type": "array",
+                "description": "Columns used for partitioning.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "clustering_columns": {
+            "type": "array",
+            "description": "Columns used for clustering or sort order.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "distribution_strategy": {
+            "type": "string",
+            "description": "Distribution strategy for MPP platforms (e.g. hash, replicate, round_robin)."
+          },
+          "retention_policy": {
+            "type": "string",
+            "description": "Data retention policy for this table (e.g. '7 years', '90 days')."
+          },
+          "encryption": {
+            "type": "string",
+            "description": "Encryption applied to this table.",
+            "enum": [
+              "none",
+              "at_rest",
+              "at_rest_and_transit"
+            ]
+          },
+          "columns": {
+            "type": "array",
+            "description": "Columns defined in this table.",
+            "items": {
+              "type": "object",
+              "required": [
+                "column_id",
+                "name",
+                "logical_attribute_ref",
+                "physical_type",
+                "nullable"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "column_id": {
+                  "type": "string",
+                  "description": "Unique identifier for this column within the table."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Physical column name."
+                },
+                "logical_attribute_ref": {
+                  "type": "string",
+                  "description": "Reference to the logical attribute this column implements."
+                },
+                "physical_type": {
+                  "type": "string",
+                  "description": "Physical data type as defined by the target platform (e.g. VARCHAR(255), NUMBER(18,2))."
+                },
+                "precision": {
+                  "type": "integer",
+                  "description": "Precision for numeric types."
+                },
+                "scale": {
+                  "type": "integer",
+                  "description": "Scale for numeric types."
+                },
+                "nullable": {
+                  "type": "boolean",
+                  "description": "Indicates whether the column allows null values."
+                },
+                "default_value": {
+                  "type": "string",
+                  "description": "Default value expression for the column."
+                },
+                "constraints": {
+                  "type": "array",
+                  "description": "Constraints applied to this column (e.g. PRIMARY KEY, UNIQUE, NOT NULL, FOREIGN KEY).",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "indexes": {
+      "type": "array",
+      "description": "Indexes defined across tables in this physical model.",
+      "items": {
+        "type": "object",
+        "required": [
+          "index_id",
+          "table_ref",
+          "columns",
+          "type",
+          "unique",
+          "rationale"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "index_id": {
+            "type": "string",
+            "description": "Unique identifier for this index."
+          },
+          "table_ref": {
+            "type": "string",
+            "description": "Identifier of the table this index belongs to."
+          },
+          "columns": {
+            "type": "array",
+            "description": "Columns included in this index.",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "type": {
+            "type": "string",
+            "description": "Index type.",
+            "enum": [
+              "btree",
+              "hash",
+              "bitmap",
+              "gin",
+              "gist"
+            ]
+          },
+          "unique": {
+            "type": "boolean",
+            "description": "Indicates whether this is a unique index."
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Rationale for creating this index."
+          }
+        }
+      }
+    },
+    "ddl_draft": {
+      "type": "string",
+      "description": "Draft DDL statements for this physical model."
+    }
+  }
+}

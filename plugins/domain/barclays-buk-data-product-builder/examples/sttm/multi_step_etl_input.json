@@ -1,0 +1,46 @@
+{
+  "_description": "Multi-step ETL input example — simplified rskm_fields (3-variant risk metric computation + merge). Demonstrates DROP→CREATE→INSERT chain with mutually-exclusive population segments merged via COALESCE.",
+  "target": {
+    "database": "t_riskdb",
+    "table": "risk_metrics",
+    "columns": [
+      {"name": "account_id", "datatype": "DECIMAL(16,0)", "nullable": false, "key": true},
+      {"name": "risk_score", "datatype": "DECIMAL(16,8)", "nullable": true, "key": false},
+      {"name": "risk_band", "datatype": "CHAR(1)", "nullable": true, "key": false},
+      {"name": "exposure_value", "datatype": "DECIMAL(16,8)", "nullable": true, "key": false},
+      {"name": "load_date", "datatype": "DATE", "nullable": false, "key": false}
+    ]
+  },
+  "sources": [
+    {
+      "database": "s_acctdb",
+      "table": "account_base",
+      "description": "Base account data with scores and balances"
+    },
+    {
+      "database": "r_refdb",
+      "table": "risk_params",
+      "description": "Risk model parameters per scorecard"
+    },
+    {
+      "database": "r_refdb",
+      "table": "risk_params_fallback",
+      "description": "Fallback risk parameters for low-score accounts"
+    }
+  ],
+  "code_artifacts": [
+    {
+      "filename": "risk_calc.sql",
+      "content": "/* Risk Score Computation Pipeline */\n\n/* Step 1 - Normal risk score computation */\ndrop table work_db.risk_normal;\n\ncreate set table work_db.risk_normal (\n  account_id DECIMAL(16,0) NOT NULL,\n  risk_score DECIMAL(16,8)\n) unique primary index (account_id);\n\ninsert into work_db.risk_normal\n  select\n    ab.account_id,\n    1/(1+EXP(\n      (rp.score_weight * ab.behaviour_score)\n      + (rp.balance_weight * CASE WHEN ab.credit_limit = 0 THEN 0\n          ELSE CAST(ab.balance AS DECIMAL(18,10)) / CAST(ab.credit_limit AS DECIMAL(18,10)) END)\n      + rp.intercept\n    )) as risk_score\n  from s_acctdb.account_base ab\n  inner join r_refdb.risk_params rp\n    on ab.scorecard_id = rp.scorecard_id\n  where ab.behaviour_score > 31\n    and ab.status_code NOT IN ('A','B','X');\n\n/* Step 2 - Fallback risk score for low-score accounts */\ndrop table work_db.risk_fallback;\n\ncreate set table work_db.risk_fallback (\n  account_id DECIMAL(16,0) NOT NULL,\n  risk_score DECIMAL(16,8)\n) unique primary index (account_id);\n\ninsert into work_db.risk_fallback\n  select\n    ab.account_id,\n    rpf.default_score as risk_score\n  from s_acctdb.account_base ab\n  inner join r_refdb.risk_params_fallback rpf\n    on ab.delinquency_code = rpf.delinquency_code\n  where ab.behaviour_score <= 31\n    and ab.status_code NOT IN ('A','B','X');\n\n/* Step 3 - Merge risk scores + derive band */\ndrop table work_db.risk_merged;\n\ncreate set table work_db.risk_merged (\n  account_id DECIMAL(16,0) NOT NULL,\n  risk_score DECIMAL(16,8),\n  risk_band  CHAR(1),\n  exposure_value DECIMAL(16,8)\n) unique primary index (account_id);\n\ninsert into work_db.risk_merged\n  select\n    drv.account_id,\n    CASE WHEN COALESCE(rf.risk_score, rn.risk_score) >= 0.9999995\n         THEN 0.999999\n         ELSE COALESCE(rf.risk_score, rn.risk_score) END as risk_score,\n    CASE WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.003 THEN '1'\n         WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.012 THEN '2'\n         WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.050 THEN '3'\n         WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.100 THEN '4'\n         WHEN COALESCE(rf.risk_score, rn.risk_score) < 1     THEN '5'\n         ELSE NULL END as risk_band,\n    CASE WHEN drv.credit_limit > drv.highest_balance\n         THEN drv.credit_limit\n         ELSE drv.highest_balance END as exposure_value\n  from s_acctdb.account_base drv\n  left join work_db.risk_normal rn\n    on drv.account_id = rn.account_id\n  left join work_db.risk_fallback rf\n    on drv.account_id = rf.account_id;\n\n/* Step 4 - Final target insert */\ninsert into t_riskdb.risk_metrics\n  select\n    rm.account_id,\n    rm.risk_score,\n    rm.risk_band,\n    rm.exposure_value,\n    CURRENT_DATE as load_date\n  from work_db.risk_merged rm;"
+    }
+  ],
+  "classification": {
+    "data_product_type": "FDP",
+    "table_type": "Transactional",
+    "crypto_aspect": "None"
+  },
+  "interview_answers": {
+    "load_type": "full_refresh",
+    "partition_key": "load_date"
+  }
+}

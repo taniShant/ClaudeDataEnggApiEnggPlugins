@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "job_id": "a1b2c3d4",
+  "project_path": "/tmp/test-repo",
+  "started_at": "2026-04-29T14:30:00+00:00",
+  "jira_id": "PROJ-1234",
+  "model": "opus",
+  "severity_filter": "all",
+  "dry_run": false,
+  "generate_tests": true,
+  "test_mode": "fast",
+  "branch_name": "remediate-cwe-79-89-20260429-143000",
+  "phases": {
+    "1": {"status": "completed"},
+    "2": {"status": "completed"},
+    "3": {"status": "completed"},
+    "4": {"status": "pending"},
+    "5": {"status": "pending"},
+    "6": {"status": "pending"},
+    "7": {"status": "pending"},
+    "8": {"status": "pending"},
+    "9": {"status": "pending"}
+  },
+  "vulnerabilities": [],
+  "fix_results": [],
+  "test_results": [],
+  "infra_findings": [],
+  "hybrid_findings": [],
+  "manual_findings": [],
+  "unresolved_items": [],
+  "report_path": null,
+  "pr_url": null
+}

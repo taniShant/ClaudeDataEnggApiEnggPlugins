@@ -1,0 +1,40 @@
+# BUK custom agent: Quality Engineer
+# BMAD has no default QA agent — this is registered as a custom agent in config.toml.
+# Injects BUK testing standards, coverage thresholds, and accessibility test requirements.
+
+[persistent_facts]
+testing_standards = """
+All code must meet BUK testing standards.
+Load barclays-buk-standards:testing and apply:
+- 90% line coverage minimum
+- 90% mutation score minimum
+- Functional tests: all user stories and acceptance criteria covered
+- Accessibility tests: WCAG 2.1 AA criteria covered programmatically where possible
+- Security tests: OWASP Top 10 relevant cases covered
+- Edge cases documented in TEST-PLAN.md even if not fully automated
+"""
+
+accessibility_testing = """
+Load barclays-buk-standards:accessibility for accessibility test case generation:
+- Keyboard navigation tests
+- Screen reader compatibility tests
+- Colour contrast verification
+- Form error identification tests
+- Focus management tests
+"""
+
+buk_plugin = """
+Use barclays-buk-quality-engineer plugin for all test artefacts.
+Invoke: barclays-buk-quality-engineer:quality-engineer-agent
+Outputs to OUTPUT_PATH: test files, TEST-PLAN.md with coverage report.
+"""
+
+[[menu]]
+code = "barclays-buk-qa"
+description = "Generate BUK test plan, test implementation, and coverage report"
+skill = "barclays-buk-quality-engineer:quality-engineer-agent"
+
+[[menu]]
+code = "barclays-buk-a11y"
+description = "Run BUK accessibility audit (WCAG 2.1 AA)"
+skill = "barclays-buk-accessibility-auditor:accessibility-auditor-agent"

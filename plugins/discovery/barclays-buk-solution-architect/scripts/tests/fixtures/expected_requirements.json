@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "source": {
+    "type": "jira",
+    "instance": "estjira.barcapint.com",
+    "issue_key": "BUKL2CUSX-173655",
+    "retrieved_at": "2026-10-01T15:30:45.123456+00:00",
+    "endpoint": "/rest/api/2/issue/{issue_key}",
+    "requested_fields": [
+      "components",
+      "description",
+      "issuelinks",
+      "issuetype",
+      "labels",
+      "status",
+      "summary"
+    ],
+    "raw_response_file": "raw/BUKL2CUSX-173655.json",
+    "raw_response_sha256": "abc123def456789"
+  },
+  "requirements": {
+    "summary": "Implement deterministic requirements retrieval from Jira",
+    "description": "As a solution architect, I need to retrieve Jira issues deterministically so that I can build requirements.json without LLM interpretation.",
+    "type": "Story",
+    "status": "In Progress",
+    "labels": [
+      "backend",
+      "feature",
+      "urgent"
+    ],
+    "components": [
+      "API",
+      "Database"
+    ],
+    "linked_issues": [
+      {
+        "issue_key": "BUKL2CUSX-173654",
+        "link_type": "relates to",
+        "direction": "inward"
+      },
+      {
+        "issue_key": "BUKL2CUSX-173656",
+        "link_type": "blocks",
+        "direction": "outward"
+      }
+    ],
+    "acceptance_criteria": []
+  },
+  "warnings": [
+    "Acceptance criteria field not configured. Pass --acceptance-criteria-field to extract custom field."
+  ]
+}

@@ -1,0 +1,24 @@
+schema_version: '1.0'
+domain:
+  id: dom.duplicates
+  name: Domain with Duplicates
+  description: Test domain with duplicate capability IDs
+  owner: test-team
+  sub_domains:
+  - id: sub.dup.first
+    name: First Subdomain
+    description: Contains first duplicate
+    capabilities:
+    - id: cap.dup.duplicate-id
+      name: First Capability
+      description: First occurrence
+    - id: cap.dup.duplicate-id
+      name: Second Capability with Same ID
+      description: This is a duplicate ID, should fail validation
+  - id: sub.dup.second
+    name: Second Subdomain
+    description: Contains second duplicate
+    capabilities:
+    - id: cap.dup.another-capability
+      name: Another Capability
+      description: Valid capability

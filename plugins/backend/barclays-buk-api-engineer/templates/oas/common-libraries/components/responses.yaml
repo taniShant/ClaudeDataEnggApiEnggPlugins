@@ -1,0 +1,116 @@
+# -----------------------------------------------------------------------------
+# NOTICE: DO NOT CHANGE this file in your project.
+# Raise a pull request to oas-template in case of fixes and improvements.
+# -----------------------------------------------------------------------------
+
+BadRequest:
+  description: |
+    The request could not be understood by the server due to malformed
+    syntax. The client SHOULD NOT repeat the request without
+    modifications.
+  headers:
+    Cache-Control:
+      $ref: './headers.yaml#/Cache-Control'
+  content:
+    application/json:
+      schema:
+        $ref: './response-types.yaml#/ErrorResponseType'
+      examples:
+        example-error-400-bad-request:
+          $ref: '../examples/example-error-400-bad-request.json'
+Unauthorized:
+  description: |
+    The user could not be authenticated for this request.
+  headers:
+    Cache-Control:
+      $ref: './headers.yaml#/Cache-Control'
+  content:
+    application/json:
+      schema:
+        $ref: './response-types.yaml#/ErrorResponseType'
+      examples:
+        example-error-401:
+          $ref: '../examples/example-error-401.json'
+Forbidden:
+  description: |
+    The user is not permitted to access the requested operation and it cannot be completed.
+  headers:
+    Cache-Control:
+      $ref: './headers.yaml#/Cache-Control'
+  content:
+    application/json:
+      schema:
+        $ref: './response-types.yaml#/ErrorResponseType'
+      examples:
+        example-error-403:
+          $ref: '../examples/example-error-403.json'
+NotFound:
+  description: |
+    Server has not found a resource with that URI. This may be
+    temporary and permanent condition. This status code is
+    commonly used when the server does not wish to reveal
+    exactly why the request has been refused, or when no other
+    response is applicable.
+  headers:
+    Cache-Control:
+      $ref: './headers.yaml#/Cache-Control'
+  content:
+    application/json:
+      schema:
+        $ref: './response-types.yaml#/ErrorResponseType'
+      examples:
+        example-error-404:
+          $ref: '../examples/example-error-404.json'
+TooManyRequests:
+  description: |
+    When a server is under attack or just receiving a very
+    large number of requests from a single party, responding
+    to each with a 429 status code will consume resources.
+    Therefore, servers may drop connections or take other steps
+    instead of responding with the 429 status code, when limiting
+    resource usage.
+  headers:
+    Cache-Control:
+      $ref: './headers.yaml#/Cache-Control'
+  content:
+    application/json:
+      schema:
+        $ref: './response-types.yaml#/ErrorResponseType'
+      examples:
+        example-error-429:
+          $ref: '../examples/example-error-429.json'
+InternalServerError:
+  description: |
+    Server encountered an error processing request. This should not
+    happen normally, but it is a generic error message, given when
+    no more specific message is suitable.
+  headers:
+    Cache-Control:
+      $ref: './headers.yaml#/Cache-Control'
+  content:
+    application/json:
+      schema:
+        $ref: './response-types.yaml#/ErrorResponseType'
+      examples:
+        example-error-500:
+          $ref: '../examples/example-error-500.json'
+ServiceUnavailable:
+  description: |
+    temporary maintenance of service, try again later. The implication
+    is that this is a temporary condition which will be alleviated
+    after some delay. If known, the length of the delay will be
+    indicated in a Retry-After header. If no Retry-After is given,
+    the client SHOULD handle the response as it would for a 500 response.
+    Note: The existence of the 503 status code does not imply that a
+    server will use it when becoming overloaded. Servers may simply
+    refuse the connection.
+  headers:
+    Cache-Control:
+      $ref: './headers.yaml#/Cache-Control'
+  content:
+    application/json:
+      schema:
+        $ref: './response-types.yaml#/ErrorResponseType'
+      examples:
+        example-error-503:
+          $ref: '../examples/example-error-503.json'

@@ -1,0 +1,64 @@
+schema_version: "1.0"
+
+target_columns:
+  format: snake_case
+  rules:
+    - "All lowercase letters, digits, and underscores only"
+    - "Must not start with a digit"
+    - "Must not contain spaces"
+    - "Must not be an SQL reserved word"
+    - "Must not contain consecutive underscores"
+  pattern: "^[a-z][a-z0-9_]*$"
+  reserved_words: [select, from, where, join, table, column, index, key, primary, foreign, constraint, create, drop, alter, insert, update, delete, group, order, by, having, union, all, distinct, as, on, and, or, not, null, true, false, between, like, in, exists, case, when, then, else, end, cast, is]
+
+target_databases:
+  pattern: "{tier}_{country}_{domain}_db"
+  tier_prefixes:
+    - fdp: "Foundation Data Product"
+    - cdp: "Consolidated Data Product"
+    - bdp: "Business Data Product"
+    - shared_fdp: "Shared Foundation Data Product"
+    - shared_cdp: "Shared Consolidated Data Product"
+    - shared_bdp: "Shared Business Data Product"
+    - bsl: "Business Service Layer"
+    - edp: "Enterprise Data Product"
+  country_codes: [uk, global]
+  examples:
+    - "fdp_uk_mortgage_db"
+    - "cdp_uk_customer_db"
+    - "bdp_uk_analytics_db"
+    - "shared_fdp_uk_mortgage_db"
+    - "shared_cdp_uk_customer_db"
+    - "shared_bdp_uk_analytics_db"
+
+source_markers:
+  system: "(system)"
+  derived: "(derived)"
+  hardcoded: "Hardcoded"
+  not_applicable: "N/A"
+  usage:
+    - marker: "(system)"
+      when: "System-generated columns: dw_lod_tmp, dw_upd_lod_tmp, eff_end_date (initial value)"
+    - marker: "(derived)"
+      when: "Derived from other columns: active flag (derived from eff_end_date)"
+    - marker: "Hardcoded"
+      when: "Constant value assigned (e.g., product_category_code = 'Personal Loans')"
+    - marker: "N/A"
+      when: "Column not applicable for this product/scope"
+
+crypto_udf:
+  naming_convention: "cloud_api_udf_{DE}_{direction}"
+  directions:
+    protect: "Tokenize (clear → encrypted)"
+    unprotect: "Detokenize (encrypted → clear)"
+  de_pattern: "UK_TOK_{DATA_CLASS}_{LEVEL}_{ROTATION}_{TYPE}_DE"
+  examples:
+    - "cloud_api_udf_UK_TOK_ACCT_L0R0_NUM_DE_unprotect"
+    - "cloud_api_udf_UK_TOK_SORTCOD_L0R0_NUM_DE_protect"
+
+table_names:
+  format: snake_case
+  rules:
+    - "All lowercase letters, digits, and underscores only"
+    - "Must not start with a digit"
+  pattern: "^[a-z][a-z0-9_]*$"

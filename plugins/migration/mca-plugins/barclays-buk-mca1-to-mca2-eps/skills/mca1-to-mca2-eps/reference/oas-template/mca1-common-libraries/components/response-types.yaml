@@ -1,0 +1,104 @@
+# -----------------------------------------------------------------------------
+# NOTICE: DO NOT CHANGE this file in your project.
+# Raise a pull request to oas-template in case of fixes and improvements.
+# -----------------------------------------------------------------------------
+EpsResponseBean:
+  type: object
+  nullable: false
+  deprecated: false
+  properties:
+    fatalError:
+      type: boolean
+      description: Indicates if the error is fatal
+      example: true
+    messages:
+      type: array
+      description: List of error messages
+      minItems: 0
+      maxItems: 100
+      items:
+        $ref: '#/EpsMessageBean'
+
+EpsMessageBean:
+  type: object
+  properties:
+    code:
+      type: string
+      description: Error code
+      pattern: '^[A-Za-z0-9]*$'
+      minLength: 1
+      maxLength: 10
+      example: "000000"
+    text:
+      type: string
+      description: Human-readable error message
+      minLength: 1
+      maxLength: 500
+      example: "Sorry, an error has occured, please contact the helpdesk."
+    type:
+      type: string
+      description: Message type (E for Error, W for Warning, I for Info)
+      pattern: '^[FEWIS]$'
+      enum:
+        - F
+        - E
+        - W
+        - I
+        - S
+      example: "E"
+    lineNumber:
+      type: integer
+      description: Line number where error occurred
+      minimum: 0
+      maximum: 999999
+      example: 0
+    exceptionCode:
+      type: string
+      description: Internal exception code
+      pattern: '^[A-Za-z0-9-]*$'
+      minLength: 1
+      maxLength: 50
+      example: "S-F-175155"
+    buildVersion:
+      type: string
+      description: Application build version
+      pattern: '^[A-Za-z0-9-_.]*$'
+      minLength: 1
+      maxLength: 20
+      example: "23.01"
+    appName:
+      type: string
+      description: Application name
+      pattern: '^[A-Za-z0-9-_.]*$'
+      minLength: 1
+      maxLength: 100
+      example: "scp-eps-acc-open"
+    process:
+      type: string
+      description: Process identifier
+      pattern: '^[A-Za-z0-9]*$'
+      minLength: 1
+      maxLength: 20
+      example: "MAAOP"
+    workload:
+      type: string
+      description: Workload identifier
+      pattern: '^[A-Za-z0-9-.]*$'
+      minLength: 1
+      maxLength: 100
+      example: "b-scpepsaccopenbr03-2-hhp77"
+    helpdeskExceptionCode:
+      type: string
+      description: Exception code for helpdesk reference
+      pattern: '^[A-Z]-[A-Z]@.*$'
+      minLength: 1
+      maxLength: 200
+      example: "S-F@null-FS:1022:5146"
+    correlationId:
+      type: string      
+      description: Correlation ID for tracking the request
+      pattern: '^[a-zA-Z0-9-+/=_]*$'
+      minLength: 1
+      maxLength: 200
+      example: "03fa9f92-3304-4439-8736-6af8d7556772"
+

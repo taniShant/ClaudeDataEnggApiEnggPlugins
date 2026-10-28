@@ -1,0 +1,83 @@
+{
+  "expand": "changelog,versionedRepresentations",
+  "id": "123456",
+  "self": "https://estjira.barcapint.com/rest/api/2/issue/123456",
+  "key": "BUKL2CUSX-173655",
+  "fields": {
+    "summary": "Implement deterministic requirements retrieval from Jira",
+    "description": "As a solution architect, I need to retrieve Jira issues deterministically so that I can build requirements.json without LLM interpretation.",
+    "status": {
+      "self": "https://estjira.barcapint.com/rest/api/2/status/3",
+      "description": "In Progress",
+      "iconUrl": "https://estjira.barcapint.com/images/icons/statuses/inprogress.png",
+      "name": "In Progress",
+      "id": "3"
+    },
+    "issuetype": {
+      "self": "https://estjira.barcapint.com/rest/api/2/issuetype/10001",
+      "id": "10001",
+      "description": "A story",
+      "iconUrl": "https://estjira.barcapint.com/images/icons/issuetypes/story.png",
+      "name": "Story",
+      "subtask": false
+    },
+    "labels": [
+      "backend",
+      "feature",
+      "urgent"
+    ],
+    "components": [
+      {
+        "self": "https://estjira.barcapint.com/rest/api/2/component/10050",
+        "id": "10050",
+        "name": "API",
+        "description": "REST API component"
+      },
+      {
+        "self": "https://estjira.barcapint.com/rest/api/2/component/10051",
+        "id": "10051",
+        "name": "Database",
+        "description": "Data persistence layer"
+      }
+    ],
+    "issuelinks": [
+      {
+        "id": "10000",
+        "type": {
+          "id": "10000",
+          "name": "blocks",
+          "inward": "is blocked by",
+          "outward": "blocks"
+        },
+        "outwardIssue": {
+          "id": "10002",
+          "key": "BUKL2CUSX-173656",
+          "self": "https://estjira.barcapint.com/rest/api/2/issue/10002",
+          "fields": {
+            "summary": "Deploy requirements service"
+          }
+        }
+      },
+      {
+        "id": "10001",
+        "type": {
+          "id": "10001",
+          "name": "relates to",
+          "inward": "relates to",
+          "outward": "relates to"
+        },
+        "inwardIssue": {
+          "id": "10003",
+          "key": "BUKL2CUSX-173654",
+          "self": "https://estjira.barcapint.com/rest/api/2/issue/10003",
+          "fields": {
+            "summary": "Set up Jira integration"
+          }
+        }
+      }
+    ],
+    "created": "2026-09-01T10:30:00.000+0000",
+    "updated": "2026-10-01T14:23:00.000+0000",
+    "customfield_12345": "Acceptance criteria line 1\nAcceptance criteria line 2"
+  }
+}

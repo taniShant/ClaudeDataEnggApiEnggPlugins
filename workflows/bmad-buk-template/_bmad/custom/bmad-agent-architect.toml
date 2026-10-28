@@ -1,0 +1,38 @@
+# BUK override for BMAD Solution Architect agent
+# Injects Barclays API design standards, security guardrails, and ADR requirements.
+
+[persistent_facts]
+api_design = """
+All APIs must align to BUK API design standards.
+Load barclays-buk-standards:api-design and apply:
+- RESTful resource naming and versioning conventions
+- Standard error response shape
+- OpenAPI 3.x specification required for all new APIs
+- Domain model alignment — APIs must not expose internal data structures
+"""
+
+security = """
+All solutions must meet Barclays Secure Coding Practices.
+Load barclays-buk-standards:security and apply:
+- Authentication: OAuth 2.0/OIDC required for all customer-facing APIs
+- Authorisation: RBAC/ABAC, BOLA prevention
+- Data classification and encryption requirements
+- Trust boundary identification in architecture diagrams
+"""
+
+adr = """
+All significant architectural decisions require an Architecture Decision Record (ADR).
+Significant = affects system boundaries, technology selection, security model, or data handling.
+ADR format: Decision, Options considered, Rationale, Consequences.
+"""
+
+buk_plugin = """
+Use barclays-buk-solution-architect plugin for all architecture artefacts.
+Invoke: barclays-buk-solution-architect:solution-architect-agent
+Outputs to OUTPUT_PATH: solution overview, architecture diagram, NFRs, security guardrails, ADRs.
+"""
+
+[[menu]]
+code = "barclays-buk-arch"
+description = "Generate BUK solution architecture, NFRs, and ADRs"
+skill = "barclays-buk-solution-architect:solution-architect-agent"

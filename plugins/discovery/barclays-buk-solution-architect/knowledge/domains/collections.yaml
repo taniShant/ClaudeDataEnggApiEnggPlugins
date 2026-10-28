@@ -1,0 +1,91 @@
+schema_version: '1.0'
+domain:
+  id: dom.collections
+  name: Collections
+  description: The Collections domain manages the identification, engagement, and resolution of customer payment delinquencies through proactive monitoring, flexible arrangement strategies, and customer-centric intervention. It aims to maximise debt recovery whilst maintaining positive customer relationships, demonstrating forbearance where appropriate, and ensuring compliance with regulatory requirements for fair treatment of customers in financial difficulty. The domain operates across the full collections lifecycle from early warning detection through to sustainable arrangement management and specialised hold scenarios.
+  owner: cc
+  bian_links:
+    - title: Open Item Management
+      url: https://bian.org/servicelandscape-12-0-0/object_21.html?object=31686
+    - title: Delinquent Account Handling
+      url: https://bian.org/servicelandscape-12-0-0/object_22.html?object=47264
+    - title: Collections
+      url: https://bian.org/servicelandscape-12-0-0/object_22.html?object=44734
+    - title: Card Collections
+      url: https://bian.org/servicelandscape-12-0-0/object_20.html?object=41869
+  sub_domains:
+    - id: sub.col.collections-case-lifecycle
+      name: Collections Case Lifecycle
+      description: Manages the entry of accounts into collections and the successful exit of accounts from collections.
+      capabilities:
+        - id: cap.col.collections-account-exit-management
+          name: Collections Account Exit Management
+          description: Management of collection case closure when customers clear their arrears or successfully complete payment plans, encompassing account record updates, removal of collection markers, and return of accounts to normal account management.
+        - id: cap.col.collections-account-onboarding
+          name: Collections Account Onboarding
+          description: Onboarding of accounts into collections due to missed payments or defined trigger events, encompassing classification and allocation to appropriate treatment strategies, enabling effective intervention and recovery management.
+        - id: cap.col.recovery-account-transition-management
+          name: Recovery Account Transition Management
+          description: Transition of accounts when standard collection strategies are exhausted or unsuccessful, encompassing charge-off accounting treatment and transfer of account ownership and treatment responsibility to specialist recovery treatment, ensuring appropriate handover of case information and debt status.
+    - id: sub.col.collections-engagement-and-payment-resolution
+      name: Collections Engagement and Payment Resolution
+      description: Executes customer engagement, negotiates payment solutions, and manages interactions with authorised third-party representatives to achieve sustainable arrears resolution.
+      capabilities:
+        - id: cap.col.collections-contact-strategy-management
+          name: Collections Contact Strategy Management
+          description: Application of customer contact strategies throughout the collections journey including contact method and timing determination, contact detail verification, and contact outcome tracking, enabling effective customer engagement and recovery optimisation.
+        - id: cap.col.payment-solutions-management
+          name: Payment Solutions Management
+          description: Management of payment plans and settlements that suit customer circumstances, encompassing agreement negotiation, payment monitoring, settlement amount determination, and token payment handling, enabling flexible recovery and fair customer outcomes.
+        - id: cap.col.third-party-representative-management
+          name: Third-Party Representative Management
+          description: Management of interactions with debt management companies and debt advice charities acting for customers, encompassing validation of financial information, assessment of proposed payment plans, and facilitation of customer access to free debt advice services.
+    - id: sub.col.collections-governance-compliance-and-insight
+      name: Collections Governance, Compliance and Insight
+      description: Provides collections performance analysis, regulatory compliance oversight, operational controls, and reporting to support governance and continuous improvement.
+      capabilities:
+        - id: cap.col.collections-compliance-monitoring
+          name: Collections Compliance Monitoring
+          description: Monitoring and enforcement of regulatory compliance across collections activities, encompassing adherence validation, record maintenance, and reporting obligations, enabling compliant and auditable operations.
+        - id: cap.col.collections-performance-management
+          name: Collections Performance Management
+          description: Management of collections performance data to support financial forecasting and risk assessment, encompassing tracking of recovery rates, contact success, and payment plan performance to improve strategies and meet regulatory reporting requirements.
+    - id: sub.col.collections-legal-recovery-and-loss-resolution
+      name: Collections Legal Recovery and Loss Resolution
+      description: Manages formal legal notices, legal recovery actions, and loss-resolution activities such as write-off for accounts that cannot be resolved through standard collections treatment.
+      capabilities:
+        - id: cap.col.account-write-off-management
+          name: Account Write Off Management
+          description: Management of account write-offs for unrecoverable debt, encompassing financial treatment, regulatory reporting, and transition to recovery processes, enabling accurate financial representation and continued recovery oversight.
+        - id: cap.col.legal-debt-recovery-management
+          name: Legal Debt Recovery Management
+          description: Management of legal secured debt recovery activities, encompassing litigation, repossession processes, and preservation of debt enforceability, enabling recovery through formal legal frameworks.
+        - id: cap.col.statutory-notice-issue-management
+          name: Statutory Notice Issue Management
+          description: Issuance of legally required customer notices including default notifications and statements, encompassing compliance validation and delivery, enabling enforceability of debt and adherence to regulatory requirements.
+    - id: sub.col.collections-specialist-case-management
+      name: Collections Specialist Case Management
+      description: Handles non-standard and protected collections scenarios where normal treatment must be paused, restricted, or adapted due to legal, vulnerability, fraud, sanctions, death, or insolvency considerations.
+      capabilities:
+        - id: cap.col.deceased-customer-account-management
+          name: Deceased Customer Account Management
+          description: Management of accounts where customers have died, encompassing identification of death, confirmation of death records, cessation of collections activity, assessment of estate status, and determination of write-off or probate claim actions.
+        - id: cap.col.formal-insolvency-case-management
+          name: Formal Insolvency Case Management
+          description: Management of accounts under formal insolvency arrangements, encompassing compliance actions, stakeholder coordination, and claim submission, enabling appropriate handling within legal frameworks.
+        - id: cap.col.manage-collections-holds
+          name: Manage Collections Holds
+          description: Management of temporary suspension of collections activities due to customer support needs, disputes, or regulatory protections, encompassing initiation and removal of holds, enabling compliant and appropriate recovery control.
+        - id: cap.col.manage-restricted-collections-accounts
+          name: Manage Restricted Collections Accounts
+          description: Management of restricted collections accounts affected by fraud or sanctions, encompassing activity suspension, compliance actions, and resolution pathways, enabling controlled handling of high-risk and regulated accounts.
+    - id: sub.col.collections-strategy-and-segmentation
+      name: Collections Strategy and Segmentation
+      description: Determines treatment strategies, segmentation, and routing for delinquent accounts based on customer circumstances, risk, hardship, and vulnerability.
+      capabilities:
+        - id: cap.col.collections-treatment-strategy-determination
+          name: Collections Treatment Strategy Determination
+          description: Determination of optimal collections treatment strategies based on customer financial situation, risk level, and personal circumstances, encompassing identification of vulnerability indicators, enabling balanced recovery and fair customer outcomes.
+        - id: cap.col.manage-pre-delinquency-risk
+          name: Manage Pre-Delinquency Risk
+          description: Management of early-stage financial difficulty risk for customers, encompassing identification and assessment of pre-delinquency indicators and initiation of appropriate preventative actions. Enables timely support, fair customer outcomes, and reduced progression into arrears.

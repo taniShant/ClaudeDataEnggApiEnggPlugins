@@ -1,0 +1,51 @@
+{
+  "description": "Expected output — views resolved to base tables",
+  "intermediate_steps": [
+    {
+      "step_number": 1,
+      "step_label": "Prior Cycle View",
+      "temp_table_name": "l_bcs_loaddb.prior_cycle_v",
+      "statement_type": "CREATE_VIEW",
+      "source_tables": ["s_trmfdb.ctcp"],
+      "row_operation": "create",
+      "joins": [],
+      "filters": [],
+      "columns_produced": [
+        {"column_name": "Account_Number", "expression": "ctcp.NBR_CARDH_ACCT", "source_columns": ["s_trmfdb.ctcp.NBR_CARDH_ACCT"], "column_role": "new"},
+        {"column_name": "Credit_Limit", "expression": "ctcp.AMT_CRED_LMT", "source_columns": ["s_trmfdb.ctcp.AMT_CRED_LMT"], "column_role": "new"},
+        {"column_name": "Minimum_Payment_Due", "expression": "ctcp.AMT_MIN_PYMT_DUE", "source_columns": ["s_trmfdb.ctcp.AMT_MIN_PYMT_DUE"], "column_role": "new"}
+      ],
+      "grain_keys": ["Account_Number"],
+      "view_definition_summary": "SELECT ctcp.NBR_CARDH_ACCT AS Account_Number, ctcp.AMT_CRED_LMT AS Credit_Limit, ctcp.AMT_MIN_PYMT_DUE AS Minimum_Payment_Due FROM s_trmfdb.ctcp WHERE CSUM(1, ctcp.NBR_CARDH_ACCT, ctcp.TIME_LAST_UPD DESC) = 1",
+      "resolves_to_base_tables": ["s_trmfdb.ctcp"],
+      "aggregation_semantics": {
+        "group_by_columns": [],
+        "aggregate_functions": [],
+        "window_functions": null,
+        "is_dedup_pattern": true
+      }
+    }
+  ],
+  "joins_detected": [
+    {
+      "driver_table": "e_mortgage_db.mortgage_account",
+      "driver_alias": "ma",
+      "joins": [
+        {
+          "table": "s_trmfdb.ctcp",
+          "alias": "pc",
+          "join_type": "LEFT",
+          "on_condition": "ma.account_id = pc.NBR_CARDH_ACCT",
+          "original_view": "l_bcs_loaddb.prior_cycle_v",
+          "original_alias_column": "Account_Number"
+        }
+      ]
+    }
+  ],
+  "mapping_rows_expectations": {
+    "source_table_column_H": "e_mortgage_db.mortgage_account, s_trmfdb.ctcp",
+    "source_column_column_I_example": "s_trmfdb.ctcp.AMT_CRED_LMT",
+    "business_logic_column_J_must_not_contain": ["prior_cycle_v", "l_bcs_loaddb.prior_cycle_v"],
+    "business_logic_column_J_must_contain": ["s_trmfdb.ctcp"]
+  }
+}

@@ -1,0 +1,71 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.barclays.SDK3_1_11_Incremental
+displayName: SDK3 @@jenkinsBuildVersion@@ Incremental Changes
+description: Incremental recipe for SDK3 @@jenkinsBuildVersion@@
+preconditions:
+  - org.openrewrite.FindSourceFiles:
+      filePattern: "{**/*.gradle,gradle.properties,**/*.java}"
+recipeList:
+  - org.openrewrite.properties.ChangePropertyValue:
+      propertyKey: SDK3_VERSION
+      newValue: @@jenkinsBuildVersion@@
+      filePattern: "gradle.properties"
+  - org.openrewrite.properties.AddProperty:
+      property: SDK3_VERSION
+      value: @@jenkinsBuildVersion@@
+      filePattern: "gradle.properties"
+      onlyIfMissing: true
+
+  # Seed jacoco.line.minimum in gradle.properties if not already set.
+  # Projects can override this value to adjust their coverage gate.
+  - org.openrewrite.properties.AddProperty:
+      property: jacoco.line.minimum
+      value: "0.80"
+      filePattern: "gradle.properties"
+      onlyIfMissing: true
+
+  # Seed checkstyle_tool_version in gradle.properties if not already set.
+  # Projects can override this value to use a different Checkstyle release.
+  - org.openrewrite.properties.AddProperty:
+      property: checkstyle_tool_version
+      value: "12.2.0"
+      filePattern: "gradle.properties"
+      onlyIfMissing: true
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "tasks\\.register\\('jacocoIntegrationTestCoverageVerification',\\s*JacocoCoverageVerification\\)\\s*\\{[\\s\\S]*?\\n\\}"
+      replace: ""
+      regex: true
+      filePattern: "**/build.gradle"
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "tasks\\.register\\('jacocoIntegrationTestReport',\\s*JacocoReport\\)\\s*\\{[\\s\\S]*?\\n\\}"
+      replace: ""
+      regex: true
+      filePattern: "**/build.gradle"
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "jacocoTestReport\\s*\\{[\\s\\S]*?\\n\\}"
+      replace: ""
+      regex: true
+      filePattern: "**/build.gradle"
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "jacocoTestCoverageVerification\\s*\\{[\\s\\S]*?\\n\\}"
+      replace: ""
+      regex: true
+      filePattern: "build.gradle"
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "\\z"
+      replace: "\n\nsdkJacocoTestReport {\n\txmlRequired = true\n\tcsvRequired = true\n\texcludePatterns = [\n\t\t\t'com.barclays.bootstrap.*',\n\t\t\t'com.barclays.api.zonesApi.ZoneApiApplication',\n\t\t\t'**/generated/**',\n\t\t\t'**/dto/**',\n\t\t\t'**/configs/**'\n\t]\n}\n\nsdkJacocoTestCoverageVerification {\n\tviolationRuleElement = \"CLASS\"\n\tviolationRuleLimitCounter = \"LINE\"\n\tviolationRuleLimitValue = \"COVEREDRATIO\"\n\tviolationRuleLimitMinimum = (project.findProperty('jacoco.line.minimum')?.toBigDecimal() ?: 0.80)\n\tviolationRuleExcludes = [\n\t\t\t'com.barclays.bootstrap.*',\n\t\t\t'com.barclays.api.*.ZoneApiApplication',\n\t\t\t'com.barclays.api.*.gateway.dto.*',\n\t\t\t'com.barclays.api.*.service.dto.*',\n\t\t\t'com.barclays.api.*.controller.*',\n\t\t\t'com.barclays.api.*.exception.*',\n\t\t\t'com.barclays.api.*.config.*',\n\t\t\t'com.barclays.api.*.configs.*',\n\t\t\t'com.barclays.api.*.filter.*',\n\t\t\t'com.barclays.api.*.constants.*'\n\t]\n}\n"
+      regex: true
+      filePattern: "build.gradle"
+
+  - org.openrewrite.properties.DeleteProperty:
+      propertyKey: jacocoCoverageExclusions
+      filePattern: "gradle.properties"
+
+  - org.openrewrite.properties.DeleteProperty:
+      propertyKey: domain.jacocoCoverageExclusions
+      filePattern: "gradle.properties"

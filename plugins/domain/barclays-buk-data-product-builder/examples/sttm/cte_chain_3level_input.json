@@ -1,0 +1,42 @@
+{
+  "$schema": "sttm-plugin/v1/extended",
+  "target_source": {
+    "format": "excel",
+    "artifact": "input/target_schema.xlsx"
+  },
+  "target": {
+    "database": "cdp_uk_analytics_db",
+    "table": "customer_summary",
+    "table_description": "Consolidated Data Product - customer summary with segment classification and aggregated product/balance metrics built via 3-level CTE chain",
+    "table_type": "Transactional",
+    "columns": [
+      {"name": "customer_id", "description": "Unique customer identifier", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "customer_segment", "description": "Derived customer segment based on product count and balance thresholds", "datatype": "string", "nullable": "Y", "key_column": "N"},
+      {"name": "total_products", "description": "Total number of distinct products held by customer", "datatype": "int", "nullable": "Y", "key_column": "N"},
+      {"name": "avg_balance", "description": "Average balance across all customer accounts", "datatype": "decimal(18,2)", "nullable": "Y", "key_column": "N"},
+      {"name": "dw_lod_tmp", "description": "Data warehouse load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "fdp_uk_customer_db",
+      "table": "customer_detail",
+      "columns": [
+        {"name": "customer_id", "datatype": "string"},
+        {"name": "product_code", "datatype": "string"},
+        {"name": "account_balance", "datatype": "decimal(18,2)"},
+        {"name": "account_status", "datatype": "string"},
+        {"name": "open_date", "datatype": "date"}
+      ]
+    }
+  ],
+  "code": {
+    "type": "sql",
+    "content": "WITH cte_base AS (\n  SELECT\n    customer_id,\n    product_code,\n    account_balance,\n    account_status\n  FROM fdp_uk_customer_db.customer_detail\n  WHERE account_status = 'ACTIVE'\n),\ncte_enriched AS (\n  SELECT\n    customer_id,\n    product_code,\n    account_balance,\n    CASE\n      WHEN account_balance >= 100000 THEN 'HIGH_VALUE'\n      WHEN account_balance >= 25000 THEN 'MEDIUM_VALUE'\n      ELSE 'STANDARD'\n    END AS balance_tier\n  FROM cte_base\n),\ncte_final AS (\n  SELECT\n    customer_id,\n    CASE\n      WHEN COUNT(DISTINCT product_code) >= 5 AND MAX(balance_tier) = 'HIGH_VALUE' THEN 'PREMIER'\n      WHEN COUNT(DISTINCT product_code) >= 3 THEN 'PREFERRED'\n      ELSE 'CORE'\n    END AS customer_segment,\n    COUNT(DISTINCT product_code) AS total_products,\n    CAST(AVG(account_balance) AS DECIMAL(18,2)) AS avg_balance\n  FROM cte_enriched\n  GROUP BY customer_id\n)\nINSERT INTO cdp_uk_analytics_db.customer_summary\nSELECT\n  customer_id,\n  customer_segment,\n  total_products,\n  avg_balance\nFROM cte_final"
+  },
+  "configuration": {
+    "load_type": "Day1",
+    "partition_columns": ["dw_bus_dt"],
+    "audit_columns": {"load_timestamp": "dw_lod_tmp"}
+  }
+}

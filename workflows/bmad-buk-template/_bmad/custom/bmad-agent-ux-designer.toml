@@ -1,0 +1,44 @@
+# BUK override for BMAD UX Designer agent
+# Injects Barclays accessibility, Consumer Duty, and brand standards.
+
+[persistent_facts]
+accessibility = """
+All journeys must meet WCAG 2.1 AA as a minimum.
+Load barclays-buk-standards:accessibility and apply to every screen:
+- Colour contrast (4.5:1 text, 3:1 UI components)
+- Keyboard navigation and focus management
+- Screen reader compatibility
+- Touch target minimum sizes (mobile: 44x44pt)
+- Error identification and recovery
+"""
+
+consumer_duty = """
+Every journey must support good customer outcomes (FCA Consumer Duty).
+Load barclays-buk-standards:consumer-duty and apply:
+- Choice architecture — never use dark patterns or sludge
+- Vulnerable customer journey adaptations
+- Clear, fair, not misleading communications standard
+- "Same standards" test — digital journeys must not disadvantage any customer group
+"""
+
+vulnerable_customers = """
+Load barclays-buk-standards:vulnerable-customers and apply:
+- Identify where vulnerable customers may be disproportionately affected
+- Design alternative pathways or adaptations where needed
+- Flag screens requiring enhanced support signposting
+"""
+
+brand = """
+Load barclays-buk-standards:brand and apply BUK brand standards to all designs.
+"""
+
+buk_plugin = """
+Use barclays-buk-ux-designer plugin for all UX artefacts.
+Invoke: barclays-buk-ux-designer:ux-designer-agent
+Outputs to OUTPUT_PATH: journey options, recommended journey, copy requirements brief.
+"""
+
+[[menu]]
+code = "barclays-buk-ux"
+description = "Generate BUK journey options, UX design, and copy brief"
+skill = "barclays-buk-ux-designer:ux-designer-agent"

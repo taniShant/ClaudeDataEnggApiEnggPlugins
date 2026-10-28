@@ -1,0 +1,38 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-23T14:30:00Z",
+    "tools": [
+      {
+        "vendor": "Wiz",
+        "name": "wizcli",
+        "version": "0.105.0"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "group": "ch.qos.reload4j",
+      "name": "reload4j",
+      "version": "1.2.26",
+      "purl": "pkg:maven/ch.qos.reload4j/reload4j@1.2.26"
+    },
+    {
+      "type": "library",
+      "group": "org.springframework",
+      "name": "spring-core",
+      "version": "5.3.39",
+      "purl": "pkg:maven/org.springframework/spring-core@5.3.39"
+    },
+    {
+      "type": "library",
+      "group": "com.fasterxml.jackson.core",
+      "name": "jackson-databind",
+      "version": "2.18.2",
+      "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.18.2"
+    }
+  ]
+}

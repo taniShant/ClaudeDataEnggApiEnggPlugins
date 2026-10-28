@@ -1,0 +1,99 @@
+openapi: '3.0.3'
+info:
+  title: 'CASA Account Validator Query API'
+  description: |
+    - **API Type:** Internal
+    - **API Risk Classification:** LIMITED
+    - **API Owner (business):** example-business-owner@barclays.com
+    - **API Owner (technical):** example-technical-owner@barclays.com
+    - **API Designer:** example-designer@barclays.com
+    - **API Overview:** Validates whether the given sort code and account number belong to a valid Barclays account.
+  contact:
+    name: 'Example Team'
+    email: 'example-team@barclays.com'
+  version: 'v1.0'
+externalDocs:
+  description: 'API Documentation'
+  url: 'https://confluence.barcapint.com/display/EXAMPLE/Account+Validator+API'
+servers:
+  - url: /v1
+    description: 'CASA Account Validator Query API'
+security:
+  - InternalTiaaUsRopcAuth: []
+tags:
+  - name: 'accounts'
+    description: 'Account validation operations'
+components:
+  securitySchemes:
+    InternalTiaaUsRopcAuth:
+      $ref: './common-libraries/security/security-schemes.yaml#/InternalTiaaUsRopcAuth'
+  responses:
+    InternalServerError:
+      $ref: './common-libraries/components/responses.yaml#/InternalServerError'
+    Forbidden:
+      $ref: './common-libraries/components/responses.yaml#/Forbidden'
+    NotFound:
+      $ref: './common-libraries/components/responses.yaml#/NotFound'
+    BadRequest:
+      $ref: './common-libraries/components/responses.yaml#/BadRequest'
+    Unauthorized:
+      $ref: './common-libraries/components/responses.yaml#/Unauthorized'
+    TooManyRequests:
+      $ref: './common-libraries/components/responses.yaml#/TooManyRequests'
+    ServiceUnavailable:
+      $ref: './common-libraries/components/responses.yaml#/ServiceUnavailable'
+paths:
+  /validateAccount:   # path key has NO version prefix — /v1 is in servers.url above
+    summary: 'Validate Account Operations'
+    description: 'Validates whether the sort code and account number belong to a valid Barclays account.'
+    post:
+      tags:
+        - 'accounts'
+      summary: 'Validate sort code and account number'
+      description: 'Returns true if the given sort code and account number are valid Barclays account details.'
+      operationId: 'validateAccount'
+      parameters:
+        - $ref: './common-libraries/components/headers.yaml#/Correlation-ID'
+        - $ref: './common-libraries/components/headers.yaml#/Authorization'
+      requestBody:
+        required: true
+        description: 'Sort code and account number to validate'
+        content:
+          application/json:
+            schema:
+              $ref: './components/accounts/type-ValidateAccountRequestType.yaml#/ValidateAccountRequestType'
+            examples:
+              ValidateAccountRequest:
+                value:
+                  data:
+                    sortCode: '201234'
+                    accountNumber: '12345678'
+      responses:
+        '200':
+          description: 'Validation result returned successfully.'
+          headers:
+            Cache-Control:
+              $ref: './common-libraries/components/headers.yaml#/Cache-Control'
+          content:
+            application/json:
+              schema:
+                $ref: './components/accounts/type-ValidateAccountResponseType.yaml#/ValidateAccountResponseType'
+              examples:
+                ValidateAccountResponse:
+                  value:
+                    data:
+                      validNonBarclaysAccount: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'

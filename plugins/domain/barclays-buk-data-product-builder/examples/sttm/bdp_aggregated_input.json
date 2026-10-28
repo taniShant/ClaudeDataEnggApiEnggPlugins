@@ -1,0 +1,51 @@
+{
+  "$schema": "sttm-plugin/v1/extended",
+  "target_source": {
+    "format": "excel",
+    "artifact": "input/target_schema.xlsx"
+  },
+  "target": {
+    "database": "bdp_uk_analytics_db",
+    "table": "customer_segment_metrics",
+    "table_description": "Business Data Product - customer segmentation metrics with propensity scores",
+    "table_type": "Transactional",
+    "columns": [
+      {"name": "customer_id", "description": "Customer identifier", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "segment_code", "description": "Customer segment code", "datatype": "string", "nullable": "Y", "key_column": "N"},
+      {"name": "segment_description", "description": "Segment human-readable description", "datatype": "string", "nullable": "Y", "key_column": "N"},
+      {"name": "propensity_score", "description": "Propensity to default score (0-1)", "datatype": "decimal(6,4)", "nullable": "Y", "key_column": "N"},
+      {"name": "total_balance", "description": "Sum of all account balances", "datatype": "decimal(18,2)", "nullable": "Y", "key_column": "N"},
+      {"name": "dw_bus_dt", "description": "Business date", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "dw_lod_tmp", "description": "Load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "cdp_uk_customer_db",
+      "table": "customer_consolidated",
+      "columns": [
+        {"name": "customer_id", "datatype": "string"},
+        {"name": "segment_code", "datatype": "string"},
+        {"name": "propensity_score_pct", "datatype": "int"},
+        {"name": "total_balance", "datatype": "decimal(18,2)"}
+      ]
+    },
+    {
+      "database": "cdp_uk_customer_db",
+      "table": "segment_lookup",
+      "columns": [
+        {"name": "segment_code", "datatype": "string"},
+        {"name": "segment_description", "datatype": "string"}
+      ]
+    }
+  ],
+  "code": {
+    "type": "sql",
+    "content": "SELECT c.customer_id, UPPER(c.segment_code) AS segment_code, s.segment_description, CAST(c.propensity_score_pct AS DECIMAL(6,4)) / 100 AS propensity_score, c.total_balance FROM cdp_uk_customer_db.customer_consolidated c LEFT JOIN cdp_uk_customer_db.segment_lookup s ON c.segment_code = s.segment_code"
+  },
+  "configuration": {
+    "load_type": "Day1",
+    "partition_columns": ["dw_bus_dt"],
+    "audit_columns": {"load_timestamp": "dw_lod_tmp"}
+  }
+}

@@ -1,0 +1,68 @@
+# Rendering modes:
+#   Single-flow: paths and names use {{target_schema}}_{{table_name}} as-is
+#   Multi-source-system (source_systems non-empty): the rendering agent injects
+#     {source_system}/ into notebook_path after {{load_type_folder}}/ and appends
+#     _{source_system} to resource name, task_key, and job_cluster_key.
+#     See /gen-bundle STEP 3 for rendering rules.
+resources:
+  jobs:
+    {{target_schema}}_{{table_name}}:
+      name: "{{target_schema}}_{{table_name}}"
+      email_notifications:
+        on_success:
+          - ${var.email_address}
+        on_failure:
+          - ${var.email_address}
+      tasks:
+        - task_key: {{target_schema}}_{{table_name}}_driver
+          notebook_task:
+            notebook_path: /Workspace/${var.ws_root}/files/src/Notebooks/{{load_type_folder}}/{{target_schema}}_{{table_name}}/{{target_schema}}_{{table_name}}_driver
+            base_parameters:
+              business_date: ""
+              environment: ${var.environment}
+              log_level: ${var.log_level}
+            source: WORKSPACE
+          job_cluster_key: {{target_schema}}_{{table_name}}_compute
+          libraries:
+            - pypi:
+                package: {{foundation_library_url}}
+      job_clusters:
+        - job_cluster_key: {{target_schema}}_{{table_name}}_compute
+          new_cluster:
+            spark_version: "{{spark_version}}"
+            aws_attributes:
+              first_on_demand: ${var.first_on_demand}
+              availability: SPOT_WITH_FALLBACK
+              zone_id: auto
+              spot_bid_price_percent: ${var.spot_bid_price_percent}
+            node_type_id: ${var.{{compute_tier}}_node_type_id}
+            custom_tags:
+              FIN:Role: "{{fin_role_tag}}"
+              APP:ApplicationService: "{{app_service_tag}}"
+              ENV:Environment: ${var.environment}
+              TEAM:Owner: "{{tenancy_name}}"
+            spark_env_vars:
+              DATABRICKS_TRUSTED_HOST: nexus-amazon-pdn.barclays.intranet
+              PIP_TRUSTED_HOST: nexus-amazon-pdn.barclays.intranet
+              PYSPARK_PYTHON: /databricks/python3/bin/python3
+              DATABRICKS_PIP_INDEX_URL: https://nexus-amazon-pdn.barclays.intranet/repository/barclays-read-pypi/simple
+              GIT_PROXY_ENABLE_SSL_VERIFICATION: "false"
+              TRUSTED_HOST: nexus-amazon-pdn.barclays.intranet
+            enable_elastic_disk: true
+            policy_id: ${var.policy_id}
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            kind: CLASSIC_PREVIEW
+            is_single_node: false
+            autoscale:
+              min_workers: ${var.{{compute_tier}}_min_workers}
+              max_workers: ${var.{{compute_tier}}_max_workers}
+      queue:
+        enabled: true
+      run_as:
+        service_principal_name: ${var.{{tenancy_name}}_{{dp_type_lower}}_exec_sp}
+      permissions:
+        - level: CAN_VIEW
+          group_name: ${var.ad_group}
+        - level: CAN_MANAGE_RUN
+          service_principal_name: ${var.{{tenancy_name}}_{{dp_type_lower}}_exec_sp}

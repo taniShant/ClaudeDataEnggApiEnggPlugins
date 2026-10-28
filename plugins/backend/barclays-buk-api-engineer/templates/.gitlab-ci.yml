@@ -1,0 +1,63 @@
+spec:
+  inputs:
+    csm_safe_id:
+      type: string
+      default: "snsvc0000000"
+      description: CSM Safe Id (ITSI) for any secret data read by this component
+    csm_role_name:
+      type: string
+      default: gitlab-role
+      description: CSM role name to allow read of secrets from GitLab
+    csm_secret_name:
+      type: string
+      default: env/ci/ci-secrets
+      description: CSM secret name (assumes kv secret as default)
+
+---
+variables:
+  WIZ_ENABLED: false
+
+include:
+  - component : $CI_SERVER_HOST/barclays/digital-platform/cicd-components/pipelines/buk-onepipeline-ci/pipeline-gradle-java-ci@3.0
+    inputs:
+      PIPELINE_VERSION: 3.0
+      comp_test_gradle_opts: &gradle_opts "-PnexusUsername=$nexusUsername -PnexusPassword=$nexusPassword"
+      comp_test_gradle_goal_name: "integrationTest jacocoTestReport"
+      comp_test_jacoco_csv_report_path: "build/reports/jacoco/test/jacocoTestReport.csv"
+      comp_test_jacoco_xml_report_path: "build/reports/jacoco/test/jacocoTestReport.xml"
+      CSM_EXTENDED: ".csm_extract_secrets"
+      GLOBAL_JAVA_BUILDER_IMAGE: $BUILDER_IMAGE_JAVA_21
+      properties_setup_get_nexus_patch_version: "True"
+      csm_safe_id: "snsvc0000000"
+      csm_role_name: $[[ inputs.csm_role_name ]]
+      csm_secret_name: $[[ inputs.csm_secret_name ]]
+      sonar_language: java
+      sonar_component: NEW_SONAR
+      sonar_builder_image: $BUILDER_IMAGE_JAVA_21
+      sonar_timeout: 1000
+      sonar_scan_type: sonar-scanner-cli
+      sonar_workspace_key: {ARTIFACT_ID}
+      sonar_quality_gate: PASS_ON_QUALITY_GATE_FAILURE
+      sonar_execution: PASS_ON_EXECUTION_FAILURE
+      sonar_csm_secret_url: "https://csm-uk1-stg.barcapint.com:8200/v1/CSM/sonar/creds/snsvc0000000_{ARTIFACT_ID}"
+      sonar_csm_role_name: "snsvc0000000_gitlab_gitlab-role"
+      properties_setup_nexus_system_account_username: "system_account_name"
+      publish_gradle_nexus_system_account_username: "system_account_name"
+      shared_nexus_publish_nexus_system_account_username: "system_account_name"
+      compliance_nexus_system_account_username: "system_account_name"
+      veracode_sca_api_token_variable_name: SCA_API_TOKEN
+      PERFORMANCE_TESTING_TOOL: "JMETER_LOCAL"
+      perf_test_jmeter_builder_image: $BUILDER_IMAGE_JAVA_21
+      perf_test_jmeter_app_server_host: "localhost:8080"
+      perf_test_jmeter_app_server_protocol: "http"
+      perf_test_jmeter_jmx_path: "{ARTIFACT_ID}.jmx"
+      perf_test_jmeter_startup_command: "java -Dspring.profiles.active=dev -Dlogging.level.root=DEBUG -Dlogging.level.org.springframework=DEBUG -Dspring.config.location=src/main/resources/ -jar build-job-jars/app.jar"
+      perf_test_jmeter_healthcheck_command: 'curl -s -f -X GET -H "Content-type: application/json" -H "correlation-id: 1000" http://localhost:8080/healthcheck'
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - if: $CI_COMMIT_BRANCH
+      when: always

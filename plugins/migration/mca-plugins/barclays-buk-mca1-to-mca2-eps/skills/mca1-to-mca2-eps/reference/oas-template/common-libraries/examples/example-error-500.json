@@ -1,0 +1,12 @@
+{
+  "value": {
+    "errors": [
+      {
+        "id": "bab8a653-3334-4dfe-be73-5e1703352595",
+        "code": "INTERNAL_SERVER_ERROR",
+        "title": "The request failed due to an internal error",
+        "severity": "E"
+      }
+    ]
+  }
+}

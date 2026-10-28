@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "source_table_metadata.schema.json",
+  "title": "Source Table Metadata",
+  "description": "Schema for session/source_table_metadata.json — per-source-table type classification. Keyed by 'db.table' (e.g. 'e_ilp_db.account_wm').",
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/definitions/sourceTableEntry"
+  },
+  "definitions": {
+    "sourceTableEntry": {
+      "type": "object",
+      "required": [
+        "source_table_type",
+        "classification_confidence",
+        "classification_heuristic",
+        "classification_source",
+        "audit_columns_present",
+        "full_column_list",
+        "classified_at"
+      ],
+      "properties": {
+        "source_table_type": {
+          "type": "string",
+          "enum": ["NonTransactional_SCD1", "NonTransactional_SCD2", "Transactional"],
+          "description": "Classified type based on audit column heuristic. NonTransactional_SCD2 = entity-state with SCD2 history columns. NonTransactional_SCD1 = entity-state with dw_lod_tmp/dw_upd_lod_tmp only (no eff_start_date/eff_end_date/active). Must be resolved before generation — ambiguous sources trigger HALT for user clarification."
+        },
+        "classification_confidence": {
+          "type": "string",
+          "enum": ["HIGH", "MEDIUM", "LOW"],
+          "description": "HIGH = definitive H0/H0b match; MEDIUM = partial audit column match; LOW = fallback/no match."
+        },
+        "classification_heuristic": {
+          "type": ["string", "null"],
+          "enum": ["VOL", "H0", "H0b", "H1", "H2", "H3", "H4", "DK", "UA", "H0-map", "H0b-map", "H1-map", "H3-map", null],
+          "description": "Which heuristic rule matched. VOL = source_volumetrics table_type (analyst-declared in mapping Excel, highest priority). DK = domain knowledge. UA = user_asked (HALT triggered, user provided answer). *-map = mapping document fallback."
+        },
+        "classification_source": {
+          "type": "string",
+          "enum": ["source_volumetrics", "domain_knowledge", "mapping_document"],
+          "default": "source_volumetrics",
+          "description": "Where the classification was derived from. 'source_volumetrics' = analyst-declared table_type from Source Volumetrics tab in mapping Excel (highest priority). 'domain_knowledge' = explicit type hint in domain knowledge file. 'mapping_document' = inferred from audit columns visible in mapping source column references."
+        },
+        "audit_columns_present": {
+          "type": "object",
+          "description": "Boolean flags for each audit column's presence. Null when classification is from volumetrics or domain knowledge (presence unknown).",
+          "required": ["eff_start_date", "eff_end_date", "active", "dw_upd_lod_tmp", "dw_bus_dt", "dw_lod_tmp"],
+          "properties": {
+            "eff_start_date": {
+              "type": ["boolean", "null"],
+              "description": "SCD2 effective start date column present. Null when presence is unknown."
+            },
+            "eff_end_date": {
+              "type": ["boolean", "null"],
+              "description": "SCD2 effective end date column present. Null when presence is unknown."
+            },
+            "active": {
+              "type": ["boolean", "null"],
+              "description": "SCD2 active flag column present. Null when presence is unknown."
+            },
+            "dw_upd_lod_tmp": {
+              "type": ["boolean", "null"],
+              "description": "Datawarehouse update load timestamp column present (SCD2 indicator). Null when presence is unknown."
+            },
+            "dw_bus_dt": {
+              "type": ["boolean", "null"],
+              "description": "Datawarehouse business date column present (Transactional indicator). Null when presence is unknown."
+            },
+            "dw_lod_tmp": {
+              "type": ["boolean", "null"],
+              "description": "Datawarehouse load timestamp column present (Transactional indicator). Null when presence is unknown."
+            }
+          },
+          "additionalProperties": false
+        },
+        "full_column_list": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Reserved for future use. Currently always empty array."
+        },
+        "classified_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when classification was performed."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

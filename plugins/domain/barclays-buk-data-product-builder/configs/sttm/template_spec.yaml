@@ -1,0 +1,1071 @@
+# =============================================================================
+# STTM Generator Plugin — Authoritative Template Specification
+# See also: templates/mapping_spec.md for visual formatting reference
+# =============================================================================
+
+schema_version: "1.1"
+
+# -----------------------------------------------------------------------------
+# Workbook Structure
+# -----------------------------------------------------------------------------
+# Output always has exactly 2 sheets regardless of 4-axis classification.
+# The template file has 9 sheets (used as base for headers/formatting),
+# but output removes unused sheets and renames the active one to "Mapping".
+# No scenario-to-sheet mapping is needed — classification is stored in _meta.
+
+workbook:
+  historical_template_sheets:
+    description: "Historical reference — the former mapping_template.xlsx had 9 sheets (now removed)"
+    note: "These are NOT output sheets — output always has exactly 2 sheets built from scratch"
+    sheets:
+      - "Template"
+      - "FDP_NonTX_Explicit"
+      - "FDP_Transactional"
+      - "FDP_Crypto_Detokenize"
+      - "FDP_Crypto_Tokenize"
+      - "FDP_Crypto_Both"
+      - "CDP_MultiSource"
+      - "BDP_Aggregated"
+      - "Source Volumetrics"
+
+  output_sheets:
+    - name: "Mapping"
+      tab_color: "#4472C4"
+      purpose: "All mapping rows for the classified target table"
+      contains_data: true
+
+    - name: "Source Volumetrics"
+      tab_color: "#00B050"
+      purpose: "One row per unique source table"
+      contains_data: true
+
+# -----------------------------------------------------------------------------
+# Mapping Columns (A–P) — present on all scenario sheets
+# -----------------------------------------------------------------------------
+mapping_columns:
+  - col: A
+    header: "Target Database"
+    data_type: text
+    required: true
+    pattern: "{tier}_{country}_{domain}_db"
+    description: >
+      Fully qualified target database name. Must follow the naming convention
+      {tier}_{country}_{domain}_db where tier is one of fdp|cdp|bdp, country is
+      a two-letter ISO code, and domain is the business domain identifier.
+
+  - col: B
+    header: "Target Table"
+    data_type: text
+    required: true
+    format: snake_case
+    description: >
+      Target table name in snake_case. Must be unique within the target database
+      and conform to organisational naming standards. When the target output is a
+      parquet file, append (file:parquet) suffix (e.g., "customer_events_clean (file:parquet)").
+      The suffix is stripped during parsing; downstream consumers see only the clean name.
+
+  - col: C
+    header: "Target Column Name"
+    data_type: text
+    required: true
+    format: snake_case
+    constraints:
+      - no_leading_digits
+      - no_reserved_words
+    description: >
+      Target column name in snake_case. Must not begin with a digit and must not
+      use SQL reserved words. Each column name must be unique within its table.
+
+  - col: D
+    header: "Target Column Definition/Description"
+    data_type: text
+    required: true
+    constraints:
+      - non_empty
+    description: >
+      Business-readable definition of the target column. Must be non-empty and
+      provide sufficient context for downstream consumers to understand the
+      column's meaning and intended use.
+
+  - col: E
+    header: "Target Column Datatype"
+    data_type: text
+    required: true
+    allowed_values:
+      - string
+      - int
+      - bigint
+      - "decimal(p,s)"
+      - date
+      - timestamp
+      - boolean
+      - float
+      - double
+    description: >
+      Target column data type. For decimal types, precision (p) and scale (s)
+      must be specified in parentheses, e.g. decimal(18,2). All other types are
+      specified without parameters.
+
+  - col: F
+    header: "Target Column Null Flag"
+    data_type: text
+    required: true
+    allowed_values:
+      - "Y"
+      - "N"
+    description: >
+      Indicates whether the target column permits NULL values. Y = nullable,
+      N = NOT NULL constraint applied.
+
+  - col: G
+    header: "Source Database"
+    data_type: text
+    required: conditional
+    required_condition: "Required for non-system and non-derived columns"
+    special_values:
+      - "(system)"
+      - "(derived)"
+      - "(file:parquet)"
+    description: >
+      Source database name. Use (system) for system-generated audit timestamp
+      columns (dw_lod_tmp, dw_bus_dt, dw_upd_lod_tmp). Use (derived) ONLY for columns computed
+      exclusively from other columns already in the same target row
+      (self-referential). Use (file:parquet) when the source is a parquet file —
+      this is a format marker analogous to (system) and (derived). When present,
+      Column H contains the absolute storage path (not a logical name).
+      For ALL other calculated columns — including
+      aggregations, window functions, hardcoded values in a data flow, and
+      business rule derivations — use the real contributing database name.
+
+  - col: H
+    header: "Source Table Name"
+    data_type: text
+    required: conditional
+    required_condition: "Required when Source Database is not (system) or (derived)"
+    special_values:
+      - "(system)"
+      - "(derived)"
+      - "Hardcoded"
+      - "N/A"
+    description: >
+      ALL source tables contributing to this target column in fully qualified
+      {database}.{table} format, comma-separated (driver table first, then
+      joined/lookup tables in join order). Use (system) for system-generated
+      audit timestamps. Use (derived) ONLY for self-referential calculations
+      (same-row inputs only). N/A only where genuinely no source applies.
+      When source is a parquet file (Source Database = (file:parquet)), Column H
+      contains the absolute storage path (e.g., "s3://raw-bucket/data/customer_events/").
+      The logical name is derived from the path basename and used as a pseudo-table
+      reference in Column I (e.g., "customer_events.event_id").
+      Examples: "e_loans_tallyman_db.TETLTABA" (single),
+      "e_loans_tallyman_db.TETLCAAC, e_loans_tallyman_db.TETLTCCC" (multi),
+      "s3://raw-bucket/data/customer_events/" (parquet file source).
+
+  - col: I
+    header: "Source Column Name"
+    data_type: text
+    required: conditional
+    required_condition: "Required when Source Table Name is a real table"
+    special_values:
+      - "(system)"
+      - "(derived)"
+      - "Hardcoded"
+      - "N/A"
+    description: >
+      ALL contributing source columns in fully qualified
+      {database}.{table}.{column} format, comma-separated. ALWAYS use 3-part
+      qualification — even for single direct copies. This enables unambiguous
+      column-level lineage tracing across databases. Use Hardcoded for constants.
+      Use (system) for system-generated audit values. (derived) ONLY for pure
+      same-row self-reference. When source is a parquet file
+      (Source Database = (file:parquet)), use 2-part FQN
+      {logical_name}.{column} instead of the standard 3-part format — the
+      logical name replaces the {database}.{table} prefix since parquet files
+      have no database/table hierarchy. Examples:
+      "e_loans_tallyman_db.TETLTABA.ACCOUNT_BALANCE_AMOUNT" (single direct),
+      "e_loans_tallyman_db.TETLTCCC.COL_ETD_DTE, e_loans_tallyman_db.TETLTCRC.ACC_ETD_RVY_DTE" (multi),
+      "customer_events.event_timestamp" (parquet file source).
+
+  - col: J
+    header: "Business Logic/Transformation Logic"
+    data_type: text
+    required: true
+    constraints:
+      - non_empty
+      - no_provenance_annotations
+    multi_table_format: "Driver Table: / Driver Conditions: / Join N Table: / Join N Type: / Join N On: / Join N Filters: / Value: (one field per line, verbose labeled)"
+    multi_step_format: "Step N (label): Driver Table: / Driver Conditions: / Join N Table: / Join N Filters: / Columns: / Grain: / Destination: (verbose labeled, after --- divider on first key column row)"
+    provenance_annotation_patterns:
+      - "per BR-\\d+"
+      - "from BR-\\d+"
+      - "^Derived from BR-\\d+"
+      - "confidence:"
+      - "evidence:"
+      - "source_priority:"
+    description: >
+      Describes the transformation logic applied to produce the target value.
+      Must be non-empty. For multi-table transformations, MUST use verbose
+      labeled newline-separated format with table aliases: "Driver Table: <database>.<table> (<alias>)\n
+      Driver Conditions: [<conditions>]\nJoin N Table: <database>.<table> (<alias>)\n
+      Join N Type: <LEFT|INNER|RIGHT|FULL|CROSS>\nJoin N On: <alias>.<col> = <alias>.<col>\n
+      Join N Filters: [<filters>]\nValue: <alias>.<expression>".
+      Each labeled field on its own line. Driver Conditions and Join N Filters always present (empty = []). Table names always fully qualified as {database}.{table}. Aliases must be unique
+      across all tables. Natural language descriptions are not acceptable for
+      multi-table joins. Must NOT contain standalone provenance annotations
+      (BR-XX labels, confidence markers, evidence references). Pure
+      transformation logic only — provenance belongs in provenance.xlsx.
+      For multi-step ETL (when intermediate_steps is non-empty), the first
+      key column row's Business Logic additionally contains the full
+      transformation lineage chain after a "---\nTransformation Lineage:"
+      divider. Each step uses the same Driver Table convention as column-level
+      format: "Driver Table:" identifies the primary table, "Driver Conditions:"
+      lists filters on the driver table, and "Join N Filters:" lists per-join
+      filters (per-table attribution). Steps also show column expressions with
+      [New]/[Transformed] tags, Grain annotations, UPDATE assignment modes
+      ([Replace]/[Additive]/[Conditional]), DELETE/TRUNCATE operations with
+      [Partial removal]/[Full removal] tags, and MERGE branch details.
+      After the step chain: "---\nEffective Source Filters:" block (cumulative
+      per base source table) and "Variables:" block (resolved DECLARE/SET
+      variables). Non-key columns with chain_depth > 1 show per-column chains
+      with pass-through markers maintaining step continuity.
+
+  - col: K
+    header: "Additional Context"
+    data_type: text
+    required: conditional
+    population_rule: first_row_only
+    constraints:
+      - non_empty_first_row
+    allowed_keys:
+      - key: load_type
+        description: "Load strategy for this table"
+        allowed_values: [BAU, day1, day0, full_then_incremental]
+      - key: partition_key
+        description: "Column(s) used as partition key"
+        allowed_values: null  # free-text (column name)
+      - key: process_frequency
+        description: "How often the BAU/Day1 load runs. Prefer DE's standard values; custom values accepted for non-standard schedules."
+        recommended_values: [DAILY, WEEKLY_ONCE, ONCE_A_MONTH, WORKING_DAYS, ALTERNATE_DAYS, TUE_TO_SAT]
+        allowed_values: null  # free-text — standard DE values preferred, custom values accepted
+      - key: rolling_deletion_predicate
+        description: "SQL WHERE-clause predicate for rolling deletion of aged data"
+        allowed_values: null  # free-text (SQL predicate)
+      - key: cdc_type
+        description: "CDC strategy — full compare or incremental"
+        allowed_values: [snapshot, delta]
+      - key: cdc_exclude
+        description: "Columns excluded from CDC change detection"
+        allowed_values: null  # comma-separated column names
+      - key: validate_unique_keys
+        description: "Whether to validate PK uniqueness during load"
+        allowed_values: [true, false]
+      - key: duplicates_ts_col
+        description: "Column used for ordering when deduplicating within batch"
+        allowed_values: null  # column name
+      - key: dedup_order
+        description: "Sort direction for dedup ordering column"
+        allowed_values: [desc, asc]
+      - key: source_system
+        description: "Identifies which independent source system this table's mapping belongs to. When present, each distinct value produces separate artifacts (config, transform, driver/wrapper, DAG). If absent, normal single-flow generation applies. Multiple source databases in a mapping do NOT imply multiple source systems — only this explicit declaration triggers multi-source-system artifact generation."
+        allowed_values: null  # free-text label (e.g., "ilp", "reference_data")
+    excluded_keys:
+      - cluster_key  # use Key Column (P) instead
+      - day0_range   # data filter — use Business Logic (J)
+      - grain        # use Target Table Description (L)
+      - br_ref       # provenance/traceability — use provenance.xlsx
+    description: >
+      Table-level operational metadata as pipe-delimited key:value pairs.
+      Populated ONLY on the first data row per target table. All subsequent
+      rows must be empty string "". Allowed keys: load_type, partition_key,
+      process_frequency, rolling_deletion_predicate, cdc_type, cdc_exclude,
+      validate_unique_keys, duplicates_ts_col, dedup_order, source_system.
+      Only include keys with non-empty values.
+      CDC keys (cdc_type, cdc_exclude, validate_unique_keys, duplicates_ts_col,
+      dedup_order) are arguments to the Databricks run_cdc() function and MUST
+      only be emitted for NonTransactional_SCD2 tables. They MUST be suppressed
+      for Transactional and NonTransactional_SCD1 tables.
+      Business rule references (br_ref) are provenance data and belong in
+      provenance.xlsx. Grain belongs in Target Table Description (L).
+
+  - col: L
+    header: "Target Table description"
+    data_type: text
+    required: conditional
+    population_rule: first_row_only
+    constraints:
+      - non_empty_first_row
+      - grain_present_or_flagged
+    grain_derivation:
+      enabled: true
+      detection_regex: "(?i)\\bgrain\\s*:"
+      append_format: " Grain: {columns}[ per {temporal_qualifier}]."
+      column_separator: " + "
+      scd2_temporal_qualifier: "per effective period"
+      confidence_threshold: 0.7
+      evidence_priority:
+        - source: intermediate_steps_final_grain_keys
+          confidence: 0.95
+        - source: lineage_grain_impact_key
+          confidence: 0.90
+        - source: aggregation_group_by_columns
+          confidence: 0.85
+        - source: target_key_columns
+          confidence: 0.80
+        - source: interview_q3_7
+          confidence: 0.75
+    description: >
+      Business description of the target table, including grain statement.
+      Populated ONLY on the first data row per target table. All subsequent
+      rows must be empty string "". If the template description does not
+      include a "Grain:" statement, the sttm-row-generator-agent auto-derives and
+      appends it from available evidence (grain_keys, grain_impact, GROUP BY,
+      Key Column, interview Q3.7). If grain cannot be determined with
+      confidence >= 0.7, it is flagged for guided mode (Q11) rather than
+      omitted silently.
+
+  - col: M
+    header: "Transformation Type"
+    data_type: text
+    required: false
+    allowed_values:
+      - "Direct"
+      - "Derived"
+      - "Lookup"
+      - "Direct - Type Cast"
+      - ""
+    description: >
+      Classification of the transformation applied. Direct = simple column copy,
+      Derived = expression or function applied, Lookup = value obtained via
+      reference table join, Direct - Type Cast = column copy with type conversion.
+      Blank if not yet classified.
+
+  - col: N
+    header: "Default Value"
+    data_type: text
+    required: false
+    constraints:
+      - compatible_with_target_datatype
+    description: >
+      Default value assigned when the source value is NULL or absent. If present,
+      must be compatible with the target column datatype specified in column E.
+
+  - col: O
+    header: "Target Table Type"
+    data_type: text
+    required: false
+    allowed_values:
+      - "NonTransactional_SCD2"
+      - "NonTransactional_SCD1"
+      - "Transactional"
+      - ""
+    description: >
+      Slowly Changing Dimension type or load pattern for the target table.
+      NonTransactional_SCD2 = full history with effective dating,
+      NonTransactional_SCD1 = overwrite, Transactional = append/event-style.
+      Blank if not yet determined.
+
+  - col: P
+    header: "Key Column"
+    data_type: text
+    required: false
+    allowed_values:
+      - "Y"
+      - "N"
+      - ""
+    description: >
+      Indicates whether this column is part of the primary/business key for the
+      target table. Y = key column, N = non-key column. Blank if not yet
+      determined.
+
+# -----------------------------------------------------------------------------
+# Source Volumetrics Columns (A–J) — present on the Source Volumetrics sheet
+# -----------------------------------------------------------------------------
+volumetrics_columns:
+  - col: A
+    header: "Source Database"
+    data_type: text
+    required: true
+    cross_reference: "Must match mapping sheets column G"
+    description: >
+      Source database name. Must correspond to values used in column G of the
+      mapping sheets to enable cross-referencing.
+
+  - col: B
+    header: "Source Table"
+    data_type: text
+    required: true
+    cross_reference: "Must match mapping sheets column H (or basename for file sources)"
+    description: >
+      Source table name. Must correspond to values used in column H of the
+      mapping sheets. For file sources (source_database = (file:parquet)),
+      use the logical name (path basename) rather than the full storage path.
+
+  - col: C
+    header: "Estimated Rows"
+    data_type: integer
+    required: false
+    description: >
+      Estimated total row count in the source table at steady state. Used for
+      capacity planning and join strategy decisions.
+
+  - col: D
+    header: "Estimated Size (GB)"
+    data_type: decimal
+    required: false
+    description: >
+      Estimated total storage size of the source table in gigabytes. Used for
+      data movement planning and cost estimation.
+
+  - col: E
+    header: "Daily Increment Rows"
+    data_type: integer
+    required: false
+    description: >
+      Estimated number of new or changed rows arriving per day. Used for
+      incremental load sizing and scheduling.
+
+  - col: F
+    header: "Daily Increment Size (GB)"
+    data_type: decimal
+    required: false
+    description: >
+      Estimated storage size of daily incremental data in gigabytes. Used for
+      buffer sizing and partition planning.
+
+  - col: G
+    header: "Primary Key"
+    data_type: text
+    required: false
+    format: "comma-separated if composite"
+    description: >
+      Primary key column(s) of the source table. For composite keys, list
+      columns separated by commas (e.g. "account_id, effective_date").
+
+  - col: H
+    header: "Partition Key"
+    data_type: text
+    required: false
+    description: >
+      Column used for physical partitioning in the source system. Informs
+      partition pruning strategies in generated pipelines.
+
+  - col: I
+    header: "Table Type"
+    data_type: text
+    required: false
+    allowed_values:
+      - "NonTransactional_SCD1"
+      - "NonTransactional_SCD2"
+      - "Transactional"
+    description: >
+      Classification of the source table's update pattern with SCD qualifier.
+      NonTransactional_SCD1 = dimension/reference data with overwrite semantics,
+      NonTransactional_SCD2 = dimension/reference data with full history tracking,
+      Transactional = append-only fact/event data. Must use the classification
+      result to pick the correct SCD qualifier.
+
+  - col: J
+    header: "Broadcast Hint"
+    data_type: text
+    required: false
+    allowed_values:
+      - "Y"
+      - "N"
+    description: >
+      Hint indicating whether the source table is a candidate for broadcast join
+      optimisation. Y = small enough to broadcast, N = too large. See
+      broadcast_hint_threshold_rows for the automatic threshold.
+
+# -----------------------------------------------------------------------------
+# Row Structure
+# -----------------------------------------------------------------------------
+row_structure:
+  # Output file (sttm.xlsx) structure — built from scratch, no template dependency:
+  output:
+    row_1:
+      content: "headers"
+      style:
+        bold: true
+        fill: true
+        fill_color: "D9E1F2"
+        wrap_text: true
+        vertical: "center"
+    row_2_onwards:
+      content: "mapping data"
+      style:
+        wrap_text: true
+        vertical: "top"
+      description: "Data starts immediately at Row 2. No instructions row in output."
+    data_start_row: 2
+    sheets:
+      - "Mapping"
+      - "Source Volumetrics"
+
+# -----------------------------------------------------------------------------
+# Output Generation Rules
+# -----------------------------------------------------------------------------
+output_generation_rules:
+  # Sheet structure
+  output_sheets:
+    - name: "Mapping"
+      tab_color: "#4472C4"
+      description: "Active scenario data — renamed from scenario-specific sheet name"
+    - name: "Source Volumetrics"
+      tab_color: "#00B050"
+      description: "One row per unique source table"
+
+  # Visual formatting
+  tab_colors_required: true
+
+  # Generation approach
+  build_from_scratch: true
+  description: >
+    Excel output is built from scratch using openpyxl (no binary template dependency).
+    Headers are written at Row 1 with formatting per templates/mapping_spec.md.
+    Generated mapping data begins at Row 2. Output has exactly 2 sheets:
+    "Mapping" and "Source Volumetrics".
+
+  # Data placement
+  generated_data_starts_row: 2
+
+  # Volumetrics rules
+  one_volumetrics_row_per_source_table: true
+  volumetrics_deduplication: >
+    Each unique (Source Database, Source Table) pair appears exactly once on
+    the Source Volumetrics sheet, regardless of how many mapping rows reference it.
+
+  # Broadcast hint threshold
+  broadcast_hint_threshold_rows: 10000
+  broadcast_hint_description: >
+    Tables with Estimated Rows <= 10,000 are automatically flagged as broadcast
+    candidates (Broadcast Hint = Y) unless explicitly overridden.
+
+  # Validation rules applied during generation
+  validation:
+    - rule: "all_required_columns_populated"
+      severity: error
+      description: "Every required column must have a non-empty value"
+
+    - rule: "allowed_values_enforced"
+      severity: error
+      description: "Columns with allowed_values must contain only listed values"
+
+    - rule: "cross_reference_integrity"
+      severity: error
+      description: >
+        Source Database and Source Table in volumetrics must have at least one
+        corresponding row in the mapping sheets
+
+    - rule: "target_table_description_first_row_only"
+      severity: warning
+      description: >
+        Target Table description must be populated on the first row per table
+        and empty on all subsequent rows. Legacy files with repeated values
+        are accepted with a deprecation warning.
+
+    - rule: "key_column_consistency"
+      severity: warning
+      description: >
+        At least one row per target table should have Key Column = Y
+
+    - rule: "datatype_default_compatibility"
+      severity: error
+      description: >
+        Default Value (col N) must be parseable as the Target Column Datatype
+        (col E) when present
+
+    - rule: "multi_table_format_enforced"
+      severity: error
+      description: >
+        Transformation Logic involving multiple source tables must use the
+        verbose labeled newline-separated format with table aliases
+
+    - rule: "multi_step_lineage_in_key_column"
+      severity: warning
+      description: >
+        When intermediate_steps is non-empty (multi-statement ETL), the first
+        key column row's Business Logic must contain the full transformation
+        lineage chain after a "---\nTransformation Lineage:" divider,
+        including effective source filters when available.
+
+    - rule: "delete_truncate_steps_documented"
+      severity: warning
+      description: >
+        When intermediate_steps contains DELETE or TRUNCATE operations,
+        they must appear in the Transformation Lineage block with their
+        WHERE condition.
+
+    - rule: "aggregation_grain_documented"
+      severity: warning
+      description: >
+        When intermediate_steps contains aggregation, the Transformation
+        Lineage block must show GROUP BY columns or Grain annotation.
+
+    - rule: "snake_case_naming"
+      severity: error
+      description: >
+        Target Table (col B) and Target Column Name (col C) must be valid
+        snake_case identifiers
+
+  # Output file naming convention
+  #
+  # Output files are dynamically prefixed based on target database and table names.
+  # Single-table runs:  {target_database}_{target_table}_{suffix}
+  # Multi-table runs:   {target_database}_{suffix}
+  #
+  # A manifest (output/.sttm_manifest.json) is written after export with resolved
+  # paths. Downstream commands (sttm-export, sttm-validate, sttm-resolve) and
+  # the pre-export hook read the manifest to discover output files. When no manifest
+  # exists, commands fall back to legacy hardcoded names for backward compatibility.
+  output_naming:
+    single_table_pattern: "{target_database}_{target_table}_{suffix}"
+    multi_table_pattern: "{target_database}_{suffix}"
+    sanitize: "lowercase, replace non-alphanumeric/underscore with _, collapse consecutive underscores, strip leading/trailing underscores"
+    manifest_file: ".sttm_manifest.json"
+    examples:
+      single_table:
+        target_database: "fdp_uk_mortgage_db"
+        target_table: "mortgage_account"
+        output_prefix: "fdp_uk_mortgage_db_mortgage_account"
+        files:
+          - "fdp_uk_mortgage_db_mortgage_account_sttm.json"
+          - "fdp_uk_mortgage_db_mortgage_account_sttm.xlsx"
+          - "fdp_uk_mortgage_db_mortgage_account_provenance.json"
+          - "fdp_uk_mortgage_db_mortgage_account_provenance.xlsx"
+          - "fdp_uk_mortgage_db_mortgage_account_validation_report.json"
+      multi_table:
+        target_database: "fdp_uk_mortgage_db"
+        target_tables: ["mortgage_account", "mortgage_payment"]
+        output_prefix: "fdp_uk_mortgage_db"
+        files:
+          - "fdp_uk_mortgage_db_sttm.json"
+          - "fdp_uk_mortgage_db_sttm.xlsx"
+          - "fdp_uk_mortgage_db_provenance.json"
+          - "fdp_uk_mortgage_db_provenance.xlsx"
+          - "fdp_uk_mortgage_db_validation_report.json"
+
+  # Output files produced by the pipeline (suffix = appended to output_prefix)
+  output_files:
+    - suffix: "sttm.json"
+      description: "Canonical JSON — system of record for all mapping data"
+      optional_sections:
+        - name: "transformation_lineage"
+          description: "Multi-step ETL chain metadata — present only when source SQL has intermediate temp tables"
+          schema_version: "1.1"
+          contains: ["intermediate_steps[]", "column_lineage_chains{}", "effective_source_filters{}", "resolved_variables{}"]
+    - suffix: "sttm.xlsx"
+      description: "2-sheet Excel projection (Mapping + Source Volumetrics) — clean operational deliverable"
+      sheets: ["Mapping", "Source Volumetrics"]
+    - suffix: "provenance.json"
+      description: "Per-field evidence metadata — JSON system of record for provenance"
+    - suffix: "provenance.xlsx"
+      description: "Human-friendly projection of provenance.json for reviewers — separate from mapping"
+      sheets: ["Field Provenance", "Business Rules"]
+      tab_colors:
+        Field Provenance: "#4472C4"
+        Business Rules: "#ED7D31"
+    - suffix: "validation_report.json"
+      description: "Validation results from pipeline checks"
+
+# -----------------------------------------------------------------------------
+# Context Management (internal optimization — does not affect output format)
+# -----------------------------------------------------------------------------
+context_management:
+  column_batch_threshold: 50
+  column_batch_size: 50          # default; overridden by adaptive calculation
+  guided_mode_batch_size: 10
+  interview_compression: true
+  adaptive_batching:
+    enabled: true
+    complexity_weights:
+      base_columns: 50           # starting batch size before penalties
+      code_lines_penalty_threshold: 2000
+      code_lines_divisor: 2000   # penalty = code_lines / 2000 (floored)
+      source_tables_penalty_threshold: 10
+      source_tables_divisor: 5   # penalty = source_tables / 5 (floored)
+      join_count_penalty_threshold: 5
+      join_count_divisor: 3      # penalty = join_count / 3 (floored)
+    min_batch_size: 15
+    max_batch_size: 50
+  interview_delivery:
+    mode: sequential
+    description: >
+      Questions are delivered one at a time (or in small thematic groups of 2-3
+      when tightly related and share a delivery_group). Pass boundaries are enforced.
+      Gateway questions are always presented alone. User must respond before the
+      next question is presented.
+    pass_boundary_enforcement: true
+    gateway_isolation: true
+    max_group_size: 3
+    show_pass_summary: true
+    show_final_summary: true
+    allow_back_navigation: true
+    show_evidence_suggestions: true
+    resume_from_prior: true
+    visual_format: box_drawing
+    evidence_summary:
+      enabled: true                   # Show pre-interview evidence summary before first question
+      show_auto_resolved_table: true  # Allow user to review all auto-resolved answers
+      allow_override: true            # Allow user to override auto-resolved answers
+    progress_tracking:
+      enabled: true                   # Show "N of M remaining" in question headers
+      format: "{current} of {remaining} remaining"
+    batch_volumetrics:
+      enabled: true                   # Offer batch mode for per-table volumetric questions
+      min_tables_for_batch: 2         # Minimum tables needing data before batch selector shown
+      options: [per_table, apply_all, mark_unknown]
+    express_mode:
+      enabled: true                   # Offer express mode when few questions remain
+      max_remaining_questions: 5      # Maximum remaining questions to qualify for express mode
+      exclude_gateway: true           # Never include gateway questions in express mode
+    gateway_impact_preview:
+      enabled: true                   # Show per-option question count preview on gateway questions
+  note: >
+    These settings control internal processing efficiency and interview delivery UX.
+    Business output (sttm.json, sttm.xlsx, provenance.json) is identical regardless
+    of interview delivery mode or batching settings. Interview delivery mode controls
+    how questions are presented to the user (sequential with pass boundaries).
+    Batching activates automatically when target columns exceed the threshold.
+    Adaptive batching reduces batch size for complex inputs (many code lines,
+    source tables, or joins) to stay within token budgets.
+
+# -----------------------------------------------------------------------------
+# Derivation Classification Rules
+# -----------------------------------------------------------------------------
+derivation_classification:
+  description: >
+    Rules governing when source columns G/H/I may use the (derived) marker
+    versus requiring real source table references.
+
+  source_database_and_source_table_rule:
+    description: >
+      source_database and source_table must ALWAYS reference real contributing
+      tables. They answer: "where does data flow from to produce this column?"
+
+      ONLY source_column may be (derived) — indicating the output is calculated
+      rather than a direct column copy.
+
+      The ONLY exception where source_database + source_table can be special markers:
+        - (system)/(system): ONLY for dw_lod_tmp, dw_bus_dt, and dw_upd_lod_tmp audit columns that
+          are pure system timestamps with zero dependency on source data
+        - (derived)/(derived): ONLY when the column is computed EXCLUSIVELY from
+          other columns already present in the SAME target row (self-referential).
+          Example: active = CASE WHEN eff_end_date = '9999-12-31' THEN '1' ELSE '0' END
+        - (file:parquet)/{storage_path}: When the source is a parquet file.
+          source_database = (file:parquet), source_table = absolute storage path
+          (e.g., s3://raw-bucket/data/customer_events/), source_column =
+          {logical_name}.{column} where logical_name is derived from path basename.
+
+      In ALL other cases — including hardcoded values, aggregations, window
+      functions, CASE expressions, lookups, and business rule derivations —
+      source_database and source_table MUST reference the primary driving table.
+
+  hardcoded_columns_rule:
+    description: >
+      When a column has a hardcoded/constant value (e.g., reporting_period_type_code = 'D'),
+      source_database and source_table must STILL reference the table that drives the
+      data flow for that row. The hardcoded value exists only because data flows from
+      a source table — that table is the source context.
+    examples:
+      - column: "reporting_period_type_code"
+        wrong: "source_database=(derived), source_table=Hardcoded"
+        correct: "source_database=fdp_uk_credit_card_db, source_table=credit_card_transaction, source_column=Hardcoded"
+        business_logic: "'D' — hardcoded; daily grain rows driven by credit_card_transaction data flow"
+        reason: "The fact row exists because transactions flow from credit_card_transaction; the type code contextualises that flow"
+
+  source_column_rule:
+    description: >
+      source_column MUST use 3-part fully qualified {database}.{table}.{column}
+      format for ALL references — including single direct copies.
+    rules:
+      - Single source column (direct copy): source_column = {db}.{table}.{column}
+        e.g., "e_loans_tallyman_db.TETLTABA.ACCOUNT_BALANCE_AMOUNT"
+      - Multiple source columns (derivation): comma-separated list of
+        {db}.{table}.{column} for ALL contributing columns
+      - Hardcoded constant: source_column = "Hardcoded"
+      - System timestamp only: source_column = "(system)"
+      - Pure same-row self-reference: source_column = target column names used
+
+  multi_source_derivation_rule:
+    description: >
+      If derivation logic reads from multiple source tables, ALL contributing tables
+      must appear in the business_logic using verbose labeled newline-separated format
+      with table aliases. The source_database/source_table fields reference the PRIMARY driver table.
+    signals_requiring_source_table_attribution:
+      - "Window function (LAG, LEAD, ROW_NUMBER, RANK) — references temporal/historical source rows"
+      - "Aggregation function (SUM, COUNT, AVG, MAX, MIN) — aggregates over source data"
+      - "Comparison to prior period or baseline — requires historical source reads"
+      - "Threshold check against a computed metric — the metric has source inputs"
+      - "Lookup/reference table join — the lookup table must be declared"
+      - "CASE expression with conditions on source columns not in the target row"
+      - "Hardcoded value in context of a data flow (the driving table must be cited)"
+    examples:
+      - column: "is_margin_exception_flag"
+        wrong: "source_database=(derived), source_table=(derived), source_column=(derived)"
+        correct: |
+          source_database=fdp_uk_credit_card_db
+          source_table=credit_card_transaction
+          source_column=credit_card_account_balance.average_daily_balance_amount, credit_card_account_interest_rate.annual_percentage_rate, credit_card_account_fee.annual_card_fee_amount, credit_card_account_fee.transaction_fee_amount, credit_card_account_fee.late_payment_fee_amount, credit_card_fraud_loss.fraud_loss_amount, credit_card_collections_activity.collections_cost_amount
+        reason: "BR-04 requires revenue/cost aggregation from multiple tables + LAG for MoM comparison. All contributing columns listed for impact analysis."
+      - column: "customer_lifecycle_stage_code"
+        wrong: "source_database=(derived), source_table=(derived), source_column=(derived)"
+        correct: |
+          source_database=fdp_uk_credit_card_db
+          source_table=credit_card_account
+          source_column=credit_card_account.account_open_date, credit_card_account_balance.average_daily_balance_amount, credit_card_transaction.transaction_date
+        reason: "BR-07 requires tenure (from account_open_date), balance trend (from balance table), last activity (from transaction table)"
+      - column: "reporting_period_type_code"
+        wrong: "source_database=(derived), source_table=Hardcoded, source_column=Hardcoded"
+        correct: |
+          source_database=fdp_uk_credit_card_db
+          source_table=credit_card_transaction
+          source_column=Hardcoded
+        reason: "Hardcoded 'D' but the row is driven by transaction data — lineage traces to the driver table"
+
+# -----------------------------------------------------------------------------
+# Transformation Lineage Schema (JSON-only section in sttm.json)
+# Present when source SQL has multi-statement ETL with intermediate temp tables.
+# Omitted for single-statement SQL (backward compatible).
+# -----------------------------------------------------------------------------
+transformation_lineage_schema:
+  schema_version: "1.1"
+  description: >
+    Optional section in sttm.json. Contains per-step intermediate table lineage,
+    per-column chain tracking, cumulative source filters, and resolved variables.
+    Enables downstream code generators to reconstruct the full ETL pipeline.
+
+  intermediate_steps:
+    type: array
+    description: "One entry per DML statement that creates/modifies/deletes from an intermediate table"
+    items:
+      required_fields: [step_number, temp_table_name, statement_type, row_operation]
+      properties:
+        step_number: { type: integer, description: "1-based sequential execution order" }
+        step_label: { type: string_or_null, description: "From SQL comments (e.g., HIST130)" }
+        temp_table_name: { type: string, description: "Intermediate table created/modified" }
+        statement_type:
+          type: string
+          enum: [INSERT_SELECT, UPDATE_FROM, MERGE, CREATE_VIEW, CREATE_AS_SELECT, DELETE, TRUNCATE, SELECT_INTO]
+        source_tables: { type: string_array, description: "Base or intermediate tables read by this step" }
+        row_operation:
+          type: string
+          enum: [create, update, delete, truncate, merge]
+        joins: { type: array, description: "Same structure as joins_detected at query level" }
+        filters: { type: string_array, description: "Exact SQL predicates applied at this step" }
+        filter_provenance:
+          type: array
+          items:
+            properties:
+              filter_sql: { type: string }
+              origin: { type: string, enum: [applied, inherited] }
+              inherited_from_step: { type: integer_or_null }
+              applied_to_table: { type: string }
+        columns_produced:
+          type: array
+          items:
+            required_fields: [column_name, expression, column_role]
+            properties:
+              column_name: { type: string }
+              expression: { type: string }
+              source_columns: { type: string_array }
+              column_role: { type: string, enum: [new, transformed, pass_through] }
+              datatype_hint: { type: string_or_null }
+        columns_dropped: { type: string_array, description: "Columns from prior step not carried forward" }
+        grain_keys: { type: string_array, description: "Columns defining uniqueness at this step" }
+        view_definition_summary: { type: string_or_null, description: "CREATE_VIEW steps only: the SELECT statement the view wraps, enabling downstream resolution" }
+        resolves_to_base_tables: { type: string_array_or_null, description: "CREATE_VIEW steps only: ultimate base tables after resolving nested view chains" }
+        aggregation_semantics:
+          type: object_or_null
+          description: "Present when step has GROUP BY or window functions"
+          properties:
+            group_by_columns: { type: string_array }
+            aggregate_functions:
+              type: array
+              items: { properties: { column: string, function: string, arguments: string } }
+            window_functions:
+              type: array_or_null
+              items: { properties: { column: string, function: string, partition_by: string_array, order_by: string_array, frame_spec: string_or_null } }
+            is_dedup_pattern: { type: boolean }
+        update_semantics:
+          type: object_or_null
+          description: "Present when statement_type = UPDATE_FROM"
+          properties:
+            update_target: { type: string }
+            update_source: { type: string }
+            set_columns:
+              type: array
+              items: { properties: { target_column: string, source_expression: string, assignment_mode: { enum: [replace, additive, conditional] } } }
+            join_condition: { type: string }
+            scope_filter: { type: string_or_null }
+        merge_semantics:
+          type: object_or_null
+          description: "Present when statement_type = MERGE"
+          properties:
+            match_keys: { type: string_array }
+            matched_action: { properties: { action: { enum: [UPDATE, DELETE] }, set_columns: array } }
+            not_matched_action: { properties: { action: { enum: [INSERT] }, insert_columns: string_array, values: string_array } }
+            not_matched_by_source: { type: object_or_null }
+        delete_semantics:
+          type: object_or_null
+          description: "Present when row_operation = delete or truncate"
+          properties:
+            target_table: { type: string }
+            where_condition: { type: string_or_null }
+            estimated_impact: { type: string, enum: [partial, full] }
+
+  column_lineage_chains:
+    type: object
+    description: "Keyed by target column name. Tracks how each column evolves through intermediate steps."
+    additional_properties:
+      properties:
+        chain_depth: { type: integer }
+        steps: { type: integer_array }
+        final_expression: { type: string }
+        intermediate_expressions:
+          type: array
+          items:
+            properties:
+              step: { type: integer }
+              expression: { type: string }
+              role: { type: string, enum: [new, transformed, pass_through] }
+        datatype_changes:
+          type: array_or_null
+          items: { properties: { step: integer, datatype: string } }
+
+  effective_source_filters:
+    type: object
+    description: "Cumulative filters per base source table. Keyed by fully qualified table name."
+    additional_properties: { type: string_array }
+
+  resolved_variables:
+    type: object
+    description: "DECLARE/SET variables resolved during multi-statement parsing. Keyed by variable name."
+    additional_properties:
+      properties:
+        value: { type: string }
+        source_statement: { type: string }
+        resolved: { type: boolean }
+        referenced_tables: { type: string_array }
+
+# -----------------------------------------------------------------------------
+# JSON Field Name Schema (binding contract for all mapping rows)
+# -----------------------------------------------------------------------------
+json_field_schema:
+  description: >
+    Canonical JSON field names for mapping rows. Every row in sttm.json MUST use
+    exactly these 16 field names. Validation rule M38 enforces this contract.
+  canonical_fields:
+    - target_database
+    - target_table
+    - target_column_name
+    - target_column_description
+    - target_column_datatype
+    - target_column_null_flag
+    - source_database
+    - source_table_name
+    - source_column_name
+    - business_logic
+    - additional_context
+    - target_table_description
+    - transformation_type
+    - default_value
+    - target_table_type
+    - key_column
+  common_wrong_variants:
+    target_column: "use target_column_name"
+    target_column_definition: "use target_column_description"
+    source_table: "use source_table_name"
+    source_column: "use source_column_name"
+    target_column_null: "use target_column_null_flag"
+    source_column_datatype: "not a canonical field — remove"
+
+  null_flag_normalization:
+    description: "target_column_null_flag must be exactly 'Y' or 'N'"
+    mapping:
+      "NOT NULL": "N"
+      "NULL": "Y"
+      "Yes": "Y"
+      "No": "N"
+      "True": "Y"
+      "False": "N"
+
+# -----------------------------------------------------------------------------
+# Datatype Mapping (Teradata → Iceberg/Spark)
+# -----------------------------------------------------------------------------
+datatype_mapping:
+  description: >
+    Target column datatypes must always be lowercase Iceberg/Spark types.
+    When source metadata uses platform-specific types, apply this mapping.
+  teradata:
+    "CHAR": "string"
+    "CHAR(n)": "string"
+    "VARCHAR": "string"
+    "VARCHAR(n)": "string"
+    "BYTE": "string"
+    "BYTE(n)": "string"
+    "VARBYTE": "string"
+    "VARBYTE(n)": "string"
+    "CLOB": "string"
+    "INTEGER": "int"
+    "INT": "int"
+    "SMALLINT": "int"
+    "BYTEINT": "int"
+    "BIGINT": "bigint"
+    "DECIMAL(p,s)": "decimal(p,s)"
+    "NUMERIC(p,s)": "decimal(p,s)"
+    "NUMBER(p,s)": "decimal(p,s)"
+    "FLOAT": "double"
+    "REAL": "double"
+    "DOUBLE PRECISION": "double"
+    "DATE": "date"
+    "TIMESTAMP": "timestamp"
+    "TIMESTAMP(n)": "timestamp"
+    "TIME": "string"
+    "INTERVAL": "string"
+  sql_server:
+    "BIT": "boolean"
+    "NVARCHAR": "string"
+    "NVARCHAR(n)": "string"
+    "NCHAR": "string"
+    "NCHAR(n)": "string"
+    "DATETIME": "timestamp"
+    "DATETIME2": "timestamp"
+  notes: >
+    All output datatypes must be lowercase. DECIMAL(11,2) must appear as decimal(11,2).
+    Validation rule S2 checks for valid Iceberg/Spark types.
+
+# -----------------------------------------------------------------------------
+# Physical Formatting (for from-scratch Excel generation)
+# Replaces the implicit formatting from the former mapping_template.xlsx
+# See templates/mapping_spec.md for human-readable reference
+# -----------------------------------------------------------------------------
+formatting:
+  mapping_sheet:
+    tab_color: "4472C4"
+    column_widths: [25, 22, 28, 40, 18, 8, 22, 22, 28, 55, 50, 50, 20, 15, 18, 12]
+    header_style:
+      bold: true
+      font_color: null  # default (black)
+      fill_color: "D9E1F2"
+      fill_type: "solid"
+      wrap_text: true
+      vertical: "center"
+    data_style:
+      wrap_text: true
+      vertical: "top"
+    freeze_panes: "A2"
+
+  volumetrics_sheet:
+    tab_color: "00B050"
+    column_widths: [25, 28, 18, 22, 22, 26, 32, 20, 18, 16]
+    header_style:
+      bold: true
+      font_color: null  # default (black)
+      fill_color: "D9E1F2"
+      fill_type: "solid"
+      wrap_text: true
+      vertical: "center"
+    data_style:
+      wrap_text: true
+      vertical: "top"
+    freeze_panes: "A2"

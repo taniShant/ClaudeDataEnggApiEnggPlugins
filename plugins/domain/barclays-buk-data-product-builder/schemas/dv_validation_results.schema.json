@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dv_validation_results.schema.json",
+  "title": "Data Validation Results",
+  "description": "Expected column layout for user-provided validation results. Input format: Excel (.xlsx) with a single 'Validation Results' sheet containing one row per check. This schema defines a single result row; the Excel sheet contains an array of such rows (columns A through M). Strict schema: only aggregated counts and check metadata — no row-level data, no business keys, no PII.",
+  "type": "object",
+  "required": ["check_id", "check_name", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "check_id": {
+      "type": "string",
+      "pattern": "^(ER|SCD2|NC|DC|DT|BR)-\\d{2}$",
+      "description": "Column A: Unique check identifier matching the validation plan check_id (e.g., 'ER-01', 'SCD2-03')"
+    },
+    "check_name": {
+      "type": "string",
+      "description": "Column B: Human-readable check name from the validation plan description"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["executed", "error", "skipped"],
+      "description": "Column C: Execution status — 'executed' (ran to completion), 'error' (query failed), 'skipped' (check not applicable or deliberately omitted)"
+    },
+    "source_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Column D: Row count from the source query (exact reconciliation checks)"
+    },
+    "target_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Column E: Row count from the target query (exact reconciliation checks)"
+    },
+    "mismatch_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Column F: Number of rows where source and target values differ (column-level reconciliation)"
+    },
+    "violation_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Column G: Number of rows violating a null check, datatype check, or business rule"
+    },
+    "overlap_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Column H: Number of SCD2 records with overlapping effective date ranges for the same key"
+    },
+    "gap_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Column I: Number of SCD2 keys with gaps in their effective date timeline"
+    },
+    "broken_boundary_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Column J: Number of SCD2 records where boundary convention is violated (e.g., eff_end_dt < eff_start_dt)"
+    },
+    "invalid_current_record_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Column K: Number of SCD2 keys with zero or multiple current (open) records"
+    },
+    "affected_key_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Column L: Number of distinct primary key values affected by the check finding"
+    },
+    "error_message": {
+      "type": ["string", "null"],
+      "description": "Column M: Error message when status is 'error'; null when status is 'executed' or 'skipped'"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "sttm-plugin/v1/extended",
+  "target_source": {
+    "format": "excel",
+    "artifact": "input/target_schema.xlsx"
+  },
+  "target": {
+    "database": "cdp_uk_customer_db",
+    "table": "customer_360",
+    "table_description": "Consolidated Data Product - 360 view combining mortgage and complaints data",
+    "table_type": "NonTransactional_SCD2",
+    "columns": [
+      {"name": "customer_id", "description": "Unique customer identifier", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "outstanding_balance", "description": "Total mortgage outstanding balance", "datatype": "decimal(18,2)", "nullable": "Y", "key_column": "N"},
+      {"name": "complaint_count", "description": "Number of open complaints", "datatype": "int", "nullable": "Y", "key_column": "N"},
+      {"name": "latest_complaint_date", "description": "Most recent complaint date", "datatype": "date", "nullable": "Y", "key_column": "N"},
+      {"name": "eff_start_date", "description": "SCD2 effective start date", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "eff_end_date", "description": "SCD2 effective end date", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "active", "description": "Active record flag", "datatype": "string", "nullable": "N", "key_column": "N"},
+      {"name": "dw_lod_tmp", "description": "Load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"},
+      {"name": "dw_upd_lod_tmp", "description": "Update load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "fdp_uk_mortgage_db",
+      "table": "mortgage_account",
+      "columns": [
+        {"name": "customer_id", "datatype": "string"},
+        {"name": "outstanding_balance", "datatype": "decimal(18,2)"},
+        {"name": "last_mod_dte", "datatype": "int"}
+      ]
+    },
+    {
+      "database": "fdp_uk_complaints_db",
+      "table": "complaint_case",
+      "columns": [
+        {"name": "customer_id", "datatype": "string"},
+        {"name": "complaint_id", "datatype": "string"},
+        {"name": "complaint_date", "datatype": "date"},
+        {"name": "status", "datatype": "string"}
+      ]
+    }
+  ],
+  "code": {
+    "type": "sql",
+    "content": "SELECT m.customer_id, m.outstanding_balance, COUNT(c.complaint_id) AS complaint_count, MAX(c.complaint_date) AS latest_complaint_date FROM fdp_uk_mortgage_db.mortgage_account m LEFT JOIN fdp_uk_complaints_db.complaint_case c ON m.customer_id = c.customer_id AND c.status = 'OPEN' GROUP BY m.customer_id, m.outstanding_balance"
+  },
+  "multi_source": {
+    "strategy": "join",
+    "primary_source": "fdp_uk_mortgage_db.mortgage_account",
+    "secondary_sources": [
+      {
+        "source": "fdp_uk_complaints_db.complaint_case",
+        "join_type": "LEFT",
+        "join_key": "customer_id"
+      }
+    ]
+  },
+  "configuration": {
+    "load_type": "Day0",
+    "scd": {"type": "scd2", "effective_start": "eff_start_date", "effective_end": "eff_end_date", "active_flag": "active", "high_end_date": "3499-12-31", "source_mod_column": "last_mod_dte"},
+    "audit_columns": {"load_timestamp": "dw_lod_tmp", "update_timestamp": "dw_upd_lod_tmp"},
+    "partition_columns": ["active"]
+  }
+}

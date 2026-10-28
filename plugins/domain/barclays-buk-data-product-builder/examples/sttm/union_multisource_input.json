@@ -1,0 +1,41 @@
+{
+  "$schema": "sttm-plugin/v1/core",
+  "target": {
+    "database": "cdp_uk_account_db",
+    "table": "consolidated_account",
+    "table_type": "NonTransactional_SCD1",
+    "columns": [
+      {"name": "account_id", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "account_balance", "datatype": "decimal(18,2)", "nullable": "Y"},
+      {"name": "source_system", "datatype": "string", "nullable": "N"},
+      {"name": "dw_lod_tmp", "datatype": "timestamp", "nullable": "N"},
+      {"name": "dw_upd_lod_tmp", "datatype": "timestamp", "nullable": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "fdp_uk_current_account_db",
+      "table": "current_account",
+      "columns": [
+        {"name": "account_id", "datatype": "string"},
+        {"name": "balance", "datatype": "decimal(18,2)"}
+      ]
+    },
+    {
+      "database": "fdp_uk_savings_account_db",
+      "table": "savings_account",
+      "columns": [
+        {"name": "account_id", "datatype": "string"},
+        {"name": "balance", "datatype": "decimal(18,2)"}
+      ]
+    }
+  ],
+  "code": {
+    "type": "sql",
+    "content": "SELECT account_id, balance AS account_balance, 'CURRENT' AS source_system FROM fdp_uk_current_account_db.current_account\nUNION ALL\nSELECT account_id, balance AS account_balance, 'SAVINGS' AS source_system FROM fdp_uk_savings_account_db.savings_account"
+  },
+  "multi_source": {
+    "strategy": "union",
+    "primary_source": "fdp_uk_current_account_db.current_account"
+  }
+}

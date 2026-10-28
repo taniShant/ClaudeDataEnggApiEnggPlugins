@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "assessment_type": "capability_impact",
+  "assessment_status": "completed",
+  "input_provenance": {
+    "requirements_path": "/path/to/requirements.json",
+    "requirements_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "capability_model_fingerprint": "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+    "assessment_generated_at": "2026-10-04T12:00:00+00:00"
+  },
+  "findings": [
+    {
+      "id": "CAP-001",
+      "capability_id": "cap.test.capability-alpha",
+      "capability_name": "Capability Alpha",
+      "capability_domain": "dom.test-domain",
+      "capability_subdomain": "sub.test.subdomain-one",
+      "impact_classification": "direct",
+      "impacted_by_requirement_ids": ["ER001"],
+      "rationale": "Requirement ER001 explicitly requests capability alpha functionality",
+      "supporting_evidence": [
+        {
+          "requirement_id": "ER001",
+          "evidence_id": "summary:0",
+          "evidence_field": "summary"
+        }
+      ],
+      "uncertainty": null,
+      "boundary_implications": null,
+      "cross_domain_effects": null
+    },
+    {
+      "id": "CAP-002",
+      "capability_id": "cap.test.capability-beta",
+      "capability_name": "Capability Beta",
+      "capability_domain": "dom.test-domain",
+      "capability_subdomain": "sub.test.subdomain-one",
+      "impact_classification": "inferred",
+      "impacted_by_requirement_ids": ["ER002", "IR001"],
+      "rationale": "Requirement ER002 requests beta enhancement; IR001 infers cross-domain coordination",
+      "supporting_evidence": [
+        {
+          "requirement_id": "ER002",
+          "evidence_id": "description:0",
+          "evidence_field": "description"
+        },
+        {
+          "requirement_id": "IR001",
+          "evidence_id": "description:1",
+          "evidence_field": "description"
+        }
+      ],
+      "uncertainty": "Exact scope of enhancement depends on architecture review",
+      "boundary_implications": null,
+      "cross_domain_effects": "May require coordination with other domains"
+    }
+  ],
+  "domain_summary": [
+    {
+      "domain_id": "dom.test-domain",
+      "domain_name": "Test Domain",
+      "affected_capability_count": 2,
+      "affected_capability_ids": [
+        "cap.test.capability-alpha",
+        "cap.test.capability-beta"
+      ],
+      "impact_classification_breakdown": {
+        "direct": 1,
+        "inferred": 1,
+        "possible": 0
+      }
+    }
+  ],
+  "cross_domain_analysis": {
+    "affected_domain_count": 1,
+    "affected_domain_ids": ["dom.test-domain"],
+    "potential_boundary_changes": false,
+    "potential_ownership_changes": false,
+    "multiple_domains_affected": false
+  },
+  "uncertainties": [
+    {
+      "id": "UNC-001",
+      "description": "Exact scope of capability beta enhancement",
+      "related_capabilities": ["cap.test.capability-beta"]
+    }
+  ]
+}

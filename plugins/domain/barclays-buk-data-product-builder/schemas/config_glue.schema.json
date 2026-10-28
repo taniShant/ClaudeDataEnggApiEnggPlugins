@@ -1,0 +1,264 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "config_glue.schema.json",
+  "title": "Glue Pipeline Config",
+  "description": "Schema for the table-level data config JSON consumed by the Glue pipeline wrapper. Covers source tables, filters, file locations, CDC, crypto, and per-environment S3 buckets.",
+  "type": "object",
+  "required": ["environments", "database", "tablename", "source", "filters", "file_locations", "date_control"],
+  "properties": {
+    "environments": {
+      "type": "object",
+      "description": "Per-environment S3 bucket configuration. The wrapper resolves config['environments'][env]['s3_bucket'] at runtime.",
+      "required": ["dev", "uat", "prd"],
+      "properties": {
+        "dev": {"$ref": "#/definitions/environmentEntry"},
+        "uat": {"$ref": "#/definitions/environmentEntry"},
+        "prd": {"$ref": "#/definitions/environmentEntry"}
+      },
+      "additionalProperties": false
+    },
+    "database": {
+      "type": "string",
+      "description": "Target Iceberg/Hive database name"
+    },
+    "tablename": {
+      "type": "string",
+      "description": "Target table name"
+    },
+    "catch_up_threshold_days": {
+      "type": "integer",
+      "description": "Number of days after which the pipeline switches to catch-up mode filters instead of normal day1 filters",
+      "minimum": 1
+    },
+    "source": {
+      "type": "object",
+      "description": "Source tables organized by temporal type. Each key maps table aliases to table definitions with fully-qualified names and required columns.",
+      "properties": {
+        "non-transactional": {
+          "type": "object",
+          "description": "SCD2 source tables with eff_start_date/eff_end_date/active columns",
+          "additionalProperties": {"$ref": "#/definitions/sourceTableEntry"}
+        },
+        "non-transactional-scd1": {
+          "type": "object",
+          "description": "SCD1 source tables with dw_lod_tmp/dw_upd_lod_tmp only — no temporal columns",
+          "additionalProperties": {"$ref": "#/definitions/sourceTableEntry"}
+        },
+        "transactional": {
+          "type": "object",
+          "description": "Append-only event/fact source tables partitioned by business date",
+          "additionalProperties": {"$ref": "#/definitions/sourceTableEntry"}
+        },
+        "file": {
+          "type": "object",
+          "description": "File-based sources (parquet/CSV) read from S3 when io_mode is 'file' or 'hybrid'",
+          "additionalProperties": {"$ref": "#/definitions/sourceTableEntry"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "filters": {
+      "type": "object",
+      "description": "Filter expressions per run mode (day0, day1, catch_up_mode). Each mode contains per-source-type filter maps. 'default' applies unless overridden by a table-specific alias key.",
+      "required": ["day0", "day1", "catch_up_mode"],
+      "properties": {
+        "day0": {"$ref": "#/definitions/filterModeBlock"},
+        "day1": {"$ref": "#/definitions/filterModeBlock"},
+        "catch_up_mode": {"$ref": "#/definitions/filterModeBlock"}
+      },
+      "additionalProperties": false
+    },
+    "crypto": {
+      "type": "object",
+      "description": "Per-environment crypto/tokenization configuration. Include only when the crypto flow is active for this pipeline; omit entirely otherwise.",
+      "properties": {
+        "dev": {"$ref": "#/definitions/cryptoEnvEntry"},
+        "uat": {"$ref": "#/definitions/cryptoEnvEntry"},
+        "prd": {"$ref": "#/definitions/cryptoEnvEntry"}
+      },
+      "additionalProperties": false
+    },
+    "file_locations": {
+      "type": "object",
+      "description": "S3 path prefixes for staging, checkpoint, and intermediate files",
+      "required": ["staging", "spark_checkpoint_dir"],
+      "properties": {
+        "staging": {
+          "type": "object",
+          "description": "Staging area S3 prefixes for flag indicators, surrogate keys, and intermediate data",
+          "required": ["flag_indicator", "surrogate_key", "staging_path"],
+          "properties": {
+            "flag_indicator": {"type": "string"},
+            "surrogate_key": {"type": "string"},
+            "staging_path": {
+              "type": "string",
+              "description": "General-purpose intermediate staging S3 prefix. The transform constructs the full S3 URI as s3://{s3_bucket}/{staging_path}/step_name."
+            }
+          },
+          "additionalProperties": false
+        },
+        "spark_checkpoint_dir": {
+          "type": "string",
+          "description": "S3 prefix for Spark checkpoint data"
+        }
+      },
+      "additionalProperties": false
+    },
+    "date_columns": {
+      "type": "array",
+      "description": "Pipeline-specific date columns beyond the standard set (eff_start_date, eff_end_date, dw_bus_dt). SourceReader auto-applies CAST(col AS DATE) for all columns in this list when they appear in filter expressions. Omit if no additional date columns are required.",
+      "items": {"type": "string"}
+    },
+    "date_control": {
+      "type": "object",
+      "description": "Date control file paths and scheduling parameters",
+      "required": ["filename", "backup_filename", "file_path", "frequency"],
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "S3 key for the date control file"
+        },
+        "backup_filename": {
+          "type": "string",
+          "description": "S3 key for the backup date control file"
+        },
+        "file_path": {
+          "type": "string",
+          "description": "Optional local file path override (empty string when using S3)"
+        },
+        "frequency": {
+          "type": "string",
+          "description": "Pipeline run frequency (e.g. 'daily', 'weekly', 'monthly')"
+        },
+        "workday_number_monthly": {
+          "type": ["string", "integer"],
+          "description": "Workday number within the month on which a monthly pipeline runs"
+        },
+        "workday_number_weekly": {
+          "type": ["string", "integer"],
+          "description": "Workday number within the week on which a weekly pipeline runs"
+        },
+        "run_on_weekends": {
+          "type": ["string", "boolean"],
+          "description": "Whether the pipeline runs on weekends"
+        },
+        "run_on_bank_holidays": {
+          "type": ["string", "boolean"],
+          "description": "Whether the pipeline runs on bank holidays"
+        }
+      },
+      "additionalProperties": false
+    },
+    "cdc": {
+      "type": "object",
+      "description": "Change data capture configuration. For NonTransactional_SCD2: include primary_key_cols, exclude_cols, snapshot_mode. For NonTransactional_SCD1: include only primary_key_cols, exclude_cols. For Transactional: omit entire cdc section.",
+      "properties": {
+        "primary_key_cols": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Primary key columns used for CDC dedup/merge logic"
+        },
+        "exclude_cols": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Columns excluded from CDC change detection"
+        },
+        "snapshot_mode": {
+          "type": "string",
+          "description": "CDC snapshot mode — applicable to SCD2 sources only; omit for SCD1"
+        }
+      },
+      "additionalProperties": false
+    },
+    "rolling_deletion": {
+      "type": "object",
+      "description": "Rolling data deletion configuration. Applicable to Transactional and NonTransactional_SCD1 tables only — must NOT be present for NonTransactional_SCD2. When enabled, TargetWriter executes DELETE FROM <target> WHERE <predicate> after each successful write. The predicate is a raw SQL WHERE clause; {current_business_date} is interpolated at runtime as an ISO date string (YYYY-MM-DD).",
+      "properties": {
+        "enabled": {
+          "type": ["boolean", "string"],
+          "default": false,
+          "description": "Enable rolling deletion. When false or absent, no delete is executed."
+        },
+        "predicate": {
+          "type": "string",
+          "description": "SQL WHERE clause for the DELETE statement. Supports {current_business_date} template variable. Examples: \"dw_bus_dt < DATE_SUB(CAST('{current_business_date}' AS DATE), 90)\" (date-based), \"status = 'ARCHIVED' AND last_updated < CAST('{current_business_date}' AS DATE)\" (custom logic)."
+        }
+      },
+      "required": ["predicate"],
+      "additionalProperties": false
+    },
+    "_template_notes": {
+      "type": "object",
+      "description": "Optional template metadata — not consumed at runtime"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "environmentEntry": {
+      "type": "object",
+      "required": ["s3_bucket"],
+      "properties": {
+        "s3_bucket": {
+          "type": "string",
+          "description": "S3 bucket name for this environment"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sourceTableEntry": {
+      "type": "object",
+      "required": ["table", "columns"],
+      "properties": {
+        "table": {
+          "type": "string",
+          "description": "Fully-qualified source table name (e.g. source_db.table_name)"
+        },
+        "columns": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1,
+          "description": "Columns required from this source table for the transformation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "filterModeBlock": {
+      "type": "object",
+      "description": "Filter expressions per source type for a given run mode. Each source-type key maps table aliases (or 'default') to SQL filter expressions.",
+      "properties": {
+        "non-transactional": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        "non-transactional-scd1": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        "transactional": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "cryptoEnvEntry": {
+      "type": "object",
+      "required": ["secret_name", "itsi", "api_endpoint_url"],
+      "properties": {
+        "secret_name": {
+          "type": "string",
+          "description": "AWS Secrets Manager secret name for crypto credentials"
+        },
+        "itsi": {
+          "type": "string",
+          "description": "ITSI identifier for crypto service in this environment"
+        },
+        "api_endpoint_url": {
+          "type": "string",
+          "description": "Crypto API endpoint URL for this environment"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

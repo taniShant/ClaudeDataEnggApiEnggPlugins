@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dtxog_config.schema.json",
+  "title": "DTXOG Config",
+  "description": "Schema for the DTXOG config JSON file consumed by the DTX Lambda/Step Function to execute Glue jobs.",
+  "type": "object",
+  "required": ["metadata", "services", "dtxog-byoc"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["version", "db_name", "tbl_name", "table_type", "summary", "datatset_type", "owner"],
+      "properties": {
+        "version": {"type": "string"},
+        "db_name": {"type": "string"},
+        "tbl_name": {"type": "string"},
+        "table_type": {"type": "string"},
+        "summary": {"type": "string"},
+        "datatset_type": {"type": "string", "description": "Dataset type identifier. Note: field name 'datatset_type' (with extra 't') matches the upstream DTX framework field name — this is intentional, not a typo."},
+        "owner": {
+          "type": "object",
+          "required": ["itbs", "itsi", "groups"],
+          "properties": {
+            "itbs": {"type": "string"},
+            "itsi": {"type": "string"},
+            "groups": {
+              "type": "object",
+              "required": ["sf_group", "ownerGroup", "ownerType"],
+              "properties": {
+                "sf_group": {"type": "string"},
+                "ownerGroup": {"type": "string"},
+                "ownerType": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "services": {
+      "type": "object",
+      "required": ["dtxoh", "dtxog", "dtxog-byoc"],
+      "properties": {
+        "dtxoh": {"type": "string", "enum": ["true", "false"]},
+        "dtxog": {"type": "string", "enum": ["true", "false"]},
+        "dtxog-byoc": {"type": "string", "enum": ["true", "false"]}
+      }
+    },
+    "dtxog-byoc": {
+      "type": "object",
+      "required": ["app_details"],
+      "properties": {
+        "app_details": {
+          "type": "object",
+          "required": ["env"],
+          "properties": {
+            "env": {
+              "type": "object",
+              "required": ["dev", "uat", "prd"],
+              "properties": {
+                "dev": {"$ref": "#/definitions/envBlock"},
+                "uat": {"$ref": "#/definitions/envBlock"},
+                "prd": {"$ref": "#/definitions/envBlock"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "envBlock": {
+      "type": "object",
+      "required": ["state_machine", "netcool_details", "glue_args", "byoc"],
+      "properties": {
+        "state_machine": {"type": "string"},
+        "netcool_details": {
+          "type": "object",
+          "required": ["sev", "itsi", "compid"],
+          "properties": {
+            "sev": {"type": "string"},
+            "itsi": {"type": "string"},
+            "compid": {"type": "string"}
+          }
+        },
+        "glue_args": {
+          "type": "object",
+          "required": ["worker-type", "number-of-workers", "timeout", "max-retries", "xtra-args"],
+          "properties": {
+            "worker-type": {"type": "string"},
+            "number-of-workers": {"type": "string"},
+            "timeout": {"type": "string"},
+            "max-retries": {"type": "string"},
+            "business_date": {"type": "string"},
+            "execution-class": {"type": "string"},
+            "enable-auto-scale": {"type": "string"},
+            "xtra-args": {
+              "type": "object",
+              "required": ["param", "sparkConf"],
+              "properties": {
+                "param": {"type": "string"},
+                "sparkConf": {"type": "string"}
+              }
+            }
+          }
+        },
+        "byoc": {
+          "type": "object",
+          "required": ["wrapper-file", "package-file", "package-cnfg"],
+          "properties": {
+            "wrapper-file": {"type": "string"},
+            "package-file": {"type": "string"},
+            "package-cnfg": {"type": "string"}
+          }
+        },
+        "crypto_dpaas": {
+          "type": "object",
+          "description": "Only present when crypto is active (crypto template variant). Not required in non-crypto config.",
+          "required": ["enable_crypto_api", "secret_name", "custom_de_list", "log_level"],
+          "properties": {
+            "enable_crypto_api": {"type": "string", "enum": ["true", "false"]},
+            "secret_name": {"type": "string"},
+            "custom_de_list": {"type": "string"},
+            "log_level": {"type": "string"}
+          }
+        }
+      }
+    }
+  }
+}

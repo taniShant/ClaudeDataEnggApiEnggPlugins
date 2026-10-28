@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://barclays.com/detox/schemas/otel-event/v1",
+  "title": "Detox OTel Event",
+  "description": "A single OTel-native structured telemetry event emitted by the Detox pipeline. Granular per-event log — every phase transition, fix attempt, validation result, and test outcome produces one event. Source: scripts/telemetry/telemetry.py build_event(). Stored in ~/.detox/telemetry/events.jsonl (one JSON line per event). TRANSPORT: at pipeline end every event for the run is exported to the Barclays Observe platform via gRPC OTLP as a 'detox.<event_type>' event (its Attributes become detox.* labels; Body/Severity/TraceId are surfaced as labels), batched in a single send together with the 'detox.pipeline_run' summary.",
+  "type": "object",
+  "required": [
+    "Timestamp",
+    "SeverityText",
+    "SeverityNumber",
+    "Body",
+    "TraceId",
+    "SpanId",
+    "Resource",
+    "Attributes"
+  ],
+  "properties": {
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event timestamp (ISO 8601 UTC with millisecond precision).",
+      "examples": ["2026-08-27T14:30:00.123Z"]
+    },
+    "SeverityText": {
+      "type": "string",
+      "enum": ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"],
+      "description": "OTel severity level as text.",
+      "examples": ["INFO"]
+    },
+    "SeverityNumber": {
+      "type": "integer",
+      "enum": [1, 5, 9, 13, 17, 21],
+      "description": "OTel severity number. Mapping: TRACE=1, DEBUG=5, INFO=9, WARN=13, ERROR=17, FATAL=21.",
+      "examples": [9]
+    },
+    "Body": {
+      "type": "string",
+      "description": "Human-readable event description.",
+      "examples": ["Event: pipeline.started", "Event: fix.applied"]
+    },
+    "TraceId": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$",
+      "description": "32-character hex trace ID. All events in one pipeline run share the same TraceId. Derived: job_id.ljust(32, '0')[:32].",
+      "examples": ["a1b2c3d400000000000000000000000"]
+    },
+    "SpanId": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{16}$",
+      "description": "16-character hex span ID. Unique per phase within a pipeline run. Derived: md5('{job_id}-phase-{N}')[:16].",
+      "examples": ["e7f3a9b1c2d4e5f6"]
+    },
+    "Resource": {
+      "type": "object",
+      "description": "OTel Resource attributes identifying the service.",
+      "required": ["service.name", "service.version", "deployment.environment"],
+      "properties": {
+        "service.name": {
+          "type": "string",
+          "const": "detox",
+          "description": "Always 'detox'."
+        },
+        "service.version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Plugin version. Read from .claude-plugin/plugin.json at runtime.",
+          "examples": ["2.6.2"]
+        },
+        "deployment.environment": {
+          "type": "string",
+          "enum": ["local", "ci"],
+          "description": "Execution environment. Auto-detected from CI, CI_JOB_ID, BUILD_NUMBER, or GITHUB_ACTIONS env vars.",
+          "examples": ["local"]
+        },
+        "barclays_cio": {
+          "type": ["string", "null"],
+          "description": "CIO / Business Portfolio of the user who ran detox. Read from barclays_cio in ~/.claude/settings.json OTEL_RESOURCE_ATTRIBUTES (populated by the mandatory Barclays Claude Code user setup). Null if unavailable.",
+          "examples": ["DIGITAL", null]
+        }
+      },
+      "additionalProperties": false
+    },
+    "Attributes": {
+      "type": "object",
+      "description": "Event-specific attributes. All keys are prefixed with 'detox.' namespace.",
+      "required": ["detox.event_type", "detox.job_id"],
+      "properties": {
+        "detox.event_type": {
+          "type": "string",
+          "enum": [
+            "pipeline.started",
+            "pipeline.completed",
+            "pipeline.failed",
+            "phase.started",
+            "phase.completed",
+            "phase.failed",
+            "phase.skipped",
+            "command.invoked",
+            "fix.applied",
+            "fix.failed",
+            "fix.retried",
+            "validation.pass",
+            "validation.fail",
+            "test.generated",
+            "test.passed",
+            "test.failed",
+            "error.occurred",
+            "selfcheck.result"
+          ],
+          "description": "The type of event being recorded. See Event Types reference below."
+        },
+        "detox.job_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{8}$",
+          "description": "Pipeline run identifier (8 hex chars). Links to pipeline_runs.job_id.",
+          "examples": ["a1b2c3d4"]
+        },
+        "detox.event_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{12}$",
+          "description": "Unique event identifier (12 hex chars). Generated: uuid4().hex[:12].",
+          "examples": ["f3a9b1c2d4e5"]
+        },
+        "detox.phase": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 9,
+          "description": "Pipeline phase number (1-9). Null for root-level events (pipeline.started, command.invoked).",
+          "examples": [4, null]
+        },
+        "detox.user.name": {
+          "type": "string",
+          "description": "Developer name. Passed by orchestrator from identity resolution. Not auto-populated.",
+          "examples": ["Devesh Kumar"]
+        },
+        "detox.cio": {
+          "type": ["string", "null"],
+          "description": "CIO / Business Portfolio of the user who ran detox. Derived from barclays_cio in ~/.claude/settings.json. Mirrors the Resource-level barclays_cio. Null if unavailable.",
+          "examples": ["DIGITAL", null]
+        },
+        "detox.repo_name": {
+          "type": "string",
+          "description": "Target repository name. Passed by orchestrator from identity resolution.",
+          "examples": ["payments-gateway"]
+        },
+        "detox.command": {
+          "type": "string",
+          "description": "Invoked command name. Present on command.invoked events.",
+          "examples": ["remediate"]
+        },
+        "detox.model": {
+          "type": "string",
+          "description": "LLM model used. Present on pipeline.started events.",
+          "examples": ["sonnet"]
+        },
+        "detox.cwe_id": {
+          "type": "string",
+          "pattern": "^CWE-[0-9]+$",
+          "description": "CWE identifier. Present on fix.* and validation.* and test.* events.",
+          "examples": ["CWE-79"]
+        },
+        "detox.file_path": {
+          "type": "string",
+          "description": "Source file path. Present on fix.* and validation.* events.",
+          "examples": ["src/main/java/App.java"]
+        },
+        "detox.commit_sha": {
+          "type": "string",
+          "description": "Git commit SHA of the fix. Present on fix.applied events.",
+          "examples": ["abc1234"]
+        },
+        "detox.error": {
+          "type": "string",
+          "description": "Error message. Present on *.failed events.",
+          "examples": ["Semgrep rule not found"]
+        },
+        "detox.retry_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Current retry attempt number. Present on fix.retried events.",
+          "examples": [2]
+        },
+        "detox.findings_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of remaining Semgrep findings. Present on validation.fail events.",
+          "examples": [3]
+        },
+        "detox.test_file": {
+          "type": "string",
+          "description": "Path to the generated test file. Present on test.* events.",
+          "examples": ["tests/security/test_cwe79_fix.py"]
+        },
+        "detox.script": {
+          "type": "string",
+          "description": "Script name that produced the error. Present on error.occurred events.",
+          "examples": ["parse_wiz_report"]
+        },
+        "detox.error_type": {
+          "type": "string",
+          "description": "Error classification. Present on error.occurred events.",
+          "examples": ["input_validation"]
+        },
+        "detox.passed": {
+          "type": "boolean",
+          "description": "Self-check result. Present on selfcheck.result events.",
+          "examples": [true]
+        },
+        "detox.total_duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total pipeline duration. Present on pipeline.completed events.",
+          "examples": [750000]
+        },
+        "detox.failed_phase": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9,
+          "description": "Phase that caused pipeline failure. Present on pipeline.failed events.",
+          "examples": [4]
+        }
+      },
+      "additionalProperties": {
+        "description": "Additional domain-specific attributes. All extra keys from event data are prefixed with 'detox.' automatically."
+      }
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "event_type_reference": {
+      "description": "Detailed reference for all 17 event types with their expected severity and key attributes.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_type": {"type": "string"},
+          "when_emitted": {"type": "string"},
+          "severity": {"type": "string"},
+          "key_attributes": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      },
+      "default": [
+        {"event_type": "pipeline.started",    "when_emitted": "Orchestrator begins after preflight",       "severity": "INFO",  "key_attributes": ["job_id", "model", "repo_name"]},
+        {"event_type": "pipeline.completed",   "when_emitted": "Orchestrator finishes successfully",       "severity": "INFO",  "key_attributes": ["job_id", "total_duration_ms"]},
+        {"event_type": "pipeline.failed",      "when_emitted": "Critical phase fails",                    "severity": "ERROR", "key_attributes": ["job_id", "failed_phase", "error"]},
+        {"event_type": "phase.started",        "when_emitted": "Phase transitions to in_progress",        "severity": "INFO",  "key_attributes": ["job_id", "phase"]},
+        {"event_type": "phase.completed",      "when_emitted": "Phase transitions to completed",          "severity": "INFO",  "key_attributes": ["job_id", "phase"]},
+        {"event_type": "phase.failed",         "when_emitted": "Phase transitions to failed",             "severity": "ERROR", "key_attributes": ["job_id", "phase", "error"]},
+        {"event_type": "phase.skipped",        "when_emitted": "Phase transitions to skipped",            "severity": "INFO",  "key_attributes": ["job_id", "phase"]},
+        {"event_type": "command.invoked",      "when_emitted": "Any /barclays-buk-detox:* command is parsed",          "severity": "INFO",  "key_attributes": ["command"]},
+        {"event_type": "fix.applied",          "when_emitted": "CWE fix succeeds",                       "severity": "INFO",  "key_attributes": ["cwe_id", "file_path", "commit_sha"]},
+        {"event_type": "fix.failed",           "when_emitted": "CWE fix fails",                          "severity": "WARN",  "key_attributes": ["cwe_id", "file_path", "error"]},
+        {"event_type": "fix.retried",          "when_emitted": "Fix enters retry attempt",                "severity": "WARN",  "key_attributes": ["cwe_id", "retry_count"]},
+        {"event_type": "validation.pass",      "when_emitted": "Semgrep rescan passes for a file",        "severity": "INFO",  "key_attributes": ["cwe_id", "file_path"]},
+        {"event_type": "validation.fail",      "when_emitted": "Semgrep rescan fails for a file",         "severity": "WARN",  "key_attributes": ["cwe_id", "file_path", "findings_count"]},
+        {"event_type": "test.generated",       "when_emitted": "Security test file created",              "severity": "INFO",  "key_attributes": ["cwe_id", "test_file"]},
+        {"event_type": "test.passed",          "when_emitted": "Generated test passes execution",         "severity": "INFO",  "key_attributes": ["cwe_id", "test_file"]},
+        {"event_type": "test.failed",          "when_emitted": "Generated test fails execution",          "severity": "WARN",  "key_attributes": ["cwe_id", "test_file", "error"]},
+        {"event_type": "error.occurred",       "when_emitted": "Structured error from any script",        "severity": "ERROR", "key_attributes": ["script", "error_type", "error"]},
+        {"event_type": "selfcheck.result",     "when_emitted": "Agent self-check outcome at run end",     "severity": "INFO",  "key_attributes": ["passed"]}
+      ]
+    },
+    "severity_number_mapping": {
+      "description": "OTel severity text to number mapping.",
+      "type": "object",
+      "properties": {
+        "TRACE": {"const": 1},
+        "DEBUG": {"const": 5},
+        "INFO":  {"const": 9},
+        "WARN":  {"const": 13},
+        "ERROR": {"const": 17},
+        "FATAL": {"const": 21}
+      }
+    }
+  }
+}

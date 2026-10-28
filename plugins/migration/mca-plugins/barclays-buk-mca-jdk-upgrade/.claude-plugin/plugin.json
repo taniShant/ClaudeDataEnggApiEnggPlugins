@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-mca-jdk-upgrade",
+    "description": "Java 8 to Java 21 / Spring Boot 2.7 to 3.5.x upgrade toolkit for MCA Spring Boot applications. Handles EAR-to-WAR conversion, dependency upgrades, code modernisation, and full build validation.",
+    "version": "2.2.1",
+    "author": {
+        "name": "Barclays AI",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

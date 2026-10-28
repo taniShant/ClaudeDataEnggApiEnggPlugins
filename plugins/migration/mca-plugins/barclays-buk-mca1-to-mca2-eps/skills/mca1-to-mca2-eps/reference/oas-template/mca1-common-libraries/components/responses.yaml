@@ -1,0 +1,61 @@
+BadRequest:
+  description: |
+    The request could not be understood by the server due to malformed 
+    syntax. The client SHOULD NOT repeat the request without 
+    modifications.
+  headers:
+    Cache-Control:
+      $ref: "./headers.yaml#/Cache-Control"
+  content:
+    application/json:
+      schema:
+        $ref: "./response-types.yaml#/EpsResponseBean"
+      examples:
+        example-error-400-bad-request:
+          $ref: "../examples/example-error-400-bad-request.json"
+Unauthorized:
+  description: |
+    The user could not be authenticated for this request.
+  headers:
+    Cache-Control:
+      $ref: "./headers.yaml#/Cache-Control"
+  content:
+    application/json:
+      schema:
+        $ref: "./response-types.yaml#/EpsResponseBean"
+      examples:
+        example-error-401:
+          $ref: "../examples/example-error-401.json"
+NotFound:
+  description: |
+    Server has not found a resource with that URI. This may be 
+    temporary and permanent condition. This status code is 
+    commonly used when the server does not wish to reveal 
+    exactly why the request has been refused, or when no other 
+    response is applicable.
+  headers:
+    Cache-Control:
+      $ref: "./headers.yaml#/Cache-Control"
+  content:
+    application/json:
+      schema:
+        $ref: "./response-types.yaml#/EpsResponseBean"
+      examples:
+        example-error-404:
+          $ref: "../examples/example-error-404.json"
+InternalServerError:
+  description: |
+    Server encountered an error processing request. This should not 
+    happen normally, but it is a generic error message, given when 
+    no more specific message is suitable.
+  headers:
+    Cache-Control:
+      $ref: "./headers.yaml#/Cache-Control"
+  content:
+    application/json:
+      schema:
+        $ref: "./response-types.yaml#/EpsResponseBean"
+      examples:
+        example-error-500:
+          $ref: "../examples/example-error-500.json"
+

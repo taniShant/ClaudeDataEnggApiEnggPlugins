@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-reliability-engineer",
+    "description": "Makes sure solutions are sustainable services. Reviews and implements improvements across performance, observability, resilience, and config management. Includes OTel conventions for BUK-standard structured logging, correlation IDs, and Collector-ready telemetry.",
+    "version": "2.0.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-mts-migrate-toolkit",
+    "description": "MTS service discovery, API replacement matching, and migration toolkit for BUK Spring Boot codebases — the mts-documentation command discovers MTS services (MCA1 doService + MCA2 callService) across 15 transport categories (mainframe-mq, SOAP, Oracle DB, DB2, CMOD, TCV hybrid, SCV, soap-webservice, itsu-oracle, als-backend) and generates per-service docs with write table extraction, orchestration sub-service TDL tracing, and migration complexity indicators; api-replacement-match finds candidate replacement APIs via 13-layer search (Backstage, pcbcooiit, PCBICCAPIS, COOCUSTCRM, GRPQRTUKBA, BCDUKCAPI, EST, DCMDEV, APITECHDES, EMMAPIS, EPZOSCON) with GitLab auth pre-check and confidence-scored match reports; mts-migrate generates migration code (new microservice, existing microservice, or in-place dual-path)",
+    "version": "1.3.0",
+    "author": {
+        "name": "MCA Core Engineering",
+        "email": "mcaplatform@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

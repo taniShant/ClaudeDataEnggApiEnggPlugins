@@ -1,0 +1,395 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "mapping_excel.schema.json",
+  "title": "Parsed Mapping Excel",
+  "description": "Schema for the parsed output of the DE mapping Excel document. Produced by /de-parse-mapping.",
+  "type": "object",
+  "required": ["target_database", "target_table", "table_description", "additional_context", "columns"],
+  "properties": {
+    "target_database": {
+      "type": "string",
+      "description": "Target Iceberg/Hive database name (e.g. fdp_mortgage_db)"
+    },
+    "target_table": {
+      "type": "string",
+      "description": "Target table name (e.g. fdp_mortgage_case). May include (file:parquet) suffix when target is a parquet file — suffix is stripped during parsing, leaving only the clean table name."
+    },
+    "table_description": {
+      "type": ["string", "null"],
+      "description": "Table-level business description, captured from first non-empty 'Target Table description' cell"
+    },
+    "additional_context": {
+      "type": ["string", "null"],
+      "description": "Table-level metadata including load_type (Day0=full/initial load, Day1/BAU=incremental, both=full_then_incremental), scheduling/frequency, crypto hints. Captured from first non-empty 'Additional Context' cell"
+    },
+    "load_type_hint": {
+      "type": ["string", "null"],
+      "enum": ["Day0", "BAU", "full_then_incremental", null],
+      "description": "Load type hint extracted from additional_context keywords. Day0=full/initial load, BAU=incremental/delta, full_then_incremental=both. Null if no keywords matched. Consumed by intent-identifier-agent at Priority 1.5."
+    },
+    "target_table_type": {
+      "type": ["string", "null"],
+      "enum": ["scd2", "scd1", "transactional", null],
+      "description": "Table-level field (first non-empty value from optional 'Target Table Type' column). scd2/scd1 maps to NonTransactional; transactional maps to Transactional. Highest priority signal (Priority 0.5) for table_type intent resolution."
+    },
+    "cdc_type_hint": {
+      "type": ["string", "null"],
+      "enum": ["snapshot", "delta", null],
+      "description": "CDC type extracted from Additional Context field. 'snapshot' = source provides full entity state (absence = deletion); 'delta' = source provides only changed/new rows (absence = unchanged). Resolved from key-value pattern 'cdc_type:snapshot|delta' or standalone keywords 'full_snapshot/snapshot/delta'. Null if not specified. Priority 0.5 for snapshot_mode resolution (takes precedence over domain knowledge)."
+    },
+    "cdc_exclude_cols_hint": {
+      "type": ["array", "null"],
+      "items": {"type": "string"},
+      "description": "CDC exclusion columns extracted from Additional Context field. Format: 'cdc_exclude:col1,col2,col3'. Columns listed here are excluded from CDC merge comparison. When non-null, takes full precedence over domain knowledge (transform-generator skips DK for CDC exclusions). Null if not specified."
+    },
+    "partition_key_hint": {
+      "type": ["array", "null"],
+      "items": {"type": "string"},
+      "description": "Partition key columns extracted from Additional Context field. Format: 'partition_key:col1,col2'. Consumed by intent-identifier-agent at Priority 1.5 for partition_key_columns resolution. Null if not specified."
+    },
+    "validate_unique_keys_hint": {
+      "type": ["boolean", "null"],
+      "description": "CDC validate_unique_keys override extracted from Additional Context field. Format: 'validate_unique_keys:true|false'. Databricks-only (consumed by run_cdc() via target_writer.py) — NOT applicable to Glue platform. When non-null, takes Priority 1 precedence over domain knowledge for cdc.validate_unique_keys in generated Databricks config. When null (not specified), gen-config defaults to false. Consumed by gen-config STEP 3 (Databricks only)."
+    },
+    "duplicates_ts_col_hint": {
+      "type": ["string", "null"],
+      "description": "CDC duplicates timestamp column extracted from Additional Context field. Format: 'duplicates_ts_col:<column_name>'. Databricks-only (consumed by run_cdc() via target_writer.py) — NOT applicable to Glue platform. When non-null, takes Priority 1 precedence over domain knowledge for cdc.duplicates_ts_col in generated Databricks config. Used by TargetWriter to order duplicate records before deduplication. Should reference a source column containing a timestamp/date. When null (not specified), field is omitted entirely from config.yml. Consumed by gen-config STEP 3 and STEP 1.5 (source column augmentation, Databricks only)."
+    },
+    "dedup_order_hint": {
+      "type": ["string", "null"],
+      "enum": ["asc", "desc", null],
+      "description": "CDC dedup sort order extracted from Additional Context field. Format: 'dedup_order:asc|desc'. Databricks-only (consumed by run_cdc() via target_writer.py) — NOT applicable to Glue platform. When non-null, takes Priority 1 precedence over domain knowledge for cdc.dedup_order in generated Databricks config. 'desc' = keep latest record; 'asc' = keep earliest record. When null (not specified), field is omitted entirely from config.yml. Consumed by gen-config STEP 3 (Databricks only)."
+    },
+    "process_frequency_hint": {
+      "type": ["string", "null"],
+      "enum": ["DAILY", "WORKING_DAYS", "ONCE_A_MONTH", "WEEKLY_ONCE", "ALTERNATE_DAYS", "TUE_TO_SAT", null],
+      "description": "Process frequency extracted from Additional Context field. Format: 'process_frequency:<value>'. Cross-platform (Databricks + Glue). Databricks: emitted as pipeline.process_frequency. Glue: emitted as date_control.frequency. When non-null, takes Priority 1 precedence over domain knowledge. Default: DAILY. Consumed by gen-config STEP 3.6. Synonym: load_frequency (used in intent identification) and process_frequency are synonymous — they represent the same scheduling frequency."
+    },
+    "workday_number_monthly_hint": {
+      "type": ["string", "null"],
+      "description": "Glue-only. Business day of month (1-based integer as string). Format: 'workday_number_monthly:<N>'. Required when frequency=ONCE_A_MONTH. Used by Glue date_control.py to compute next monthly run date. When null, defaults to empty string. Not applicable to Databricks. Consumed by gen-config STEP 3.6."
+    },
+    "workday_number_weekly_hint": {
+      "type": ["string", "null"],
+      "description": "Glue-only. Day of week (0=Sunday, 1=Monday, ..., 6=Saturday) as string. Format: 'workday_number_weekly:<N>'. Required when frequency=WEEKLY_ONCE. Used by Glue date_control.py to compute next weekly run date. When null, defaults to empty string. Not applicable to Databricks. Consumed by gen-config STEP 3.6."
+    },
+    "run_on_weekends_hint": {
+      "type": ["string", "null"],
+      "enum": ["Y", "N", null],
+      "description": "Glue-only. Controls calendar vs business day arithmetic in date_control.py. Format: 'run_on_weekends:Y|N'. Affects ONCE_A_MONTH and ALTERNATE_DAYS frequencies only. When null, defaults to N. Not applicable to Databricks. Consumed by gen-config STEP 3.6."
+    },
+    "run_on_bank_holidays_hint": {
+      "type": ["string", "null"],
+      "enum": ["Y", "N", null],
+      "description": "Glue-only. Controls UK bank holiday skipping in date_control.py. Format: 'run_on_bank_holidays:Y|N'. Affects all frequencies. When null, defaults to N. Not applicable to Databricks. Consumed by gen-config STEP 3.6."
+    },
+    "rolling_deletion_predicate_hint": {
+      "type": ["string", "null"],
+      "description": "Rolling deletion SQL predicate extracted from Additional Context field. Format: 'rolling_deletion_predicate:<SQL_WHERE_clause>'. Cross-platform (Databricks + Glue). Specifies the WHERE clause used by TargetWriter._rolling_delete() to prune old data after each successful write. Supports {current_business_date} template variable (interpolated at runtime as ISO date string). Example: 'rolling_deletion_predicate:dw_bus_dt < DATE_SUB(CAST(\\'{current_business_date}\\' AS DATE), 90)'. Applicable to Transactional and NonTransactional_SCD1 tables only — must NOT be emitted for NonTransactional_SCD2. When non-null, takes Priority 1 precedence over domain knowledge for rolling_deletion.predicate in generated config. When null (not specified), rolling_deletion section is omitted entirely from config. Consumed by gen-config STEP 3.7."
+    },
+    "source_system_hint": {
+      "type": ["string", "null"],
+      "description": "Source system label from Additional Context (key-value: source_system:<value>). When non-null, triggers multi-source-system artifact generation — each distinct value across tables produces separate independent artifacts. Multiple source databases do NOT imply multiple source systems; only this explicit declaration does."
+    },
+    "columns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/mappingColumn"
+      }
+    },
+    "source_volumetrics": {
+      "type": "array",
+      "description": "Per-source-table volumetric data from optional 'Source Volumetrics' sheet. Drives worker sizing (DTXOG/Databricks) and performance optimizations (broadcast, repartition). Null/absent if sheet not provided.",
+      "items": {
+        "$ref": "#/definitions/sourceVolumetric"
+      }
+    }
+  },
+  "definitions": {
+    "mappingColumn": {
+      "type": "object",
+      "required": [
+        "target_column_name",
+        "target_column_description",
+        "target_column_datatype",
+        "target_column_nullable",
+        "source_references",
+        "transformation_logic"
+      ],
+      "properties": {
+        "target_column_name": {"type": "string"},
+        "target_column_description": {"type": ["string", "null"]},
+        "target_column_datatype": {"type": "string"},
+        "target_column_nullable": {
+          "type": "boolean",
+          "description": "true = nullable, false = NOT NULL"
+        },
+        "source_references": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/sourceReference"},
+          "description": "Fully-qualified source references. Each object ties a source column to exactly one table in one database. Assembled by parser using cascading qualification rules."
+        },
+        "transformation_logic": {
+          "type": ["string", "null"],
+          "description": "Business Logic/Transformation Logic cell value (free-text or structured format)"
+        },
+        "transformation_type": {
+          "type": ["string", "null"],
+          "enum": ["Direct", "Derived", "Lookup", "Direct - Type Cast", null],
+          "description": "Classification of transformation complexity. Direct=rename/alias, Derived=expression, Lookup=join-based, Direct - Type Cast=rename+cast. Null if optional column not present."
+        },
+        "default_value": {
+          "type": ["string", "number", "null"],
+          "description": "Fallback value when transformation logic yields NULL. Applied via F.coalesce(expr, F.lit(default)). Null if not specified."
+        },
+        "key_column": {
+          "type": ["boolean", "null"],
+          "description": "True if this column is part of the table's primary/business key. Collected across all rows to derive primary_key_columns[] at Priority 0.5. Null if optional column not present."
+        },
+        "structured_transformation": {
+          "$ref": "#/definitions/structuredTransformation"
+        },
+        "join_logic_missing": {
+          "type": "boolean",
+          "default": false,
+          "description": "True when source_references contains multiple distinct tables but no structured_transformation (Driver Table format) was provided. Triggers ADVISORY during parse recommending structured format. Transform generation proceeds with NL interpretation (Rule 11) — best-effort join/filter code with advisory comments. Structured format recommended for deterministic output."
+        },
+        "crypto_flags": {
+          "$ref": "#/definitions/columnCryptoFlags"
+        },
+        "extracted_join_predicates": {
+          "type": ["array", "null"],
+          "items": {"$ref": "#/definitions/extractedJoinPredicate"},
+          "description": "Join predicates extracted verbatim from free-text transformation_logic during parsing (STEP 2.8). Used as LOCKED constraints for transform generation — prevents LLM from inferring symmetric join keys or substituting column names. Null if no joins detected, structured_transformation is present (already deterministic), or transformation_logic is null/empty."
+        },
+        "extracted_literals": {
+          "type": ["array", "null"],
+          "items": {"$ref": "#/definitions/extractedLiteral"},
+          "description": "Literal/constant values extracted verbatim from free-text transformation_logic during parsing (STEP 2.8). Used as LOCKED constraints for transform generation — prevents LLM from substituting 'more logical' values based on column semantics. Null if no literals detected or transformation_logic is null/empty."
+        }
+      }
+    },
+    "sourceReference": {
+      "type": "object",
+      "required": ["database", "table", "column"],
+      "description": "Fully-qualified source reference. Parser decomposes qualified names from Excel: db.table.column → {database, table, column}; table.column with known db → {database (inherited), table, column}; bare column with single source → {database, table, column (all inherited)}.",
+      "properties": {
+        "database": {"type": "string", "description": "Source database name (e.g. e_ilp_db). Extracted from fully qualified db.table format in Source Table column or standalone Source Database column."},
+        "table": {"type": "string", "description": "Source table name without db prefix (e.g. account_wm). Extracted from db.table or table.column qualified notation in the Excel."},
+        "column": {"type": "string", "description": "Source column name without table/db prefix (e.g. payoff_balance). Extracted from db.table.column or table.column qualified notation in the Excel."}
+      },
+      "additionalProperties": false
+    },
+    "structuredTransformation": {
+      "type": ["object", "null"],
+      "description": "Parsed structured transformation logic. Populated when Business Logic column uses structured format (detected by 'Driver Table:' trigger). Null when free-text format used.",
+      "properties": {
+        "driver_table": {
+          "type": "string",
+          "description": "Primary/driving table alias for the join sequence"
+        },
+        "driver_conditions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Filter conditions applied to the driver table BEFORE any joins execute. Same syntax as table_conditions (e.g., 'Filter status NOT IN (CLO,RED,WOF)', 'Filter dw_bus_dt={control_Date}', 'pick latest record based on timestamp'). Empty array if no driver-level filtering needed."
+        },
+        "joins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["join_number", "table", "join_type", "join_conditions"],
+            "properties": {
+              "join_number": {
+                "type": "integer",
+                "description": "Sequential join order (1, 2, 3...)"
+              },
+              "table": {
+                "type": "string",
+                "description": "Table alias or name being joined"
+              },
+              "table_conditions": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Pre-join filter conditions applied to this table before joining (e.g. 'Filter limit_type=Base'). Empty array if none."
+              },
+              "join_type": {
+                "type": "string",
+                "enum": ["LEFT", "INNER", "RIGHT", "FULL", "CROSS"],
+                "description": "SQL join type"
+              },
+              "join_conditions": {
+                "type": "string",
+                "description": "Join ON clause expression (e.g. 'master_tab.acctid = table1.acctid AND table1.active = 1')"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "value_expression": {
+          "type": "string",
+          "description": "Final column derivation expression applied after all joins (e.g. 'Round off the limit_amount to 2 decimal points')"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sourceVolumetric": {
+      "type": "object",
+      "required": ["source_database", "source_table"],
+      "description": "Volumetric profile for a single source table. Drives Day 0 sizing (estimated_size_gb), Day 1 sizing (daily_increment_size_gb), and transform optimizations (broadcast_hint).",
+      "properties": {
+        "source_database": {
+          "type": "string",
+          "description": "Source database name — must match a source_database in mapping columns"
+        },
+        "source_table": {
+          "type": "string",
+          "description": "Source table name — must match a source table in mapping columns"
+        },
+        "estimated_rows": {
+          "type": ["integer", "null"],
+          "description": "Total row count of full table"
+        },
+        "estimated_size_gb": {
+          "type": ["number", "null"],
+          "description": "Approximate total storage size in GB (primary input for Day 0 worker sizing)"
+        },
+        "daily_increment_rows": {
+          "type": ["integer", "null"],
+          "description": "Average rows added/changed per day (informational)"
+        },
+        "daily_increment_size_gb": {
+          "type": ["number", "null"],
+          "description": "Average daily delta size in GB (primary input for Day 1 worker sizing)"
+        },
+        "primary_key": {
+          "type": ["string", "null"],
+          "description": "Primary key column(s) of source table — comma-separated if composite (e.g. 'account_id, eff_start_date'). Used for repartition key selection and dedup logic."
+        },
+        "partition_key": {
+          "type": ["string", "null"],
+          "description": "Partition key column(s) of source table (e.g. 'dw_bus_dt', 'active'). Used for partition pruning filter selection."
+        },
+        "table_type": {
+          "type": ["string", "null"],
+          "enum": ["NonTransactional_SCD1", "NonTransactional_SCD2", "Transactional", null],
+          "description": "Source table type. NonTransactional_SCD2 = entity-state tables with SCD2 history (eff_start_date, eff_end_date, active); NonTransactional_SCD1 = entity-state tables with dw_lod_tmp/dw_upd_lod_tmp only (no temporal columns); Transactional = append-only event/fact tables partitioned by business date. Directly maps to source_table_type used for runtime filtering strategy."
+        },
+        "broadcast_hint": {
+          "type": ["boolean", "null"],
+          "description": "True if analyst flags this as a small reference/decode table suitable for F.broadcast(). Auto-set to true if estimated_size_gb < 0.01."
+        }
+      },
+      "additionalProperties": false
+    },
+    "extractedJoinPredicate": {
+      "type": "object",
+      "required": ["left_table", "left_col", "operator", "right_table", "right_col", "source_text", "confidence"],
+      "description": "A join predicate extracted verbatim from free-text transformation_logic. Represents one ON clause condition (e.g., 'customer_response.customer_survey_id = wm_append_data.unique_survey_ref'). When confidence is high/medium, this becomes a LOCKED constraint that the transform-generator-agent MUST reproduce exactly — no symmetric key assumptions, no column name substitution.",
+      "properties": {
+        "left_table": {
+          "type": "string",
+          "description": "Left-side table name or alias from the join condition (as written in transformation_logic)"
+        },
+        "left_col": {
+          "type": "string",
+          "description": "Left-side column name (as written in transformation_logic)"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["=", "!=", "<", ">", "<=", ">="],
+          "description": "Comparison operator in the join predicate"
+        },
+        "right_table": {
+          "type": "string",
+          "description": "Right-side table name or alias from the join condition (as written in transformation_logic)"
+        },
+        "right_col": {
+          "type": "string",
+          "description": "Right-side column name (as written in transformation_logic). May differ from left_col — asymmetric joins are intentional and MUST NOT be 'corrected'"
+        },
+        "source_text": {
+          "type": "string",
+          "description": "Verbatim text fragment from transformation_logic that was parsed to produce this predicate. Preserved for audit trail and human review."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Extraction confidence. high=both tables in source_references + unambiguous regex match. medium=one table recognized OR minor ambiguity. low=neither table recognized (advisory only, NOT locked as constraint)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "extractedLiteral": {
+      "type": "object",
+      "required": ["column", "operator", "value", "source_text", "context", "confidence"],
+      "description": "A literal/constant value extracted verbatim from free-text transformation_logic. Represents an explicit comparison or assignment value (e.g., nps_question_indicator='Y'). When confidence is high/medium, this becomes a LOCKED constraint — the transform-generator-agent MUST use this exact value, not infer alternatives based on column semantics.",
+      "properties": {
+        "column": {
+          "type": ["string", "null"],
+          "description": "Column the literal applies to. Null for hardcoded assignments where no source column is referenced (e.g., 'Hardcode to GBP')."
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["=", "!=", "IN", "NOT IN", "hardcode", ">", "<", ">=", "<="],
+          "description": "Comparison or assignment operator. 'hardcode' for literal assignment instructions."
+        },
+        "value": {
+          "description": "The literal value exactly as it appears in transformation_logic. String for single values, array of strings for IN/NOT IN lists, number for numeric comparisons.",
+          "oneOf": [
+            {"type": "string"},
+            {"type": "number"},
+            {"type": "array", "items": {"type": "string"}}
+          ]
+        },
+        "source_text": {
+          "type": "string",
+          "description": "Verbatim text fragment from transformation_logic that was parsed. Preserved for audit trail."
+        },
+        "context": {
+          "type": "string",
+          "enum": ["filter_predicate", "case_when_condition", "case_when_result", "literal_assignment", "join_condition_literal"],
+          "description": "Where in the logic this literal appears. filter_predicate=WHERE/filter clause, case_when_condition=WHEN predicate, case_when_result=THEN value, literal_assignment=hardcode/default, join_condition_literal=literal in ON clause."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Extraction confidence. high=unambiguous regex match with clear value. medium=value extracted but minor context ambiguity. low=uncertain extraction (advisory only, NOT locked)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "columnCryptoFlags": {
+      "type": "object",
+      "required": ["is_crypto", "operation", "de_name", "extraction_source", "extraction_failed"],
+      "properties": {
+        "is_crypto": {
+          "type": "boolean",
+          "description": "True if transformation logic contains explicit crypto signal"
+        },
+        "operation": {
+          "type": ["string", "null"],
+          "enum": ["tokenize", "detokenize", null],
+          "description": "tokenize (protect), detokenize (unprotect), or null if no crypto"
+        },
+        "de_name": {
+          "type": ["string", "null"],
+          "description": "Protegrity Data Element name extracted from transformation logic. Null if not extractable. Must match pattern: (UK|US|APAC)_TOK_<func>_L<d>R<d>_<type>_DE"
+        },
+        "extraction_source": {
+          "type": "string",
+          "enum": ["udf_pattern", "protegrity_element", "keyword"],
+          "description": "Which detection method matched: UDF pattern, explicit Protegrity reference, or keyword-only"
+        },
+        "extraction_failed": {
+          "type": "boolean",
+          "description": "True when is_crypto=true but de_name could not be extracted or validation failed. Triggers refusal."
+        },
+        "extraction_ambiguous": {
+          "type": "boolean",
+          "description": "True when both 'tokenize' and 'detokenize' keywords found. Operation defaults to 'tokenize'. Flags for manual review."
+        }
+      }
+    }
+  }
+}

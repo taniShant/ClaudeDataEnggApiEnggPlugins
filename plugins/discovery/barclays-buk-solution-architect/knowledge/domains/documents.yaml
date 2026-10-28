@@ -1,0 +1,41 @@
+schema_version: '1.0'
+domain:
+  id: dom.documents
+  name: Documents
+  description: "The Document Services domain operates as a critical component within the Customer Communications and Document Management capability area, supporting Barclays UK's regulatory obligations and customer interaction requirements across the full document lifecycle. This domain provides the technical and operational capabilities required to create, secure, store, and retrieve customer-facing and regulatory documentation in compliance with UK financial services regulations, including record-keeping mandates, data retention requirements, and audit trail obligations."
+  owner: cdao
+  bian_links:
+    -
+      title: Archive Services
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=45697"
+    -
+      title: Correspondence
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=32927"
+    -
+      title: Document Directory
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=44708"
+    -
+      title: Document Services
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=30399"
+  sub_domains:
+    -
+      id: sub.doc.document-lifecycle-management
+      name: Document Lifecycle Management
+      description: "The end-to-end management of documents from initial reception through production, delivery, and long-term storage, encompassing all activities required to create, distribute, preserve, and retrieve business-critical documentation throughout its operational and archival lifecycle. Purpose is to enable Barclays UK to manage the complete lifecycle of customer correspondence, regulatory notices, transaction documentation, and business records in a compliant, efficient, and auditable manner that supports operational excellence, regulatory obligations, and customer service requirements."
+      capabilities:
+        -
+          id: cap.doc.deliver-documents
+          name: Deliver Documents
+          description: "The capability to distribute finalized documents to intended recipients through  appropriate channels, ensuring timely, secure, and compliant delivery with proof  of receipt and channel preference management."
+        -
+          id: cap.doc.produce-documents
+          name: Produce Documents
+          description: "The capability to create, compose, assemble, and finalize customer correspondence,  regulatory notices, transaction documentation, and other business documents through  templated generation, dynamic content assembly, and electronic execution. This capability  enables the bank to produce legally compliant, brand-consistent, personalized documentation  at scale that supports customer transactions, regulatory obligations, marketing communications,  and operational workflows while ensuring accuracy, traceability, and non-repudiation."
+        -
+          id: cap.doc.receive-documents
+          name: Receive Documents
+          description: "The capability to receive, ingest, and onboard documents from external sources into  the bank's managed document systems, ensuring quality, completeness, and security  throughout the intake process."
+        -
+          id: cap.doc.store-and-retrieve-documents
+          name: "Store & Retrieve Documents"
+          description: "The capability to securely persist, organize, manage, and provide controlled access  to documents throughout their lifecycle, from active operational use through long-term  archival to ultimate disposition, ensuring compliance with retention schedules, legal  holds, and audit requirements."

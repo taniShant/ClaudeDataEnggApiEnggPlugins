@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DM Session Tracking",
+  "description": "Tracks data model development command execution and output locations. Stored at dm-session/tracking.json.",
+  "type": "object",
+  "properties": {
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when tracking file was created"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of most recent command execution"
+    },
+    "commands_run": {
+      "type": "array",
+      "description": "Ordered log of dm-* commands executed in this session",
+      "items": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "enum": ["/dm-bra", "/dm-model", "/dm-validate", "/dm-status"],
+            "description": "The dm-* command that was executed"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 execution timestamp"
+          },
+          "input": {
+            "type": "string",
+            "description": "Input provided to the command (JIRA ref, file path, or text)"
+          },
+          "input_type": {
+            "type": "string",
+            "enum": ["jira", "file", "text", "modify"],
+            "description": "How the input was classified"
+          },
+          "output_path": {
+            "type": ["string", "null"],
+            "description": "Path to the output file produced (null if no output)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["success", "hard_stop", "error"],
+            "description": "Outcome of the command execution"
+          }
+        },
+        "required": ["command", "timestamp", "status"],
+        "additionalProperties": false
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Current state of deliverables produced",
+      "properties": {
+        "business_requirement": {
+          "type": ["string", "null"],
+          "description": "Path to business requirement document (null if not yet produced)"
+        },
+        "data_model": {
+          "type": ["string", "null"],
+          "description": "Path to data model document (null if not yet produced)"
+        },
+        "bra_validation": {
+          "type": ["object", "null"],
+          "description": "Most recent BRA validation result",
+          "properties": {
+            "verdict": {
+              "type": "string",
+              "enum": ["APPROVED", "REJECTED"]
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "must_have_passed": {
+              "type": "integer"
+            },
+            "must_have_total": {
+              "type": "integer"
+            }
+          }
+        },
+        "dm_validation": {
+          "type": ["object", "null"],
+          "description": "Most recent Data Model validation result",
+          "properties": {
+            "verdict": {
+              "type": "string",
+              "enum": ["APPROVED", "REJECTED"]
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "must_have_passed": {
+              "type": "integer"
+            },
+            "must_have_total": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "reference": {
+      "type": ["string", "null"],
+      "description": "JIRA reference or slug used for output directory naming"
+    }
+  },
+  "required": ["commands_run", "outputs"],
+  "additionalProperties": false
+}

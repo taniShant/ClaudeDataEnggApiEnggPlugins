@@ -1,0 +1,60 @@
+{
+  "$schema": "sttm-plugin/v1/extended",
+  "target_source": {
+    "format": "excel",
+    "artifact": "input/target_schema.xlsx"
+  },
+  "target": {
+    "database": "fdp_uk_customer_db",
+    "table": "customer_account",
+    "table_description": "Foundation Data Product - customer account with detokenized PII",
+    "table_type": "NonTransactional_SCD2",
+    "columns": [
+      {"name": "customer_id", "description": "Customer identifier", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "account_number", "description": "Bank account number (clear text)", "datatype": "string", "nullable": "N", "key_column": "N"},
+      {"name": "sort_code", "description": "Branch sort code (clear text)", "datatype": "string", "nullable": "N", "key_column": "N"},
+      {"name": "customer_name", "description": "Customer full name", "datatype": "string", "nullable": "Y", "key_column": "N"},
+      {"name": "eff_start_date", "description": "SCD2 effective start date", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "eff_end_date", "description": "SCD2 effective end date", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "active", "description": "Active record flag", "datatype": "string", "nullable": "N", "key_column": "N"},
+      {"name": "dw_lod_tmp", "description": "Load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"},
+      {"name": "dw_upd_lod_tmp", "description": "Update load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "e_customer_db",
+      "table": "customer_master",
+      "columns": [
+        {"name": "cust_id", "datatype": "string"},
+        {"name": "acct_num_encrypted", "datatype": "string", "sensitivity": "pii_tokenized"},
+        {"name": "sort_code_encrypted", "datatype": "string", "sensitivity": "pii_tokenized"},
+        {"name": "cust_name", "datatype": "string"},
+        {"name": "last_mod_dte", "datatype": "int"}
+      ]
+    }
+  ],
+  "crypto": {
+    "direction": "detokenize",
+    "detokenize": [
+      {
+        "source_column": "acct_num_encrypted",
+        "target_column": "account_number",
+        "source_de": "UK_TOK_ACCT_L0R0_NUM_DE",
+        "udf": "cloud_api_udf_UK_TOK_ACCT_L0R0_NUM_DE_unprotect"
+      },
+      {
+        "source_column": "sort_code_encrypted",
+        "target_column": "sort_code",
+        "source_de": "UK_TOK_SORTCOD_L0R0_NUM_DE",
+        "udf": "cloud_api_udf_UK_TOK_SORTCOD_L0R0_NUM_DE_unprotect"
+      }
+    ]
+  },
+  "configuration": {
+    "load_type": "Day0",
+    "scd": {"type": "scd2", "effective_start": "eff_start_date", "effective_end": "eff_end_date", "active_flag": "active", "high_end_date": "3499-12-31", "source_mod_column": "last_mod_dte"},
+    "audit_columns": {"load_timestamp": "dw_lod_tmp", "update_timestamp": "dw_upd_lod_tmp"},
+    "partition_columns": ["active"]
+  }
+}

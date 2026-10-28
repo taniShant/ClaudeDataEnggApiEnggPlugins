@@ -1,0 +1,32 @@
+{
+  "$schema": "sttm-plugin/v1/core",
+  "target": {
+    "database": "bdp_uk_analytics_db",
+    "table": "account_mom_change",
+    "table_type": "Transactional",
+    "columns": [
+      {"name": "account_id", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "period_date", "datatype": "date", "nullable": "N", "key_column": "Y"},
+      {"name": "current_balance", "datatype": "decimal(18,2)", "nullable": "Y"},
+      {"name": "prior_balance", "datatype": "decimal(18,2)", "nullable": "Y"},
+      {"name": "balance_change", "datatype": "decimal(18,2)", "nullable": "Y"},
+      {"name": "dw_lod_tmp", "datatype": "timestamp", "nullable": "N"},
+      {"name": "dw_bus_dt", "datatype": "date", "nullable": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "cdp_uk_account_db",
+      "table": "account_monthly_snapshot",
+      "columns": [
+        {"name": "account_id", "datatype": "string"},
+        {"name": "period_date", "datatype": "date"},
+        {"name": "balance", "datatype": "decimal(18,2)"}
+      ]
+    }
+  ],
+  "code": {
+    "type": "sql",
+    "content": "SELECT curr.account_id, curr.period_date, curr.balance AS current_balance, prev.balance AS prior_balance, curr.balance - prev.balance AS balance_change FROM cdp_uk_account_db.account_monthly_snapshot curr INNER JOIN cdp_uk_account_db.account_monthly_snapshot prev ON curr.account_id = prev.account_id AND curr.period_date = ADD_MONTHS(prev.period_date, 1)"
+  }
+}

@@ -1,0 +1,26 @@
+schema_version: '1.0'
+domain:
+  id: dom.complaints
+  name: Complaints
+  description: "The Complaints  domain is designed to handle and resolve customer complaints and concerns, and reach an appropriate (Regulatory controlled) outcome."
+  owner: cc
+  bian_links:
+    - title: Customer Relationship Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=30437"
+  sub_domains:
+  - id: sub.cmp.customer-complaints
+    name: Customer Complaints
+    description: The Customer Complaints sub-domain is designed to handle customer issues, classify complaints and concerns, resolve customer complaints and reach an appropriate (Regulatory controlled) outcome. Complaints are distinct from customer concerns because the customer has suffered detriment.
+    capabilities:
+    - id: cap.cmp.classify-a-customer-issue
+      name: Classify a Customer Issue
+      description: This is the capability to decide whether a customer issue is a complaint, where the customer has suffered a detriment, or a concern where they have not. Complaints require regular regulatory reporting. Concerns do not.  
+    - id: cap.cmp.manage-a-complaint
+      name: Manage a Complaint
+      description: The ability to record, categorise, allocate, resolve, close and re-open a complaint and perform all associate tasks. These include sending notifications, linking products, creating and locating customer records (including 3rd parties) and compensating customers. 
+    - id: cap.cmp.manage-a-concern
+      name: Manage a Concern
+      description: Essentially, this is the ability to record a concern. Concerns are closed immediately with no further action required. 
+    - id: cap.cmp.report-and-analyse-customer-issues
+      name: Report and Analyse Customer Issues
+      description: Reporting and analysis of complaints and concerns including regulatory reporting.     

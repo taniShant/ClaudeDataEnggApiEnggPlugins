@@ -1,0 +1,28 @@
+schema_version: '1.0'
+domain:
+  id: dom.customer-interactions
+  name: Customer Interactions
+  description: "The Customer Interactions domain enables Barclays UK to facilitate bidirectional communication across channels, manage complaints and feedback, and maintain comprehensive interaction records. It ensures all customer engagements are compliant with UK financial regulations—including Strong Customer Authentication (SCA), Consumer Duty, and FCA Complaints Rules—while delivering seamless, traceable, and customer-centric experiences throughout the customer lifecycle."
+  owner: cdao
+  bian_links:
+    -
+      title: Customer Interactions
+      url: "https://bian.org/servicelandscape-12-0-0/object_23.html?object=47633"
+  sub_domains:
+    -
+      id: sub.ci.customer-engagement-management
+      name: Customer Engagement Management
+      description: "The orchestration and recording of all customer touchpoints and dialogues across channels, encompassing bidirectional communication, feedback and complaint management, and comprehensive interaction history to support relationship building, service excellence, and regulatory compliance. The purpose is to enable Barclays UK to engage customers through their preferred channels, capture and resolve feedback, and maintain comprehensive records of all interactions to support consistent service delivery, dispute resolution, regulatory reporting, and continuous improvement."
+      capabilities:
+        -
+          id: cap.ci.communicate-with-customers
+          name: Communicate With Customers
+          description: "The capability to enable bidirectional engagement between the bank and customers across multiple channels, encompassing both outbound notifications and interactive dialogues, with full traceability, preference management, and intelligent routing to appropriate resolution paths. Purpose is to enable the bank to maintain timely, relevant, and personalized communication with customers that supports transaction confirmation, service delivery, relationship building, and issue resolution while respecting customer preferences, meeting regulatory communication standards, and optimizing channel costs."
+        -
+          id: cap.ci.manage-customer-feedback
+          name: Manage Customer Feedback
+          description: "The capability to capture, classify, route, investigate, and report on customer feedback including complaints, suggestions, service quality inputs, and sentiment, ensuring regulatory compliance and driving service improvement. The purpose is to enable the bank to meet regulatory obligations for complaints handling (FCA Complaints Rules), identify service improvement opportunities, track customer satisfaction trends, and demonstrate accountability through root cause analysis and remediation tracking."
+        -
+          id: cap.ci.record-customer-interactions
+          name: Record Customer Interactions
+          description: "The capability to comprehensively log, store, and provide controlled access to records of customer engagement events across all channels, maintaining a longitudinal view of interactions that supports relationship management, dispute resolution, regulatory compliance, and audit requirements. The purpose is to enable the bank to maintain a complete, auditable history of customer interactions that supports consistent customer service, evidence-based dispute resolution, regulatory reporting, quality assurance, and relationship insights while ensuring data protection compliance and optimized storage costs."

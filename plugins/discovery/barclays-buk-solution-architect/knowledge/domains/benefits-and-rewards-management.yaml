@@ -1,0 +1,54 @@
+schema_version: '1.0'
+domain:
+  id: dom.benefits-and-rewards-management
+  name: Benefits and Rewards Management
+  description: The Benefits and Rewards Management domain oversees customer benefits and rewards (which are a specific type of benefit) and is responsible for evaluating entitlements, managing the benefit lifecycle, orchestrating fulfilment of benefits with both internal and external providers and maintaining audit trails of entitlement decisions and holdings.  In addition, rewards are supported (as a sub-type of benefit) with additional capabilities to manage earnings and redemptions.  This domain should offer a future-ready model that can link a single entity to multiple diverse benefit providers without tight coupling.
+  owner: digital
+  sub_domains:
+  - id: sub.brm.benefits
+    name: Benefits
+    description: The Benefits sub-domain is responsible for management of the various benefit definitions and eligibility rules, as well as the orchestration of individual benefit holdings, including alignment to underlying products and downstream fulfilment domains. 
+    capabilities:
+    - id: cap.brm.benefit-proposition-offering
+      name: Benefit Proposition Offering
+      description: Management of proposition offering definitions, types, versions, included benefits and entity associations, enabling consistent benefit configuration and supporting proposition evolution across the organisation.
+    - id: cap.brm.manage-benefit-definitions
+      name: Manage Benefits Definitions
+      description: Management of individual benefit definitions, include types, versions and supporting platform (internal or external).
+    - id: cap.brm.orchestrate-benefits
+      name: Orchestrate Benefits
+      description: Execution of benefit lifecycle operations including activation, suspension, and withdrawal for individual benefit holdings, enabling timely benefit delivery and supporting proposition commitments.  Actual fulfilment of the benefit may be delegated to its own domain (e.g. Insurance) - this capability is purely focused on the orchestration.
+    - id: cap.brm.assess-benefit-value
+      name: Assess Benefit Value
+      description: Assessment of benefit-related financial positions encompassing cost allocation, revenue impact, and customer value analysis, enabling commercial decision-making and regulatory compliance for customer fair value evaluations.
+    - id: cap.brm.benefit-and-entitlement-management
+      name: Benefit and Entitlement Management
+      description: Provides lifecycle management of customer benefit entitlements and associated relationships, ensuring benefits remain aligned to qualifying criteria and customer circumstances. Supports benefit portfolio evolution through relationship changes, entitlement monitoring, compliance controls, and seamless state transitions across pending, active, suspended, expired, and cancelled statuses.
+  - id: sub.brm.rewards
+    name: Rewards
+    description: The Rewards sub-domain provides the core capabilities required to define, manage, execute, and govern customer reward schemes. It establishes a consistent and reusable foundation for reward enrolment, configuration, execution, fulfilment, settlement, and financial accountability, enabling compliant execution at scale.  The domain determines what rewards are, when they are earned, and how reward obligations are governed and financially accounted for.
+    capabilities:
+    - id: cap.brm.manage-rewards-scheme-membership
+      name: Manage Rewards Scheme Membership
+      description: >
+        This capability manages customer membership within reward schemes, providing a governed and authoritative view of customer participation and reward earning eligibility. It encompasses eligibility determination, enrolment and opt in management, reward tier state lifecycle management, and constraint validation, ensuring consistent and compliant control of customer membership within schemes.
+    
+        The capability owns the definition and enforcement of scheme eligibility rules at a membership level, customer enrolment and opt in or opt out management, and the lifecycle of reward tiers within a scheme, including qualification, upgrade, downgrade, and retention. It is responsible for tier movement logic and validation of product, customer, and regulatory constraints. It maintains the authoritative record of customer membership and reward tier state.
+    - id: cap.brm.manage-reward-definitions
+      name: Manage Reward Definitions
+      description: >
+        This capability manages the definition and governance of reward schemes, providing a controlled foundation for consistent, compliant, and financially governed reward execution. It encompasses the definition of reward structures, rules, tier models, valuation models, liability governance, and lifecycle control, ensuring alignment with customer, partner, and regulatory constraints.
+    
+        The capability owns reward types and catalogues, promotional and reward rules including caps, thresholds, and exclusions, and reward tier definitions. It is responsible for reward pricing, valuation, cost attribution, and overall reward liability governance. It manages versioning and lifecycle control of reward configurations and defines and governs partner backed reward schemes, including benefit structures, commercial models, valuation approaches, and control mechanisms.
+    - id: cap.brm.fulfil-rewards-and-manage-value
+      name: Fulfil Rewards and Manage Value
+      description: >
+        This capability executes reward fulfilment and financial closure, providing controlled delivery and transparent financial accountability for rewards. It encompasses fulfilment orchestration, settlement and reconciliation of reward obligations, and analysis of reward cost, liability, exposure, and performance, ensuring rewards are delivered correctly and governed throughout their financial lifecycle.
+    
+        The capability owns reward fulfilment orchestration, including coordination with internal and external partners, and the settlement and reconciliation of reward obligations. It manages partner settlement and exception handling and provides analytics on reward performance, cost, and exposure. It is responsible for breakage, liability, and forecasting analysis, as well as fair-value assessment and conduct monitoring to support financial and regulatory governance.
+    - id: cap.brm.process-reward-earnings-and-redemptions
+      name: Process Reward Earnings and Redemptions
+      description: >
+        This capability processes reward earning and redemption outcomes, providing accurate and deterministic execution for qualifying customer activity. It encompasses event-level eligibility evaluation, reward calculation and accrual, balance management, expiry and adjustment handling, and redemption decisioning, ensuring rewards are applied consistently and under appropriate financial control.
+    
+        The capability owns event-level eligibility evaluation against governed rules, calculation and accrual of rewards, and the application of earn and promotional logic at runtime. It manages reward balances and accounts, handles expiry, forfeiture, adjustments, reversals, compensation, and corrections, and supports colleague assisted servicing for disputes and remediation. It determines when reward outcome communications should be triggered, such as reward earned, balance change, expiry, or redemption outcome.

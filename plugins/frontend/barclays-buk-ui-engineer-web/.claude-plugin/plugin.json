@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-ui-engineer-web",
+    "description": "Generate Online Banking web screens from Figma designs into Blueprint React components (@barclays/blueprint-react)",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards", "barclays-buk-ui-engineer"]
+}

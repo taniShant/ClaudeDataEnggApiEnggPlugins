@@ -1,0 +1,89 @@
+{
+  "skill_name": "arbiter_switch_analysis",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm analysing ValidateNewPayeeOperation.java in bmb-gateway for dead code. The class checks session.getAttribute(OperationConstants.COP_ENABLED) before executing any COP logic. OperationConstants.COP_ENABLED resolves to the string 'COP_ENABLED'. I've looked up 'COP' in function_data_confluence.json and it shows ALL.status=OFF. What is the correct dead code verdict for the if(isCoPEnabled) block, and should I delete it?",
+      "expected_output": "Agent must NOT immediately classify if-block as dead. Must output KEEP ALL or ASK USER first because OFF=upcoming. Only after asking the user and receiving confirmation that COP is abandoned should it promote to dead. Must also apply @Component entry point exception — class itself kept even if block is deleted.",
+      "files": [],
+      "expectations": [
+        "Agent does NOT immediately classify the if-block as dead code without user input",
+        "Agent explains that OFF means upcoming feature, not dead",
+        "Agent asks user to confirm whether COP feature is abandoned or upcoming",
+        "If user confirms abandoned, agent classifies if-block as dead with +1.5 boost",
+        "Agent applies entry point exception — class itself is KEEP even if block is dead"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Analysing ValidateFundsTransferOperation.java. Found this pattern: session.getAttribute(OperationConstants.BMB_PAYMENTS_COP_SPECIAL_CHARS_ENABLED). OperationConstants.BMB_PAYMENTS_COP_SPECIAL_CHARS_ENABLED = 'COP_SPECIAL_CHARS_ENABLED'. I traced it: GetAppPolicyServiceImpl sets it from configValues.getBooleanProperty(ConfigurationKeyConstants.BMB_PAYMENTS_COP_SPECIAL_CHARS_ENABLED). ConfigurationKeyConstants.BMB_PAYMENTS_COP_SPECIAL_CHARS_ENABLED = 'bmb.payments.cop.special.chars.enabled'. The gateway config page shows: bmb.payments.cop.special.chars.enabled = true. The code is: if(isCOPSpecialCharsEnabled) { isValidForCOP(payeeName); } else { isValidForBApp(payeeName); }. What is dead?",
+      "expected_output": "Agent correctly identifies the else-block (isValidForBApp call) as dead. Applies +1.5 boost from config=true. Does NOT ask user — config page has explicit true value, no ambiguity. Boost value must be exactly +1.5, not any other value.",
+      "files": [],
+      "expectations": [
+        "Agent identifies else-block (isValidForBApp) as dead code",
+        "Agent identifies if-block (isValidForCOP) as live / KEEP",
+        "Agent applies +1.5 confidence boost from Config page explicit true value",
+        "Agent does NOT prompt user — config value is unambiguous",
+        "Agent does NOT apply any boost other than +1.5"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Looking at ListofFromAccountsOperation.java. Found isFeatureSwitchOn(request, OperationConstants.APP_SCAM_DAY3). APP_SCAM_DAY3 resolves to string 'APP_SCAM_DAY3'. In function_data_confluence.json: APP_SCAM_DAY3 ALL.status=ON, appVersions minimum BMB_03470. Latest version in the JSON is BMB_03731. The code: if(isAppScamDay3Enabled) { doNewScamPath(); } else { doOldScamPath(); }. What should I delete?",
+      "expected_output": "Agent computes age = 3731 - 3470 = 261. Age 261 < 500 threshold. Must output KEEP ALL — too recent to classify as stale. Must NOT apply any confidence boost. Must NOT delete the else-block.",
+      "files": [],
+      "expectations": [
+        "Agent computes or acknowledges age = 261 (3731 - 3470)",
+        "Agent classifies as KEEP ALL — age below 500 threshold",
+        "Agent does NOT delete or flag the else-block as dead",
+        "Agent applies zero confidence boost (age < 500)",
+        "Agent does NOT prompt user — matrix row is unambiguous (KEEP ALL)"
+      ]
+    },
+    {
+      "id": 4,
+      "technology": "ios",
+      "prompt": "I'm analysing PaymentFlowCoordinator.swift in barclays-app for dead code. The class checks BMBFeatureStatusHelper.sharedInstance().isOn(BMBFeatureData.ConfirmationOfPayee) before executing COP logic. BMBFeatureData.ConfirmationOfPayee resolves to the string 'COP'. I've looked up 'COP' in function_data_confluence.json and it shows ALL.status=OFF. What is the correct dead code verdict for the if(isCoPEnabled) block, and should I delete it?",
+      "expected_output": "Agent must NOT classify the if-block as dead. OFF means upcoming feature, not dead code. Agent must output KEEP ALL. Only after asking the user and receiving confirmation that COP is permanently abandoned should it promote to dead. Must also apply entry point exception — coordinator class itself is kept even if block is deleted.",
+      "files": [],
+      "expectations": [
+        "Agent does NOT immediately classify the if-block as dead code",
+        "Agent explains that OFF means upcoming feature, not dead",
+        "Agent outputs KEEP ALL as initial verdict",
+        "Agent asks user to confirm whether COP feature is abandoned or upcoming before any reclassification",
+        "If user confirms abandoned, agent classifies if-block as dead with +1.5 boost",
+        "Agent applies entry point exception — coordinator class itself is KEEP even if block is dead"
+      ]
+    },
+    {
+      "id": 5,
+      "technology": "ios",
+      "prompt": "Analysing BMBOffersFeatureFlagConfigurations.swift. Found this pattern: BMBFeatureStatusHelper.sharedInstance().status(forFeature: BMBFeatureData.transferAndOffersAPIMigration) == .ON. BMBFeatureData.transferAndOffersAPIMigration = 'BCard_BT_MT_Migration'. Function Data shows: BCard_BT_MT_Migration status=ON, min_version=BMB_03500, age=850. The code is: if useThinAPI { offersService.fetchOffersThinGateway(...) } else { offersService.fetchOffersLegacy(...) }. What is dead?",
+      "expected_output": "Agent correctly identifies the else-block (fetchOffersLegacy) as dead. Applies +0.5 boost because age=850 is in the 500-1000 range. Does NOT ask user — switch is ON with sufficient age and else-block calls legacy path. Boost value must be exactly +0.5, not any other value.",
+      "files": [],
+      "expectations": [
+        "Agent identifies else-block (fetchOffersLegacy) as dead code",
+        "Agent identifies if-block (fetchOffersThinGateway) as live / KEEP",
+        "Agent applies +0.5 confidence boost because age=850 is in 500-1000 range",
+        "Agent does NOT prompt user — switch status is unambiguous (ON + sufficient age)",
+        "Agent does NOT apply any boost other than +0.5",
+        "Agent checks for cascade — grep fetchOffersLegacy across all files"
+      ]
+    },
+    {
+      "id": 6,
+      "technology": "ios",
+      "prompt": "Analysing CardControlsCoordinator.swift. Found BMBFeatureStatusHelper.isOn(BMBFeatureData.debitNgcbSdmTempFreeze). BMBFeatureData.debitNgcbSdmTempFreeze = 'DEBIT_NGCB_TF_SDM'. NOT FOUND in function_data_confluence.json. NOT FOUND in gateway_config.txt. Git log shows last commit to this file was March 2025 (about 6 months ago). The code is: if isTempFreezeSDMEnabled { presentSDMTempFreezeFlow(for: card) } else { presentCurrentTempFreezeFlow(for: card) }. What is dead?",
+      "expected_output": "Agent must NOT classify either block as dead. NOT FOUND in both sources + git age <12 months = KEEP ALL (too new to judge). Agent must not ask the user — the age threshold alone resolves this. No boost applied.",
+      "files": [],
+      "expectations": [
+        "Agent does NOT classify either block as dead code",
+        "Agent outputs KEEP ALL verdict",
+        "Agent explains that NOT FOUND + <6 months age = too new to judge",
+        "Agent does NOT ask user — age threshold resolves without ambiguity",
+        "Agent applies boost = 0 (no boost)",
+        "Agent does NOT attempt cascade analysis since nothing is dead"
+      ]
+    }
+  ]
+}

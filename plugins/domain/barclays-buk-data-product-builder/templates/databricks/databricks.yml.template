@@ -1,0 +1,221 @@
+# The name of the bundle. run `databricks bundle schema` to see the full bundle settings schema.
+bundle:
+  name: CDAO_Deployment
+
+variables:
+  environment:
+    description: "Execution environment (derived from deployment target)"
+    default: "dev"
+  ws_root:
+    description: "ROOT Folder Name"
+    default: "{{ws_root_default}}"
+  target_catalog_name:
+    description: "Target Unity Catalog name where result data resides"
+    default: "{{target_catalog}}"
+  schema_name:
+    description: "Schema name"
+    default: "{{target_schema}}"
+  policy_id:
+    description: "Job Policy Id"
+    default: "{{policy_id}}"
+  # Compute Tier: small (Day0 < 10 GB / Day1 < 1 GB)
+  small_node_type_id:
+    description: "Node type for small compute tier"
+    default: "m5d.large"
+  small_min_workers:
+    description: "Min autoscale workers for small tier"
+    default: 1
+  small_max_workers:
+    description: "Max autoscale workers for small tier"
+    default: 4
+  # Compute Tier: medium (Day0 10-50 GB / Day1 1-10 GB)
+  medium_node_type_id:
+    description: "Node type for medium compute tier"
+    default: "m5d.xlarge"
+  medium_min_workers:
+    description: "Min autoscale workers for medium tier"
+    default: 1
+  medium_max_workers:
+    description: "Max autoscale workers for medium tier"
+    default: 8
+  # Compute Tier: large (Day0 50-200 GB / Day1 10-50 GB)
+  large_node_type_id:
+    description: "Node type for large compute tier"
+    default: "m5d.xlarge"
+  large_min_workers:
+    description: "Min autoscale workers for large tier"
+    default: 2
+  large_max_workers:
+    description: "Max autoscale workers for large tier"
+    default: 16
+  # Compute Tier: xlarge (Day0 > 200 GB / Day1 > 50 GB)
+  xlarge_node_type_id:
+    description: "Node type for xlarge compute tier"
+    default: "m5d.2xlarge"
+  xlarge_min_workers:
+    description: "Min autoscale workers for xlarge tier"
+    default: 2
+  xlarge_max_workers:
+    description: "Max autoscale workers for xlarge tier"
+    default: 24
+  first_on_demand:
+    description: "Number of on-demand nodes before spot (driver reliability)"
+    default: 1
+  spot_bid_price_percent:
+    description: "Spot instance bid price percentage"
+    default: 100
+  log_level:
+    description: "Driver logging level (DEBUG, INFO, WARN, ERROR)"
+    default: "INFO"
+  email_address:
+    description: "Email_ids of success and failure notifications"
+    default: "{{notification_email}}"
+  {{tenancy_name}}_{{dp_type_lower}}_cicd_sp:
+    description: "CI-CD Service Principal to deploy the Jobs"
+    default: "{{cicd_sp_id}}"
+  {{tenancy_name}}_{{dp_type_lower}}_exec_sp:
+    description: "Execution Service Principal to execute the Jobs"
+    default: "{{exec_sp_id}}"
+  ad_group:
+    description: "AD Group to monitor the Jobs"
+    default: "{{ad_group}}"
+
+include:
+  # Utility jobs (shared across all tables)
+  - ./jobs/{{tenancy_name}}_{{dp_type_lower}}_jobs/{{target_schema}}_table_creation_utility.yml
+  - ./jobs/{{tenancy_name}}_{{dp_type_lower}}_jobs/{{target_schema}}_date_control_insert_utility.yml
+  - ./jobs/{{tenancy_name}}_{{dp_type_lower}}_jobs/{{target_schema}}_daily_date_control_update_utility.yml
+  # Volume creation utility (include only if volumes are needed)
+  {{#if has_volumes}}
+  - ./jobs/{{tenancy_name}}_{{dp_type_lower}}_jobs/{{target_schema}}_volume_creation_utility.yml
+  {{/if}}
+  # Per-table data pipeline jobs — single-flow (source_systems empty)
+  {{#each tables}}
+  - ./jobs/{{../tenancy_name}}_{{../dp_type_lower}}_jobs/day0/{{target_schema}}_{{table_name}}_job.yml
+  {{/each}}
+  {{#each tables}}
+  - ./jobs/{{../tenancy_name}}_{{../dp_type_lower}}_jobs/day1/{{target_schema}}_{{table_name}}_job.yml
+  {{/each}}
+  # Per-table data pipeline jobs — multi-source-system (source_systems non-empty)
+  # When source_systems is non-empty, replace the single-flow includes above with:
+  #   {{#each tables}}
+  #   {{#each ../source_systems}}
+  #   - ./jobs/{{../../tenancy_name}}_{{../../dp_type_lower}}_jobs/day0/{{this}}/{{../target_schema}}_{{../table_name}}_job.yml
+  #   {{/each}}
+  #   {{/each}}
+  #   {{#each tables}}
+  #   {{#each ../source_systems}}
+  #   - ./jobs/{{../../tenancy_name}}_{{../../dp_type_lower}}_jobs/day1/{{this}}/{{../target_schema}}_{{../table_name}}_job.yml
+  #   {{/each}}
+  #   {{/each}}
+
+sync:
+  paths:
+    - "src/Notebooks/"
+
+# Deployment Target specific values for workspace
+# Scheduling is managed by Airflow — jobs have no built-in schedule.
+targets:
+  dev:
+    default: true
+    workspace:
+      host: "{{dev_workspace_host}}"
+      root_path: "/Workspace/{{dev_ws_root}}/"
+    variables:
+      environment: "dev"
+      ws_root: "{{dev_ws_root}}"
+      target_catalog_name: "{{dev_target_catalog}}"
+      policy_id: "{{dev_policy_id}}"
+      # Compute tiers (scaled down for dev)
+      small_node_type_id: "m5d.large"
+      small_min_workers: 1
+      small_max_workers: 2
+      medium_node_type_id: "m5d.large"
+      medium_min_workers: 1
+      medium_max_workers: 4
+      large_node_type_id: "m5d.large"
+      large_min_workers: 1
+      large_max_workers: 4
+      xlarge_node_type_id: "m5d.xlarge"
+      xlarge_min_workers: 1
+      xlarge_max_workers: 8
+      first_on_demand: 0
+      spot_bid_price_percent: 60
+      log_level: "DEBUG"
+      email_address: "{{notification_email}}"
+      {{tenancy_name}}_{{dp_type_lower}}_cicd_sp: "{{dev_cicd_sp}}"
+      {{tenancy_name}}_{{dp_type_lower}}_exec_sp: "{{dev_exec_sp}}"
+      ad_group: "{{dev_ad_group}}"
+
+  prod_parallel:
+    workspace:
+      host: "{{preprd_workspace_host}}"
+      root_path: "/Workspace/{{preprd_ws_root}}"
+    variables:
+      environment: "preprd"
+      ws_root: "{{preprd_ws_root}}"
+      target_catalog_name: "{{preprd_target_catalog}}"
+      policy_id: "{{preprd_policy_id}}"
+      # Compute tiers (moderate for pre-production)
+      small_max_workers: 4
+      medium_max_workers: 6
+      large_max_workers: 12
+      xlarge_node_type_id: "m5d.xlarge"
+      xlarge_max_workers: 18
+      first_on_demand: 1
+      spot_bid_price_percent: 100
+      log_level: "INFO"
+      email_address: "{{notification_email}}"
+      {{tenancy_name}}_{{dp_type_lower}}_cicd_sp: "{{preprd_cicd_sp}}"
+      {{tenancy_name}}_{{dp_type_lower}}_exec_sp: "{{preprd_exec_sp}}"
+      ad_group: "{{preprd_ad_group}}"
+
+  prod_prod:
+    workspace:
+      host: "{{prd_workspace_host}}"
+      root_path: "/Workspace/{{prd_ws_root}}"
+    variables:
+      environment: "prd"
+      ws_root: "{{prd_ws_root}}"
+      target_catalog_name: "{{prd_target_catalog}}"
+      policy_id: "{{prd_policy_id}}"
+      # Compute tiers use production defaults (no overrides needed)
+      first_on_demand: 1
+      spot_bid_price_percent: 100
+      log_level: "INFO"
+      email_address: "{{notification_email}}"
+      {{tenancy_name}}_{{dp_type_lower}}_cicd_sp: "{{prd_cicd_sp}}"
+      {{tenancy_name}}_{{dp_type_lower}}_exec_sp: "{{prd_exec_sp}}"
+      ad_group: "{{prd_ad_group}}"
+
+  {{#if has_uat}}
+  uat:
+    workspace:
+      host: "{{uat_workspace_host}}"
+      root_path: "/Workspace/{{uat_ws_root}}"
+    variables:
+      environment: "uat"
+      ws_root: "{{uat_ws_root}}"
+      target_catalog_name: "{{uat_target_catalog}}"
+      policy_id: "{{uat_policy_id}}"
+      # Compute tiers (same as dev for UAT)
+      small_node_type_id: "m5d.large"
+      small_min_workers: 1
+      small_max_workers: 2
+      medium_node_type_id: "m5d.large"
+      medium_min_workers: 1
+      medium_max_workers: 4
+      large_node_type_id: "m5d.large"
+      large_min_workers: 1
+      large_max_workers: 4
+      xlarge_node_type_id: "m5d.xlarge"
+      xlarge_min_workers: 1
+      xlarge_max_workers: 8
+      first_on_demand: 0
+      spot_bid_price_percent: 60
+      log_level: "DEBUG"
+      email_address: "{{notification_email}}"
+      {{tenancy_name}}_{{dp_type_lower}}_cicd_sp: "{{uat_cicd_sp}}"
+      {{tenancy_name}}_{{dp_type_lower}}_exec_sp: "{{uat_exec_sp}}"
+      ad_group: "{{uat_ad_group}}"
+  {{/if}}

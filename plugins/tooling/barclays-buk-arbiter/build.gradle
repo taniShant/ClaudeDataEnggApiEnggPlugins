@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    // Barclays Nexus repository
+    maven {
+        url = uri('https://nexus.barcapint.com/nexus/content/groups/public')
+        credentials {
+            username = System.getenv('NEXUS_USER') ?: 'anonymous'
+            password = System.getenv('NEXUS_PASS') ?: 'anonymous'
+        }
+    }
+    // Fallback to Maven Central for public artifacts
+    mavenCentral()
+}
+
+dependencies {
+    // Spoon for true AST transformation
+    implementation 'fr.inria.gforge.spoon:spoon-core:10.4.0'
+
+    // JSON serialization for result output
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // JUnit for testing
+    testImplementation 'junit:junit:4.13.2'
+}
+
+application {
+    mainClassName = 'com.barclays.buk.arbiter.removal.SpoonRemovalTool'
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes 'Main-Class': 'com.barclays.buk.arbiter.removal.SpoonRemovalTool'
+        attributes 'Implementation-Title': 'Arbiter Removal Tool'
+        attributes 'Implementation-Version': project.version
+    }
+    archiveFileName = 'arbiter-removal-tool.jar'
+}
+
+// Create fat JAR with all dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'com.barclays.buk.arbiter.removal.SpoonRemovalTool'
+        attributes 'Implementation-Title': 'Arbiter Removal Tool'
+        attributes 'Implementation-Version': project.version
+    }
+    archiveFileName = 'arbiter-removal-tool.jar'
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+build.dependsOn fatJar
+
+test {
+    useJUnit()
+}

@@ -1,0 +1,52 @@
+{
+  "source_volumetrics": [
+    {
+      "source_database": "e_ilp_db",
+      "source_table": "account_wm",
+      "estimated_rows": 120000000,
+      "estimated_size_gb": 85,
+      "daily_increment_rows": 500000,
+      "daily_increment_size_gb": 0.35,
+      "primary_key": "account_id, eff_start_date",
+      "partition_key": "active",
+      "table_type": "NonTransactional_SCD2",
+      "broadcast_hint": "N"
+    },
+    {
+      "source_database": "e_ilp_db",
+      "source_table": "branch_lookup",
+      "estimated_rows": 2500,
+      "estimated_size_gb": 0.001,
+      "daily_increment_rows": 10,
+      "daily_increment_size_gb": 0.0001,
+      "primary_key": "branch_code",
+      "partition_key": "",
+      "table_type": "NonTransactional_SCD1",
+      "broadcast_hint": "Y"
+    },
+    {
+      "source_database": "e_mortgage_db",
+      "source_table": "mrt_mortgage_payment",
+      "estimated_rows": 45000000,
+      "estimated_size_gb": 32,
+      "daily_increment_rows": 200000,
+      "daily_increment_size_gb": 0.14,
+      "primary_key": "payment_id",
+      "partition_key": "dw_bus_dt",
+      "table_type": "Transactional",
+      "broadcast_hint": "N"
+    },
+    {
+      "source_database": "ref_db",
+      "source_table": "dim_product_type",
+      "estimated_rows": 200,
+      "estimated_size_gb": 0.0001,
+      "daily_increment_rows": 0,
+      "daily_increment_size_gb": 0,
+      "primary_key": "product_type_code",
+      "partition_key": "",
+      "table_type": "NonTransactional_SCD1",
+      "broadcast_hint": "Y"
+    }
+  ]
+}

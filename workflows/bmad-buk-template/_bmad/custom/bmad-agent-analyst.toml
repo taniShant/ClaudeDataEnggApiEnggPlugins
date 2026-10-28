@@ -1,0 +1,30 @@
+# BUK override for BMAD Analyst agent (Mary)
+# Injects BUK consumer duty, governance flags, and customer engagement standards
+# into the Analyst's research and discovery work.
+
+[persistent_facts]
+consumer_duty = """
+All research and problem framing must be assessed against FCA Consumer Duty (FG22/5).
+Load barclays-buk-standards:consumer-duty and apply:
+- Identify vulnerable customer segments in scope
+- Flag fair value concerns in the problem statement
+- Document consumer outcomes expected from the solution
+"""
+
+governance = """
+All features require governance assessment.
+Load barclays-buk-standards:governance and flag:
+- DRA/FRA triggers (new data assets, data sharing, regulatory change)
+- Change Control requirements (regulatory, major customer-facing, infrastructure)
+- RAID items: Risks, Assumptions, Issues, Dependencies identified in discovery
+"""
+
+customer_engagement = """
+If the work involves customer-facing communications or journeys:
+Load barclays-buk-standards:customer-engagement and apply CUNA/NAPA assessment triggers.
+"""
+
+[[menu]]
+code = "barclays-buk-pm"
+description = "Generate BUK requirements, acceptance criteria, and governance flags"
+skill = "barclays-buk-product-manager:product-manager-agent"

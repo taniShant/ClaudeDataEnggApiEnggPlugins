@@ -1,0 +1,247 @@
+{
+  "version": "1.0",
+  "description": "Pre-validated safe versions for autonomous CWE-937 remediation. All versions tested in Barclays BUK ecosystem and confirmed available in internal Nexus.",
+  "last_updated": "2026-07-22",
+  "maintained_by": "Security Champions",
+  "review_cadence": "quarterly",
+  "config_expires": "2026-10-22",
+  "versions": {
+    "log4j:log4j": {
+      "current_vulnerable": "1.2.17",
+      "safe_version": "ch.qos.reload4j:reload4j:1.2.26",
+      "strategy": "drop_in_replacement",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "100% API-compatible with log4j 1.2.17. No code changes required. PatternLayout subclasses (e.g., PatternLayoutIBank) continue to work. Backports CVE-2019-17571, CVE-2021-4104, CVE-2022-23302.",
+      "cves_patched": ["CVE-2019-17571", "CVE-2021-4104", "CVE-2022-23302", "CVE-2022-23305", "CVE-2022-23307"],
+      "tested_projects": ["coreMortgages", "Mortgages", "FeatureStore2", "SALES"],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "org.bouncycastle:bcprov-jdk15on": {
+      "current_vulnerable": "1.60",
+      "safe_version": "org.bouncycastle:bcprov-jdk18on:1.85",
+      "strategy": "drop_in_replacement",
+      "nexus_confirmed": true,
+      "expires": "2027-03-22",
+      "notes": "bcprov-jdk15on is end-of-life. bcprov-jdk18on is the current supported artifact (Java 8+). The artifact rename is part of the fix — bcprov-jdk18on:1.85 patches multiple CVEs (CVE-2026-59650, CVE-2026-12860, CVE-2026-12816, CVE-2026-13506, CVE-2026-59649, etc.). Compatible with JDK 8, 11, 17, and 21+. Available in Barclays internal Nexus.",
+      "cves_patched": ["CVE-2026-59650", "CVE-2026-12860", "CVE-2026-12816", "CVE-2026-13506", "CVE-2026-59649", "CVE-2026-59640", "CVE-2026-15055", "CVE-2026-59647", "CVE-2026-14682", "CVE-2026-58059", "CVE-2023-33201", "CVE-2026-58061", "CVE-2026-12817"],
+      "tested_projects": ["CLOUDITDECOUP"],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "org.apache.logging.log4j:log4j-core": {
+      "current_vulnerable": "2.14.1",
+      "safe_version": "2.24.0",
+      "strategy": "in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patches Log4Shell (CVE-2021-44228) and related RCE vulnerabilities. Requires log4j-api:2.24.0 (always paired). If codebase uses org.apache.log4j.* imports, add log4j-1.2-api:2.24.0 bridge. Also patches WVE-2026-007 and other deserialization vulnerabilities. Supports upgrades from all pre-safe versions (2.14.1, 2.17.2, etc.) to 2.24.0.",
+      "cves_patched": ["CVE-2021-44228", "CVE-2021-45046", "CVE-2021-45105", "CVE-2021-44832", "CVE-2025-15284", "WVE-2026-007", "CVE-2026-53669", "CVE-2026-53666", "CVE-2026-82417"],
+      "tested_projects": ["SALES", "CLOUDITDECOUP"],
+      "requires_bridge": "conditional",
+      "requires_code_changes": false
+    },
+    "org.springframework:spring-webmvc": {
+      "current_vulnerable": "5.3.22",
+      "safe_version": "5.3.39",
+      "strategy": "in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patches Spring4Shell (CVE-2022-22965) and related RCE. Same major.minor (5.3.x) ensures backward compatibility. Java 8-11 compatible.",
+      "cves_patched": ["CVE-2022-22965"],
+      "tested_projects": ["SALES"],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "org.apache.commons:commons-text": {
+      "current_vulnerable": "1.9",
+      "safe_version": "1.10.0",
+      "strategy": "in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patches Text4Shell (CVE-2022-42889). Minimal version jump, same major version (1.x). No API breaking changes.",
+      "cves_patched": ["CVE-2022-42889"],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "com.fasterxml.jackson.core:jackson-databind": {
+      "current_vulnerable": "2.15.2",
+      "safe_version": "2.19.4",
+      "strategy": "force_with_related_artifacts",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patches deserialization gadget vulnerabilities (CVE-2022-42003, CVE-2022-42004). MUST pair with jackson-core:2.19.4 and jackson-annotations:2.19.4 (enforce same version). Use resolutionStrategy.force for static scanner visibility.",
+      "cves_patched": ["CVE-2022-42003", "CVE-2022-42004"],
+      "related_artifacts": [
+        "com.fasterxml.jackson.core:jackson-core:2.19.4",
+        "com.fasterxml.jackson.core:jackson-annotations:2.19.4"
+      ],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "io.netty:netty-codec": {
+      "current_vulnerable": "4.1.85",
+      "safe_version": "4.1.94.Final",
+      "strategy": "in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patches HTTP request smuggling (CWE-444). Same major.minor branch (4.1.x) ensures compatibility.",
+      "cves_patched": ["CVE-2023-32315"],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "org.yaml:snakeyaml": {
+      "current_vulnerable": "1.32",
+      "safe_version": "2.0",
+      "strategy": "major_version_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patches unsafe deserialization (CWE-502). Major version bump but stable API. Disable unsafe deserialization by default in 2.x (more secure).",
+      "cves_patched": ["CVE-2017-18640"],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "org.glassfish.jersey.core:jersey-common": {
+      "current_vulnerable": "2.41",
+      "safe_version": "2.42",
+      "strategy": "related_artifacts_in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "In-place upgrade. MUST apply same version to all org.glassfish.jersey.* artifacts (jersey-server, jersey-client, jersey-core, etc.).",
+      "cves_patched": [],
+      "related_artifact_pattern": "org.glassfish.jersey.*",
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "org.apache.tomcat.embed:tomcat-embed-core": {
+      "current_vulnerable": "9.0.37",
+      "safe_version": "9.0.121",
+      "strategy": "in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patches critical Tomcat CVEs including CVE-2026-41293, CVE-2025-24813, CVE-2026-43512, CVE-2026-43515. Java 8+ compatible. 9.0.121 is latest available; 9.0.119, 9.0.120 also available if needed.",
+      "cves_patched": ["CVE-2026-41293", "CVE-2025-24813", "CVE-2026-43512", "CVE-2026-43515"],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "com.fasterxml.jackson.core:jackson-core": {
+      "current_vulnerable": "2.11.1",
+      "safe_version": "2.18.10",
+      "strategy": "in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patches deserialization gadgets. Java 8+ compatible. MUST pair with jackson-databind:2.18.10 and jackson-annotations:2.18.10 (enforce same version across all three artifacts). Use resolutionStrategy.force for static scanner visibility.",
+      "cves_patched": [],
+      "related_artifacts": [
+        "com.fasterxml.jackson.core:jackson-databind:2.18.10",
+        "com.fasterxml.jackson.core:jackson-annotations:2.18.10"
+      ],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "com.fasterxml.jackson.core:jackson-databind": {
+      "current_vulnerable": "2.11.1",
+      "safe_version": "2.18.10",
+      "strategy": "force_with_related_artifacts",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patches deserialization gadget vulnerabilities. Java 8+ compatible. MUST pair with jackson-core:2.18.10 and jackson-annotations:2.18.10 (enforce same version). Use resolutionStrategy.force for static scanner visibility.",
+      "cves_patched": [],
+      "related_artifacts": [
+        "com.fasterxml.jackson.core:jackson-core:2.18.10",
+        "com.fasterxml.jackson.core:jackson-annotations:2.18.10"
+      ],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "org.springframework:spring-beans": {
+      "current_vulnerable": "5.2.8",
+      "safe_version": "5.2.22.RELEASE",
+      "strategy": "in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patch-level upgrade within Spring 5.2.x. Java 8+ compatible. Addresses Spring CVEs while maintaining backward compatibility.",
+      "cves_patched": [],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "org.springframework:spring-core": {
+      "current_vulnerable": "5.2.8",
+      "safe_version": "5.2.22.RELEASE",
+      "strategy": "in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patch-level upgrade within Spring 5.2.x. Java 8+ compatible. Addresses Spring CVEs while maintaining backward compatibility.",
+      "cves_patched": [],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    },
+    "org.springframework:spring-context": {
+      "current_vulnerable": "5.2.8",
+      "safe_version": "5.2.22.RELEASE",
+      "strategy": "in_place_upgrade",
+      "nexus_confirmed": true,
+      "expires": "2026-10-22",
+      "notes": "Patch-level upgrade within Spring 5.2.x. Java 8+ compatible. Addresses Spring CVEs while maintaining backward compatibility.",
+      "cves_patched": [],
+      "tested_projects": [],
+      "requires_bridge": false,
+      "requires_code_changes": false
+    }
+  },
+  "special_cases": {
+    "log4j_migration_1x_to_2x": {
+      "description": "When Log4j 1.x must migrate to 2.x (not reload4j)",
+      "trigger": "User specifies 2.x is required OR reload4j compatibility issues detected",
+      "strategy": "Exclude log4j 1.x globally, add log4j-core + log4j-api + conditional bridges",
+      "steps": [
+        "Add: configurations.all { exclude group: 'log4j', module: 'log4j' }",
+        "Add: implementation 'org.apache.logging.log4j:log4j-core:2.23.1'",
+        "Add: implementation 'org.apache.logging.log4j:log4j-api:2.23.1'",
+        "Check src/ for 'import org.apache.log4j.*' — if found, add log4j-1.2-api:2.23.1",
+        "Check build.gradle for 'slf4j-log4j12' — if found, replace with log4j-slf4j2-impl:2.23.1"
+      ],
+      "nexus_confirmed": true,
+      "notes": "Not auto-selected; requires hybrid or manual review flag"
+    }
+  },
+  "exclusions": {
+    "description": "Libraries that should be handled as dependency type (corrective action) not auto-fix",
+    "reason": "Major migration, multiple strategies, or org-specific decision required",
+    "packages": [
+      {
+        "name": "com.sun.jersey:*",
+        "reason": "GPL-2.0-CPE licensed; requires legal/compliance assessment. May be removed or replaced with Eclipse Jersey 3.x or Apache CXF."
+      },
+      {
+        "name": "com.sun.xml.bind:jaxb1-impl",
+        "reason": "GPL-2.0 licensed; requires replacement with org.glassfish.jaxb:jaxb-runtime (EDL). Involves multiple artifacts."
+      },
+      {
+        "name": "org.jvnet.mimepull:mimepull",
+        "reason": "GPL-2.0 licensed; may need replacement or version bump coordination with JAXB."
+      },
+      {
+        "name": "com.amazonaws:aws-java-sdk-core",
+        "reason": "EOL on 2025-12-31; migration from v1 to v2 involves significant API changes and code rewrites."
+      }
+    ]
+  },
+  "nexus_availability_check": {
+    "description": "How to verify a version is available in internal Nexus before applying",
+    "command_gradle": "./gradlew dependencies --configuration runtimeClasspath 2>/dev/null | grep -A 2 'group:artifact'",
+    "command_maven": "mvn help:describe -Dartifact=group:artifact:version",
+    "expected_success": "Version resolves without 'Could not find' or 'HTTP 404' errors"
+  }
+}

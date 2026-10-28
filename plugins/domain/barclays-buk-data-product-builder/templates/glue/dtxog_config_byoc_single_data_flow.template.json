@@ -1,0 +1,108 @@
+{
+  "metadata": {
+    "version": "0.1",
+    "db_name": "{{target_database}}",
+    "tbl_name": "{{target_table}}",
+    "table_type": "{{table_type}}",
+    "summary": "DTX-OG BYOC configuration (single data flow) for {{target_database}}.{{target_table}}",
+    "datatset_type": "{{data_product_type}}",
+    "owner": {
+      "itbs": "BSN0004626",
+      "itsi": "{{itsi_prod}}",
+      "groups": {
+        "sf_group": "{{sf_group}}",
+        "ownerGroup": "maintenance",
+        "ownerType": "BTB"
+      }
+    }
+  },
+  "services": {
+    "dtxoh": "false",
+    "dtxog": "false",
+    "dtxog-byoc": "true"
+  },
+  "dtxog-byoc": {
+    "app_details": {
+      "env": {
+        "dev": {
+          "state_machine": "dtx-sm-glue-byoc-{{tenancy_name}}",
+          "netcool_details": {
+            "sev": "WARN",
+            "itsi": "{{itsi_dev}}",
+            "compid": "DEFAULT-DEV"
+          },
+          "glue_args": {
+            "worker-type": "G.1X",
+            "number-of-workers": "10",
+            "timeout": "1440",
+            "max-retries": "0",
+            "business_date": "",
+            "execution-class": "STANDARD",
+            "enable-auto-scale": "true",
+            "xtra-args": {
+              "param": "",
+              "sparkConf": "spark.sql.parquet.int96TimestampConversion=True --conf spark.sql.parquet.binaryAsString=true --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions --conf spark.sql.catalog.glue_catalog=org.apache.iceberg.spark.SparkCatalog --conf spark.sql.catalog.glue_catalog.warehouse=file:///tmp/spark-warehouse --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog --conf spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO --conf spark.sql.catalog.glue_catalog.glue.lakeformation-enabled=true --conf spark.sql.catalog.glue_catalog.glue.id={{aws_account_id_dev}} --conf spark.sql.iceberg.handle-timestamp-without-timezone=True --conf spark.sql.execution.arrow.pyspark.enabled=true --conf spark.sql.execution.arrow.pyspark.fallback.enabled=false --conf spark.sql.execution.arrow.maxRecordsPerBatch=100000 --conf spark.sql.crossJoin.enabled=True"
+            }
+          },
+          "byoc": {
+            "wrapper-file": "s3://{{s3_bucket_dev}}/apps/pkg/bin/wrapper.py,s3://{{s3_bucket_dev}}/apps/pkg/{{database_name}}.whl",
+            "package-file": "NA",
+            "package-cnfg": "s3://{{s3_bucket_dev}}/apps/pkg/conf/{{database_name}}/{{table_name}}/config.json"
+          }
+        },
+        "uat": {
+          "state_machine": "dtx-sm-glue-byoc-{{tenancy_name}}",
+          "netcool_details": {
+            "sev": "WARN",
+            "itsi": "{{itsi_uat}}",
+            "compid": "DEFAULT-UAT"
+          },
+          "glue_args": {
+            "worker-type": "G.1X",
+            "number-of-workers": "10",
+            "timeout": "1440",
+            "max-retries": "0",
+            "business_date": "",
+            "execution-class": "STANDARD",
+            "enable-auto-scale": "true",
+            "xtra-args": {
+              "param": "",
+              "sparkConf": "spark.sql.parquet.int96TimestampConversion=True --conf spark.sql.parquet.binaryAsString=true --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions --conf spark.sql.catalog.glue_catalog=org.apache.iceberg.spark.SparkCatalog --conf spark.sql.catalog.glue_catalog.warehouse=file:///tmp/spark-warehouse --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog --conf spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO --conf spark.sql.catalog.glue_catalog.glue.lakeformation-enabled=true --conf spark.sql.catalog.glue_catalog.glue.id={{aws_account_id_uat}} --conf spark.sql.iceberg.handle-timestamp-without-timezone=True --conf spark.sql.execution.arrow.pyspark.enabled=true --conf spark.sql.execution.arrow.pyspark.fallback.enabled=false --conf spark.sql.execution.arrow.maxRecordsPerBatch=100000 --conf spark.sql.crossJoin.enabled=True"
+            }
+          },
+          "byoc": {
+            "wrapper-file": "s3://{{s3_bucket_uat}}/apps/pkg/bin/wrapper.py,s3://{{s3_bucket_uat}}/apps/pkg/{{database_name}}.whl",
+            "package-file": "NA",
+            "package-cnfg": "s3://{{s3_bucket_uat}}/apps/pkg/conf/{{database_name}}/{{table_name}}/config.json"
+          }
+        },
+        "prd": {
+          "state_machine": "dtx-sm-glue-byoc-{{tenancy_name}}",
+          "netcool_details": {
+            "sev": "WARN",
+            "itsi": "{{itsi_prd}}",
+            "compid": "{{compid_prd}}"
+          },
+          "glue_args": {
+            "worker-type": "G.2X",
+            "number-of-workers": "10",
+            "timeout": "2880",
+            "max-retries": "0",
+            "business_date": "",
+            "execution-class": "STANDARD",
+            "enable-auto-scale": "true",
+            "xtra-args": {
+              "param": "",
+              "sparkConf": "spark.sql.parquet.int96TimestampConversion=True --conf spark.sql.parquet.binaryAsString=true --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions --conf spark.sql.catalog.glue_catalog=org.apache.iceberg.spark.SparkCatalog --conf spark.sql.catalog.glue_catalog.warehouse=file:///tmp/spark-warehouse --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog --conf spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO --conf spark.sql.catalog.glue_catalog.glue.lakeformation-enabled=true --conf spark.sql.catalog.glue_catalog.glue.id={{aws_account_id_prd}} --conf spark.sql.iceberg.handle-timestamp-without-timezone=True --conf spark.sql.execution.arrow.pyspark.enabled=true --conf spark.sql.execution.arrow.pyspark.fallback.enabled=false --conf spark.sql.execution.arrow.maxRecordsPerBatch=100000 --conf spark.sql.crossJoin.enabled=True"
+            }
+          },
+          "byoc": {
+            "wrapper-file": "s3://{{s3_bucket_prd}}/apps/pkg/bin/wrapper.py,s3://{{s3_bucket_prd}}/apps/pkg/{{database_name}}.whl",
+            "package-file": "NA",
+            "package-cnfg": "s3://{{s3_bucket_prd}}/apps/pkg/conf/{{database_name}}/{{table_name}}/config.json"
+          }
+        }
+      }
+    }
+  }
+}

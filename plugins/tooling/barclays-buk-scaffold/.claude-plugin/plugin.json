@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-scaffold",
+    "description": "Scaffold new Barclays journey repositories from approved templates — SDF (Chameleon + DAF) stack",
+    "version": "1.0.0",
+    "author": {
+        "name": "Philip Thomas",
+        "email": "philip.thomas@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

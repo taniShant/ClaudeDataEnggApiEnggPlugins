@@ -1,0 +1,42 @@
+pitest {
+    targetClasses = [project.findProperty('pitestTargetClasses') ?: '{basePackage}.*']
+    targetTests = ['{basePackage}.*']
+    jvmArgs = ['-Xmx1024m']
+    useClasspathFile = true
+    reportDir = file("${buildDir}/reports/pit")
+    outputFormats = ['HTML', 'XML']
+
+    jvmArgs = [
+            '--add-opens=java.base/java.lang=ALL-UNNAMED',
+            '--add-opens=java.base/java.lang.invoke=ALL-UNNAMED',
+            '--add-opens=java.base/java.io=ALL-UNNAMED',
+            '--add-opens=java.base/java.net=ALL-UNNAMED',
+            '--add-opens=java.base/java.nio=ALL-UNNAMED',
+            '--add-opens=java.base/java.util=ALL-UNNAMED',
+            '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+            '-XX:+EnableDynamicAgentLoading'
+    ]
+
+    timestampedReports = false
+    historyInputLocation = file("./history.bin")
+    historyOutputLocation = file("./history.bin")
+    timeoutConstInMillis = 600000
+    threads = 8
+    withHistory = true
+    junit5PluginVersion = '1.2.1'
+
+    excludedClasses = ['{basePackage}.**.config.*',
+                       '{basePackage}.**.exception.*',
+                       '{basePackage}.**.beans.*',
+                       '{basePackage}.{AppName}Application']
+    excludedTestClasses = []
+
+    avoidCallsTo = ['java.util.logging',
+                    'org.apache.log4j',
+                    'org.slf4j',
+                    'org.apache.commons.logging',
+                    'com.barclays.api.bap.bld.lib.logging.LogFactory',
+                    'com.barclays.api.bap.bld.lib.logging.Logger',
+                    'com.barclays.api.bap.bld.lib.logging.PerfLogger',
+                    'com.barclays.api.bap.bld.lib.logging.PerfEvent']
+}

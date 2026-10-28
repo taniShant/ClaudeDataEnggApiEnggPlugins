@@ -1,0 +1,12 @@
+{
+  "description": "View resolution example — REPLACE VIEW with JOIN to view",
+  "source_sql": [
+    "REPLACE VIEW l_bcs_loaddb.prior_cycle_v AS SELECT ctcp.NBR_CARDH_ACCT AS Account_Number, ctcp.AMT_CRED_LMT AS Credit_Limit, ctcp.AMT_MIN_PYMT_DUE AS Minimum_Payment_Due FROM s_trmfdb.ctcp WHERE CSUM(1, ctcp.NBR_CARDH_ACCT, ctcp.TIME_LAST_UPD DESC) = 1;",
+    "SELECT ma.account_id, ma.account_name, pc.Credit_Limit, pc.Minimum_Payment_Due FROM e_mortgage_db.mortgage_account ma LEFT JOIN l_bcs_loaddb.prior_cycle_v pc ON ma.account_id = pc.Account_Number WHERE ma.active = '1';"
+  ],
+  "schema_dict": {
+    "s_trmfdb.ctcp": ["NBR_CARDH_ACCT", "AMT_CRED_LMT", "AMT_MIN_PYMT_DUE", "TIME_LAST_UPD"],
+    "e_mortgage_db.mortgage_account": ["account_id", "account_name", "active"]
+  },
+  "target_table": "fdp_uk_mortgage_db.mortgage_account_enriched"
+}

@@ -1,0 +1,8 @@
+# -----------------------------------------------------------------------------
+# NOTICE: Operational headers (channelId, deviceId, businessId, sourceSortCode)
+# have been moved to common-libraries/components/headers.yaml.
+#
+# This file is kept for backward compatibility with existing specs that still
+# $ref from ./components/common/type-common-headers.yaml.
+# New specs should reference all headers from common-libraries/components/headers.yaml.
+# -----------------------------------------------------------------------------

@@ -1,0 +1,19 @@
+{
+  "name": "barclays-buk-software-catalogue",
+  "version": "0.1.0",
+  "description": "Navigate the Barclays Software Catalogue — discover domains, capabilities, APIs, and service owners via the Backstage catalog MCP.",
+  "author": {
+    "name": "Developer AI Tooling",
+    "email": "dspedeveloperaitoolingteam@barclays.com"
+  },
+  "dependencies": ["barclays-buk-standards"],
+  "userConfig": {
+    "environment": {
+      "title": "Backstage environment",
+      "description": "Which Backstage environment to query",
+      "type": "string",
+      "options": ["production", "non-production"],
+      "default": "production"
+    }
+  }
+}

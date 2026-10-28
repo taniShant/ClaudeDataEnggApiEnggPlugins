@@ -1,0 +1,11 @@
+{
+    "name": "barclays-buk-nx-angular-migration-toolkit",
+    "description": "Handles Nx Angular (especially Angular 12 to newer Angular versions) repository migration. Find current version, plan and migrate one version at a time. Find out Blueprint Angular version and also upgrade the same as needed.",
+    "version": "1.0.0",
+    "author": {
+        "name": "Sayan Sengupta",
+        "email": "sayan.sengupta@barclays.com"
+    },
+    "license": "Barclays Internal",
+    "dependencies": ["barclays-buk-standards"]
+}

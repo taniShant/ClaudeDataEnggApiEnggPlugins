@@ -1,0 +1,84 @@
+schema_version: '1.0'
+domain:
+  id: dom.scheduled-payments
+  name: Scheduled Payments
+  description: "The Scheduled Payments Domain provides the capabilities required to create, maintain, monitor, and trigger initiation of future-dated, recurring, and mandate-based payment arrangements across BUK. It manages the scheduled payment instructions, ensuring they are securely stored, governed, amended, and triggered at the appropriate time in accordance with customer instructions. The domain standardises scheduled payment initiation, providing a secure, governed and channel-agnostic approach to manage scheduled payment obligations."
+  owner: capl
+  bian_links:
+    -
+      title: Direct Debit Mandate
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=46204"
+    -
+      title: Direct Debit
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=32677"
+    -
+      title: Standing Order
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=34129"
+  sub_domains:
+    -
+      id: sub.sp.mandate-management
+      name: Mandate Management
+      description: "Provides the capabilities required to establish, maintain and manage recurring and future-dated payment mandates throughout their lifecycle."
+      capabilities:
+        -
+          id: cap.sp.maintain-payment-schedule
+          name: Maintain Payment Schedule
+          description: "Provides the capability to establish and maintain payment schedules for recurring and future-dated payment arrangements. Supports the definition of payment frequency, execution dates, recurrence patterns, and scheduling preferences in accordance with applicable payment policies."
+        -
+          id: cap.sp.manage-direct-debit-mandates
+          name: Manage Direct Debit Mandates
+          description: "Provides the capability to create, maintain, suspend, reactivate, and cancel Direct Debit mandates throughout their lifecycle. Ensures mandate arrangements remain valid and available for scheduled collection processing."
+        -
+          id: cap.sp.manage-future-dated-payment
+          name: Manage Future Dated Payment
+          description: "Provides the capability to create, maintain, amend, and cancel future-dated payment arrangements. Ensures payment instructions are scheduled for execution on the customer-designated date in accordance with applicable payment policies."
+        -
+          id: cap.sp.manage-standing-order-mandates
+          name: Manage Standing Order Mandates
+          description: "Provides the capability to create, maintain, amend, suspend, and cancel standing order arrangements throughout their lifecycle. Ensures recurring payment instructions are managed in accordance with customer preferences and payment schedules."
+    -
+      id: sub.sp.process-scheduled-payments
+      name: Process Scheduled Payments
+      description: "Provides the capabilities required to calculate due payment occurrences, generate payment instructions, and trigger execution of recurring and future-dated payment arrangements in accordance with the applicable schedule, mandate terms, and payment policies."
+      capabilities:
+        -
+          id: cap.sp.forecast-scheduled-payment-activity
+          name: Forecast Scheduled Payment Activity
+          description: "Provides the capability to calculate and present projected payment obligations and expected payment flows using scheduled payment mandates, future-dated payment instructions, and recurring payment commitments. Ensures visibility of anticipated payment activity to support planning, liquidity management, customer servicing, and operational decision-making."
+        -
+          id: cap.sp.process-and-manage-direct-debit-collection-requests
+          name: Process and Manage Direct Debit Collection Requests
+          description: Provides the capability to generate and trigger Direct Debit collection requests when they become due. Ensures collection instructions are submitted in accordance with the associated Direct Debit mandate and collection schedule.
+        -
+          id: cap.sp.process-future-dated-payments
+          name: Process Future Dated Payments
+          description: Provides the capability to generate and trigger future-dated payment instructions when their scheduled execution date is reached. Ensures payments are submitted in accordance with the configured payment arrangement and applicable payment policies.
+        -
+          id: cap.sp.process-standing-orders
+          name: Process Standing Orders
+          description: Provides the capability to generate and trigger standing order payments in accordance with the configured payment schedule and mandate terms. Ensures recurring payments are submitted accurately and on time.
+        -
+          id: cap.sp.process-vrp-collection-requests
+          name: Process Vrp Collection Requests
+          description: "Provides the capability to generate and trigger Variable Recurring Payment collection requests in accordance with the customer's consent, mandate terms, and applicable collection rules. Ensures payment collections are initiated within the authorised consent parameters."
+    -
+      id: sub.sp.service-scheduled-payment
+      name: Service Scheduled Payment
+      description: "Provides the capabilities required to monitor, service, and support scheduled payment arrangements throughout their lifecycle. Ensures visibility of mandate status, scheduled executions, payment outcomes, customer communications, and exception handling activities."
+      capabilities:
+        -
+          id: cap.sp.manage-direct-debit-returns
+          name: Manage Direct Debit Returns
+          description: Provides the capability to manage the return of a direct debit collection. This capability includes the determination of eligibility of a collection for return and the recording of whether a direct debit collection is to be returned.
+        -
+          id: cap.sp.manage-scheduled-payment-customer-communication
+          name: Manage Scheduled Payment Customer Communication
+          description: Provides the capability to initiate customer communications relating to scheduled payment mandates and execution events. Raises communication requests through the enterprise communications platform while not generating communication content or managing delivery channels.
+        -
+          id: cap.sp.provide-scheduled-payment-information
+          name: Provide Scheduled Payment Information
+          description: "Provides the capability to retrieve and provide information relating to scheduled payment arrangements, including mandate details, execution schedules, payment history, and current status. Ensures customers, channels, and downstream services have visibility of scheduled payment activity."
+        -
+          id: cap.sp.support-indemnity-claims
+          name: Support Indemnity Claims
+          description: "Provides the capability to manage indemnity claims associated with scheduled payment arrangements. Supports claim initiation, investigation, tracking, and resolution in accordance with applicable payment scheme rules and bank policies."

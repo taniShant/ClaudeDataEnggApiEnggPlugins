@@ -1,0 +1,144 @@
+{
+  "rows": [
+    {
+      "target_database": "cdp_uk_account_db",
+      "target_table": "consolidated_account",
+      "target_column_name": "account_id",
+      "target_column_description": "Primary account identifier from both current and savings sources",
+      "target_column_datatype": "string",
+      "target_column_null_flag": "N",
+      "source_database": "fdp_uk_current_account_db; fdp_uk_savings_account_db",
+      "source_table_name": "fdp_uk_current_account_db.current_account; fdp_uk_savings_account_db.savings_account",
+      "source_column_name": "fdp_uk_current_account_db.current_account.account_id; fdp_uk_savings_account_db.savings_account.account_id",
+      "business_logic": "Union Branch 1: SELECT account_id FROM fdp_uk_current_account_db.current_account (ca)\nUnion Branch 2: SELECT account_id FROM fdp_uk_savings_account_db.savings_account (sa)\nUnion Type: UNION ALL\nValue: account_id",
+      "additional_context": "load_type:BAU|process_frequency:daily|cdc_type:snapshot",
+      "target_table_description": "Consolidated account view combining current and savings accounts via UNION ALL. Grain: account_id + source_system.",
+      "transformation_type": "Derived",
+      "default_value": "",
+      "target_table_type": "NonTransactional_SCD1",
+      "key_column": "Y"
+    },
+    {
+      "target_database": "cdp_uk_account_db",
+      "target_table": "consolidated_account",
+      "target_column_name": "account_balance",
+      "target_column_description": "Account balance from respective source system",
+      "target_column_datatype": "decimal(18,2)",
+      "target_column_null_flag": "Y",
+      "source_database": "fdp_uk_current_account_db; fdp_uk_savings_account_db",
+      "source_table_name": "fdp_uk_current_account_db.current_account; fdp_uk_savings_account_db.savings_account",
+      "source_column_name": "fdp_uk_current_account_db.current_account.balance; fdp_uk_savings_account_db.savings_account.balance",
+      "business_logic": "Union Branch 1: SELECT balance AS account_balance FROM fdp_uk_current_account_db.current_account (ca)\nUnion Branch 2: SELECT balance AS account_balance FROM fdp_uk_savings_account_db.savings_account (sa)\nUnion Type: UNION ALL\nValue: balance AS account_balance",
+      "additional_context": "",
+      "target_table_description": "",
+      "transformation_type": "Derived",
+      "default_value": "",
+      "target_table_type": "",
+      "key_column": "N"
+    },
+    {
+      "target_database": "cdp_uk_account_db",
+      "target_table": "consolidated_account",
+      "target_column_name": "source_system",
+      "target_column_description": "Identifies which source system provided the record",
+      "target_column_datatype": "string",
+      "target_column_null_flag": "N",
+      "source_database": "(derived)",
+      "source_table_name": "(derived)",
+      "source_column_name": "(derived)",
+      "business_logic": "Union Branch 1: SELECT 'CURRENT' AS source_system FROM fdp_uk_current_account_db.current_account (ca)\nUnion Branch 2: SELECT 'SAVINGS' AS source_system FROM fdp_uk_savings_account_db.savings_account (sa)\nUnion Type: UNION ALL\nValue: Hardcoded per branch ('CURRENT' or 'SAVINGS')",
+      "additional_context": "",
+      "target_table_description": "",
+      "transformation_type": "Derived",
+      "default_value": "",
+      "target_table_type": "",
+      "key_column": "N"
+    },
+    {
+      "target_database": "cdp_uk_account_db",
+      "target_table": "consolidated_account",
+      "target_column_name": "dw_lod_tmp",
+      "target_column_description": "Data warehouse load timestamp",
+      "target_column_datatype": "timestamp",
+      "target_column_null_flag": "N",
+      "source_database": "(system)",
+      "source_table_name": "(system)",
+      "source_column_name": "(system)",
+      "business_logic": "current_timestamp()",
+      "additional_context": "",
+      "target_table_description": "",
+      "transformation_type": "Derived",
+      "default_value": "",
+      "target_table_type": "",
+      "key_column": "N"
+    },
+    {
+      "target_database": "cdp_uk_account_db",
+      "target_table": "consolidated_account",
+      "target_column_name": "dw_upd_lod_tmp",
+      "target_column_description": "Data warehouse update load timestamp",
+      "target_column_datatype": "timestamp",
+      "target_column_null_flag": "N",
+      "source_database": "(system)",
+      "source_table_name": "(system)",
+      "source_column_name": "(system)",
+      "business_logic": "current_timestamp()",
+      "additional_context": "",
+      "target_table_description": "",
+      "transformation_type": "Derived",
+      "default_value": "",
+      "target_table_type": "",
+      "key_column": "N"
+    }
+  ],
+  "source_volumetrics": [
+    {
+      "source_database": "fdp_uk_current_account_db",
+      "source_table": "current_account",
+      "estimated_rows": "",
+      "estimated_size_gb": "",
+      "partition_columns": "",
+      "partition_count": "",
+      "update_frequency": "",
+      "incremental_column": "",
+      "join_role": "union_branch_1",
+      "broadcast_hint": ""
+    },
+    {
+      "source_database": "fdp_uk_savings_account_db",
+      "source_table": "savings_account",
+      "estimated_rows": "",
+      "estimated_size_gb": "",
+      "partition_columns": "",
+      "partition_count": "",
+      "update_frequency": "",
+      "incremental_column": "",
+      "join_role": "union_branch_2",
+      "broadcast_hint": ""
+    }
+  ],
+  "_meta": {
+    "classification": {
+      "data_product_type": "CDP",
+      "table_type": "NonTransactional_SCD1",
+      "crypto_aspect": "None"
+    },
+    "union_metadata": {
+      "is_union": true,
+      "union_type": "UNION ALL",
+      "branch_count": 2,
+      "branches": [
+        {
+          "branch_number": 1,
+          "source_tables": ["fdp_uk_current_account_db.current_account"],
+          "joins_detected": {}
+        },
+        {
+          "branch_number": 2,
+          "source_tables": ["fdp_uk_savings_account_db.savings_account"],
+          "joins_detected": {}
+        }
+      ]
+    }
+  }
+}

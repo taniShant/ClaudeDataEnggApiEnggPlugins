@@ -1,0 +1,122 @@
+schema_version: '1.0'
+domain:
+  id: dom.payment-initiation
+  name: Payment Initiation
+  description: "The Payment Initiation Domain provides the capabilities required to capture, validate, authorise, enrich and orchestrate account-to-account payment instructions across all BUK channels. It processes customer payment instruction and transforms it into execution-ready payment order or diarises the instruction incase of scheduled  payments by applying business, risk and controls consistently across domestic and international payment journeys. The domain standardises payment initiation, ensuring a secure, governed, and channel-agnostic approach before payment instructions enter the execution lifecycle."
+  owner: capl
+  bian_links:
+    -
+      title: Disbursement
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=41459"
+    -
+      title: Payment Execution
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=39023"
+    -
+      title: Payment Initiation
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=29967"
+    -
+      title: Payment Order
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=35550"
+  sub_domains:
+    -
+      id: sub.pmti.beneficiary-management
+      name: Beneficiary Management
+      description: "The Beneficiary Management sub-domain provides the functions required to create, validate, maintain, govern and retrieve beneficiary information across account-to-account payment journeys. It acts as the authoritative payment beneficiary repository and manages the end-to-end lifecycle of beneficiaries ensuring that payee details are accurate, consistent, and readily available for payment initiation."
+      capabilities:
+        -
+          id: cap.pmti.manage-beneficiary-information
+          name: Manage Beneficiary Information
+          description: "Provides the capability to create, maintain, and retrieve beneficiary information used in payment initiation. Supports both traditional account-based beneficiaries and contact-based payment identifiers (for example, Pay by Phone contacts), enabling accurate payee resolution, reuse across payment journeys, and reducing the risk of misdirected payments."
+    -
+      id: sub.pmti.contact-payment-enrolment-and-discovery
+      name: Contact Payment Enrolment and Discovery
+      description: "The Contact Payment Enrolment and Discovery sub-domain provides the capabilities required to manage customer participation in contact-based payment services, including enrolment, account nomination, discoverability, and recipient identification."
+      capabilities:
+        -
+          id: cap.pmti.determine-contact-based-payment-recipients
+          name: Determine Contact-Based Payment Recipients
+          description: "Provides the capability to determine whether a selected contact is enrolled, discoverable, and eligible to receive a contact-based payment."
+        -
+          id: cap.pmti.manage-contact-based-payment-participation
+          name: Manage Contact-Based Payment Participation
+          description: "Provides the capability to register, manage, and withdraw participation in contact-based payment services, including account nomination and discoverability preferences."
+    -
+      id: sub.pmti.payment-authorisation-and-controls
+      name: "Payment Authorisation & Controls"
+      description: "The Payment Authorisation and Controls sub-domain provides the capabilities required to evaluate, authorise, and govern payment instructions across account-to-account payment journeys. It manages the application of payment controls, including funds availability, limits assessment, fraud risk evaluation, multi-party authorisation, and funds earmarking, ensuring payments are approved and processed in accordance with customer instructions, risk policies."
+      capabilities:
+        -
+          id: cap.pmti.evaluate-limits-and-controls
+          name: "Evaluate Limits & Controls"
+          description: "Provides the capability to assess payment instructions against customer, account, channel, and product-level limits and control policies. Determines whether a payment can proceed, requires additional authorisation or should be declined. Supports processing through the application of controlled fallback limits when primary limit management services or usage data are unavailable, ensuring safe, resilient, and consistent payment decisioning."
+        -
+          id: cap.pmti.manage-fraud-risk
+          name: Manage Fraud Risk
+          description: "Provides the capability to orchestrate fraud risk evaluation for payment instructions using payment context, behavioural signals, and risk attributes. Invokes enterprise fraud services and enforces the resulting decision, including payment approval, challenge, or decline. Supports processing through the application of controlled fallback risk controls when primary fraud-decisioning services are unavailable, ensuring safe, resilient, and consistent payment processing while minimising customer disruption."
+        -
+          id: cap.pmti.manage-multi-party-authorisation
+          name: Manage Multi-Party Authorisation
+          description: "Provides the capability to orchestrate and enforce multi-party approval requirements for payment instructions. Supports payment scenarios requiring multiple approvers, including dual-signatory, multi-signatory, delegated authority, and third-party initiated payment arrangements. Ensures that payment instructions progress only when all required approvals have been obtained in accordance with the applicable mandate, signing authority, and approval rules."
+        -
+          id: cap.pmti.perform-earmarking-of-funds
+          name: Perform Earmarking of Funds
+          description: Provides the capability to reserve funds for payment where execution certainty is required. Confirms that sufficient funds are available through the appropriate account services and places a temporary hold to support real-time and time-critical payment journeys. Ensures reserved funds remain available for execution while not performing account posting or settlement.
+        -
+          id: cap.pmti.validate-available-funds
+          name: Validate Available Funds
+          description: "Provides the capability to validate funds availability for payment through the appropriate account services. Determines whether sufficient funds are available for the intended payment and returns the outcome required to progress the payment journey. Supports processing through the use of controlled fallback balance information when primary balance or ledger services are unavailable, ensuring resilient payment initiation, controlled service degradation, and reduced risk of false declines."
+    -
+      id: sub.pmti.payment-communication-and-monitoring
+      name: "Payment Communication & Monitoring"
+      description: "The Payment Communication and Monitoring sub-domain provides the capabilities required to trigger payment-related customer communications throughout the payment initiation lifecycle. It ensures that relevant payment initiation events are communicated consistently, accurately, and in a timely manner to customers. (should the name be revised to payment initiation communications)."
+      capabilities:
+        -
+          id: cap.pmti.manage-payment-communications
+          name: Manage Payment Communications
+          description: "Provides the capability to initiate payment-related customer communications across the payment lifecycle. Initiates communication requests for payment events through the enterprise communications platform. Does not generate communication content or manage delivery channels, but ensures the appropriate communication events are raised at the correct stage of the payment journey."
+    -
+      id: sub.pmti.payment-instruction-validation-and-pre-processing
+      name: "Payment Instruction Validation & Pre-Processing"
+      description: "The Payment Instruction Validation and Pre-Processing sub-domain provides the capabilities required to validate, assess, and prepare payment instructions across account-to-account payment journeys. It manages the application of pre-processing and validation controls, including payment eligibility assessment, instruction validation, duplicate payment detection, fee and charge calculation, permitted payment amount determination, and future payment date calculation, ensuring payment instructions are complete, accurate, compliant, and ready for downstream authorisation and processing. The sub-domain standardises payment validation and pre-processing, providing a consistent, governed, and channel-agnostic approach to payment readiness."
+      capabilities:
+        -
+          id: cap.pmti.assess-payment-eligibility
+          name: Assess Payment Eligibility
+          description: "Provides the capability to assess payment instructions against customer entitlements, account permissions, product rules, and payment constraints. Determines whether a payment instruction is eligible to proceed through the payment journey and ensures that only valid payment instructions progress to authorisation and processing."
+        -
+          id: cap.pmti.calculate-future-payment-date
+          name: Calculate Future Payment Date
+          description: "Provides the capability to determine the appropriate execution date for future-dated and recurring payment instructions. Evaluates payment schedules, business rules, calendar constraints, and non-processing days to calculate a valid payment date in accordance with the applicable payment policy."
+        -
+          id: cap.pmti.calculate-payment-fees-and-charges
+          name: "Calculate Payment Fees & Charges"
+          description: "Provides the capability to determine applicable fees and charges for payment. Evaluates payment attributes against product rules, customer segment policies, and currency-specific charging rules, and obtains the relevant fees, surcharges, and charges from the appropriate systems and domains. Ensures the applicable charges are calculated and applied in accordance with the relevant payment policy."
+        -
+          id: cap.pmti.calculate-permitted-payment-amount
+          name: Calculate Permitted Payment Amount
+          description: "Provides the capability to determine the amount available for a customer to initiate based on applicable account, product, customer, and payment-specific rules. Considers factors such as existing payment commitments, reserved funds, product constraints, and applicable policies to calculate the maximum amount that can be initiated and presented to the customer."
+        -
+          id: cap.pmti.validate-duplicate-payment
+          name: Validate Duplicate Payment
+          description: Provides the capability to identify potential duplicate payment instructions before submission for processing. Evaluates payment attributes against previously initiated payments to determine whether a payment may have already been submitted and ensures appropriate action is taken to prevent duplicate execution. Supports consistent and idempotent payment initiation across channels and journeys.
+        -
+          id: cap.pmti.validate-payment-instruction
+          name: Validate Payment Instruction
+          description: "Provides the capability to validate the completeness, accuracy, and conformity of payment instructions prior to processing, ensuring only valid payment instructions progress through the payment journey."
+    -
+      id: sub.pmti.payment-orchestration
+      name: Payment Orchestration
+      description: "The Payment Orchestration sub-domain provides the capabilities required to capture, orchestrate, and manage payment instructions across account-to-account payment journeys. It manages the end-to-end lifecycle of payment instructions, coordinating the execution of payment initiation tasks , business rules, validations, decisioning logic, and downstream interactions to ensure payments are initiated consistently across all channels and payment types. The sub-domain establishes a single orchestration layer and authoritative record for payment instructions, providing a governed, channel-agnostic, and reusable approach to payment initiation journey and state management."
+      capabilities:
+        -
+          id: cap.pmti.capture-payment-instruction
+          name: Capture Payment Instruction
+          description: Provides the capability to capture payment instructions from all BUK channels and represent them in a consistent payment instruction format. Ensures payment data is standardised and enriched with the information required to support downstream validation and processing activities.
+        -
+          id: cap.pmti.manage-payment-instruction-state
+          name: Manage Payment Instruction State
+          description: "Provides the capability to manage the lifecycle state of payment instructions throughout the payment initiation journey. Maintains and tracks payment instruction status as it progresses through initiation, validation, authorisation, fulfilment, and completion activities. Ensures auditability, traceability, and visibility of payment status for downstream services and channels."
+        -
+          id: cap.pmti.process-payment-instruction
+          name: Process Payment Instruction
+          description: Provides the capability to orchestrate the end-to-end processing of payment instructions across the payment initiation lifecycle. Ensures payment instructions satisfy all initiation requirements before progressing as validated and authorised payment instructions ready for order creation.

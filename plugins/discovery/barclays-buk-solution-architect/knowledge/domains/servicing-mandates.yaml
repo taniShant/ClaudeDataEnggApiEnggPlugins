@@ -1,0 +1,96 @@
+schema_version: '1.0'
+domain:
+  id: dom.servicing-mandates
+  name: Servicing Mandates
+  description: |
+    The Servicing Mandates Domain establishes and governs the formal delegation framework that enables authorized parties to act on behalf of Barclays customers. It maintains the definitive record of mandate agreements that control access permissions to Barclays products and services, ensuring all transactions executed under delegated authority remain compliant with regulatory  standards and customer expectations.
+    The domain serves as the authoritative source for mandate information across all Barclays channels and business lines, enabling consistent authorization experiences while protecting customers from unauthorized access and fraudulent activity.
+    This domain provides the required configuration capabilities for enforcement of the mandate rules on transactions limits e.g. while making payments, authorize channel access e.g. carrying out transactions/accessing products/services.
+    This domain does not directly control transaction limits, authorize access to channels and authenticate customer actions. The capabilities in this domain maybe used by other domains e.g. Payments, Customer Identity and Access to execute transactions and access controls.
+  owner: bb
+  bian_links:
+    - title: Servicing Mandate
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=35374"
+  sub_domains:
+  - id: sub.sm.mandate-configuration
+    name: Mandate Configuration
+    description: >
+      Defines the parameters, scope and rules for different mandate types across Barclays' product portfolio, including signatory requirements, transaction limits, and channel-specific controls
+    capabilities:
+    - id: cap.sm.manage-mandate-and-signatory-rules
+      name: Manage Mandate and Signatory Rules
+      description: Define and maintain authorization rules, signatory requirements, approval hierarchies, and delegation mandates governing transactional and operational authorities for accounts and products.
+    - id: cap.sm.manage-transactional-limit-controls
+      name: Manage Transactional Limit Controls
+      description: Establish and administer monetary thresholds, velocity limits, and transaction constraints governing payments, transfers, and financial operations across customer accounts and channels.
+    - id: cap.sm.provision-ability-to-authorize-access-channels
+      name: Provision Ability to Authorize Access Across Channels
+      description: Provides ability to configure access permissions, channel restrictions, and authorization controls governing customer interactions across digital, branch, and third-party banking channels and interfaces.
+    - id: cap.sm.provide-ability-to-configure-product-mandates
+      name: Provide Ability to Configure Product Mandates
+      description: Define product-specific mandate requirements, authorization frameworks, and signatory controls aligned to account types, customer segments, and regulatory compliance requirements.
+  - id: sub.sm.mandate-lifecycle-management
+    name: Mandate Lifecycle Management
+    description: >
+      Maintains the end-to-end process of mandate creation, amendment, renewal and termination across all Barclays relationships
+    capabilities:
+    - id: cap.sm.establish-and-activate-mandate-agreements
+      name: Establish and Activate Mandate Agreements
+      description: Initiate, validate, and activate new mandate arrangements including signatory registrations, authorization frameworks, and approval workflows for customer accounts and services.
+    - id: cap.sm.process-mandate-amendments
+      name: Process Mandate Amendments
+      description: Execute changes to existing mandate agreements including signatory updates, authority revisions, limit adjustments, and approval hierarchy modifications throughout the mandate lifecycle.
+    - id: cap.sm.manage-monitor-and-maintain-mandate-relationships
+      name: Manage, Monitor and Maintain Mandate Relationships
+      description: Oversee ongoing mandate arrangements, monitor compliance with authorization rules, manage signatory relationships, and maintain mandate validity across customer portfolios and products.
+  - id: sub.sm.mandate-servicing
+    name: Mandate Servicing
+    description: >
+      Delivers mandate capabilities that enable customers to effectively delegate authority while maintaining appropriate control over their banking relationships
+    capabilities:
+    - id: cap.sm.provide-customers-with-ability-to-inquire-and-retrieve
+      name: Provide Customers With Ability to Inquire and Retrieve Mandates Information
+      description: Provide customers with access to mandate details, signatory information, authorization levels, approval statuses, and current mandate arrangements across accounts and channels.
+    - id: cap.sm.provide-ability-to-configure-delegate-access
+      name: Provide Ability to Configure Delegate Access
+      description: Enable customers to grant delegate access, assign proxy authorities, provision third-party mandates, and establish authorized representative relationships for account and transaction management.
+    - id: cap.sm.provide-ability-to-notify-mandate-event
+      name: Provide Ability to Trigger Notifications/alerts to Customers on Mandate Event
+      description: Facilitates delivery real-time notifications regarding mandate changes, authorization requests, signatory updates, approval workflows, and critical mandate events through customer-preferred communication channels.
+    - id: cap.sm.provide-ability-to-generate-mandate-documents
+      name: Provide Ability to Generate Mandate Documents
+      description: Facilitates production of mandate agreements, authorization certificates, signatory declarations, delegation letters, and compliance documentation for customer records, legal requirements, and regulatory submissions.
+    - id: cap.sm.provide-advice-and-guidance-on-mandate-set-up
+      name: Provide Advice and Guidance on Mandate Set up
+      description: Provide expert guidance on optimal mandate configurations, recommend authorization frameworks, advise on signatory arrangements, and support customers in designing effective governance structures.
+    - id: cap.sm.provide-an-ability-to-self-serve-mandate-requests
+      name: Provide an Ability to Self-Serve Mandate Requests
+      description: Enable customers to independently manage mandate requests, update signatory information, modify authorization levels, and perform routine mandate maintenance through digital self-service channels.
+    - id: cap.sm.monitor-mandate-activities
+      name: Monitor Mandate Activities
+      description: Empower customers to review mandate usage, monitor authorization activities, track signatory actions, and oversee delegate performance through dashboards and reporting tools.
+  - id: sub.sm.mandate-verification
+    name: Mandate Verification
+    description: >
+      Provides real-time verification of mandate validity and authorization parameters during transaction processing across all customer touchpoints
+    capabilities:
+    - id: cap.sm.validate-and-verify-mandate-authorization
+      name: Validate and Verify Mandate Authorization
+      description: Authenticate and verify signatory authorities, validate authorization levels, confirm mandate compliance, and ensure transactional requests align with established mandate rules and requirements.
+    - id: cap.sm.support-the-ability-to-handle-authorization-exceptions
+      name: Support the Ability to Handle Authorization Exceptions
+      description:  Identify authorization breaches, escalate mandate violations, process exception approvals, and resolve non-compliant transactions through alternative authorization workflows and override procedures.
+  - id: sub.sm.regulatory-compliance
+    name: Regulatory Compliance
+    description: >
+      Ensures all mandate arrangements adhere to relevant financial regulations, anti-money laundering requirements, and internal governance policies
+    capabilities:
+    - id: cap.sm.manage-mandate-audit-data-for-compliance
+      name: Manage Mandate Audit Data for Compliance
+      description: Maintain comprehensive audit records, track mandate changes, document authorization activities, and preserve compliance evidence supporting regulatory examinations, internal audits, and governance requirements.
+    - id: cap.sm.report-regulatory-mandate-data
+      name: Report Regulatory Mandate Data
+      description: Prepare and submit regulatory reports, disclose mandate arrangements to authorities, provide compliance certifications, and fulfill supervisory reporting obligations for signatory and authorization frameworks.
+    - id: cap.sm.assess-impact-of-regulatory-changes-on-mandates
+      name: Assess Impact of Regulatory Changes on Mandates
+      description: Analyze regulatory updates affecting mandate requirements, assess compliance gaps, evaluate operational impacts, and determine necessary adaptations to authorization policies and signatory frameworks.

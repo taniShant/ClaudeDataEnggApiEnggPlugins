@@ -1,0 +1,28 @@
+schema_version: '1.0'
+domain:
+  id: dom.knowledge-management
+  name: Knowledge Management
+  description: "Knowledge Management enables the bank to create, govern, maintain, and deliver authoritative operational knowledge—such as Articles, FAQs, procedures, policies, T&Cs and guidance—to support consistent execution of customer servicing, operations, risk handling, and regulatory compliance across all channels.  The domain ensures that operational knowledge is- Authoritative, Current, Contextual, Auditable"
+  owner: cc
+  bian_links:
+    -
+      title: Knowledge and Intellectual Property Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_25.html?object=131164"
+    -
+      title: Management Manual
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=32915"
+  sub_domains:
+    -
+      id: sub.km.knowledge-management
+      name: Knowledge Management
+      description: "Knowledge Management enables the bank to create, govern, maintain, and deliver authoritative operational knowledge—such as Articles, FAQs, procedures, policies, T&Cs and guidance—to support consistent execution of customer servicing, operations, risk handling, and regulatory compliance across all channels.  The domain ensures that operational knowledge is- Authoritative, Current, Contextual, Auditable"
+      capabilities:
+        -
+          id: cap.km.maintain-operational-knowledge-assets
+          name: Maintain Operational Knowledge Assets
+          description: "Maintains authoritative operational knowledge content by governing its accuracy, relevance, and currency throughout its lifecycle, enabling consistent, compliant, and trusted information to support effective customer servicing and operational decision-making across the organisation."
+        -
+          id: cap.km.provide-operational-knowledge-access
+          name: Provide Operational Knowledge Access
+          description: "Provides controlled access to authoritative operational knowledge aligned to role and context, enabling accurate, consistent, and compliant decision-making and customer servicing by ensuring relevant information is available when required across the organisation."
+

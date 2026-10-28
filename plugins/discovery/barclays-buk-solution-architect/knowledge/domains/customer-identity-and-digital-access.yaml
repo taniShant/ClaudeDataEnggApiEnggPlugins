@@ -1,0 +1,66 @@
+schema_version: '1.0'
+domain:
+  id: dom.customer-identity-and-digital-access
+  name: Customer Identity and Digital Access
+  description: The Customer Identity & Digital Access (CIDA) Domain is responsible for the creation, verification, management, and governance of digital identities, profiles and permissions for customers / parties digitally interacting with the bank. This domain ensures that customers can be safely onboarded, are uniquely identified, authenticated, authorized, and supported throughout their digital relationship with the bank, while enabling colleagues to service and manage the underlying digital capabilities integrating with the XDP Customer Identity and Access Management (CIAM) solution.
+  owner: digital
+  bian_links:
+    -
+      title: Party Authentication
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=40912"
+    -
+      title: Party Lifecycle Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=29780"
+    -
+      title: Customer Access Entitlement
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=30136"
+    -
+      title: Issued Device Administration
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=30905"
+    -
+      title: Issued Device Tracking
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=30205"
+    -
+      title: Processing Order
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=33179"
+    -
+      title: Servicing Order
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=32295"
+  sub_domains:
+  - id: sub.cida.access-and-permissions-context
+    name: Access and Permissions
+    description: The Access and Permissions sub-domain encompasses the capabilities that determine and enforce what actions a user can perform within a channel by applying profile‑based permissions and access rules, 
+    capabilities:
+    - id: cap.cida.determine-customer-permissions-and-entitlements
+      name: Determine Customer Permissions and Entitlements
+      description: Determination of access permissions for customers based on identity attributes, persona, profile context, and applicable policies, enabling consistent and secure access to products, services, and customer journeys.
+    - id: cap.cida.apply-channel-access-policies
+      name: Apply Channel Access Policies
+      description: The Apply Channel Access Policies capability applies BUK-specific policies to determine how authenticated identities can access digital channels.
+  - id: sub.cida.digital-identity-and-profile-management
+    name: Digital Identity and Profile Management
+    description: The Identity Context and Profile Management sub‑domain encompasses the capabilities required to create, maintain, and govern customer identity profiles across their lifecycle, enabling a consistent representation of the customer, and effective progression through onboarding and ongoing relationship changes.
+    capabilities:
+    - id: cap.cida.determine-digital-identities
+      name: Determine Digital Identities
+      description: Establish, maintain and materialise digital identities and personas that enable credentials to be created to allow user access to the channels.
+    - id: cap.cida.determine-customer-profiles
+      name: Determine Customer Profiles
+      description: Maintaining customer profiles representing relationships, roles, and contextual attributes across products and services, enabling personalised experiences and appropriate access control throughout customer interactions.
+  - id: sub.cida.identity-servicing-and-orchestration
+    name: Identity Servicing and Orchestration
+    description: The Identity Servicing and Orchestration sub‑domain encompasses the capabilities that support customers in managing their identity position by assisting with identity verification, recovery, access issues, and related identity‑based servicing activities, ensuring continuity, trust, and appropriate access across customer journeys.
+    capabilities:
+    - id: cap.cida.provide-colleague-identity-support
+      name: Provide Colleague Identity Support
+      description: Provide Colleague Identity Support is the capability that enables colleagues to assist customers with identity and access‑related servicing needs, including onboarding support, identity recovery, and access troubleshooting, ensuring customers can securely manage and regain access to their services.
+    - id: cap.cida.provide-customer-identity-support
+      name: Provide Customer Identity Support
+      description: Allow customers to directly manage their digital identity servicing issues including features like password resets, account unblocking, and so on.
+  - id: sub.cida.trust-and-assurance-orchestration
+    name: Trust and Assurance Orchestration
+    description: Trust and Assurance Orchestration is the sub‑domain that encompasses the capabilities required to determine when and how identity‑related actions—such as authentication, verification, recovery, or step‑up—are required during customer journeys, ensuring appropriate trust, security, and continuity across interactions.
+    capabilities:
+    - id: cap.cida.validate-authentication-policy
+      name: Validate Authentication Policy
+      description: Validate Authentication Policy is the capability that evaluates customer and journey context to determine when identity‑related actions—such as authentication, verification, recovery, or step‑up—are required, coordinating these actions to enable secure and uninterrupted progression through customer journeys.

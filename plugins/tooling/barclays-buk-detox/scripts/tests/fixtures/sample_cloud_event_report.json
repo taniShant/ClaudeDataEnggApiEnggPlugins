@@ -1,0 +1,38 @@
+{
+  "specversion": "1.0",
+  "type": "com.example.vulnerability.report",
+  "source": "wiz-scanner",
+  "id": "wiz-report-20240101-001",
+  "time": "2024-01-01T12:00:00Z",
+  "vulnerabilityFindings": {
+    "reportId": "wiz-report-20240101-001",
+    "timestamp": "2024-01-01T12:00:00Z",
+    "scannerVersion": "1.0.0",
+    "findings": [
+      {
+        "id": "cloud-001",
+        "title": "SQL Injection in Query",
+        "description": "String interpolation in SQL query",
+        "severity": "CRITICAL",
+        "cwe": "CWE-89",
+        "filePath": "src/db.py",
+        "lineNumber": 42,
+        "codeSnippet": "query = f\"SELECT * FROM users WHERE id = {user_id}\"",
+        "ruleId": "python-sql-injection",
+        "confidence": "high"
+      },
+      {
+        "id": "cloud-002",
+        "title": "Hardcoded Secret",
+        "description": "API key hardcoded in source",
+        "severity": "HIGH",
+        "cwe": "CWE-798",
+        "filePath": "src/config.py",
+        "lineNumber": 15,
+        "codeSnippet": "API_KEY = \"sk-1234567890abcdef\"",
+        "ruleId": "hardcoded-credentials",
+        "tags": ["secrets", "credentials"]
+      }
+    ]
+  }
+}

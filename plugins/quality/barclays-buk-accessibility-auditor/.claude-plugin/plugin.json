@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-accessibility-auditor",
+    "description": "Checks compliance of solutions against industry accessibility rules. Covers WCAG, keyboard navigation, and screen reader behaviour.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

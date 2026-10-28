@@ -1,0 +1,5 @@
+schema_version: '2.0'
+domain:
+  id: dom.broken
+  name: Broken Domain
+  missing_required_field: true

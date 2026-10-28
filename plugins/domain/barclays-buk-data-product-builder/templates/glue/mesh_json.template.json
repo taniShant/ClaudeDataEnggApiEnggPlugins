@@ -1,0 +1,123 @@
+{
+  "name": "{{target_database}}_{{target_table}}",
+  "summary": "{{table_summary}}",
+  "description": "{{table_description}}",
+  "datasetType": "{{dataset_type}}",
+  "datasetTypeSummary": {
+    "name": "{{dataset_type}}",
+    "summary": "{{dataset_type_summary}}",
+    "description": "{{dataset_type_description}}"
+  },
+  "versionPolicy": "NO_CONSTRAINT",
+  "versionManagement": "CLIENT",
+  "owner": {
+    "itbs": "BSN0004626",
+    "groups": [
+      {
+        "owner": "{{btb_team}}",
+        "ownerGroup": "maintenance",
+        "ownerType": "BTB"
+      },
+      {
+        "owner": "{{btb_team}}",
+        "ownerGroup": "origination",
+        "ownerType": "BTB"
+      },
+      {
+        "owner": "sdw_buk_rtb",
+        "ownerGroup": "maintenance",
+        "ownerType": "RTB"
+      },
+      {
+        "owner": "sdw_buk_rtb",
+        "ownerGroup": "origination",
+        "ownerType": "RTB"
+      }
+    ]
+  },
+  "labels": [
+    {
+      "name": "businessdate",
+      "datasetLabelType": "key",
+      "defaultValue": "null",
+      "optional": false
+    }
+  ],
+  "storageMediumLinks": [
+    {
+      "name": "consumption",
+      "summary": "BUK Consumption Layer Storage",
+      "storageType": "HOT",
+      "storageMediumDefinition": "aws_data_catalog",
+      "platformDefinition": "{{platform_definition|default:edp_cloud_datalake}}",
+      "dataGroup": "{{target_database}}",
+      "isPublic": true,
+      "priority": 1
+    }
+  ],
+  "applicationProfileLinks": [],
+  "aspects": [
+    {
+      "name": "data",
+      "summary": "{{table_summary}}",
+      "description": "{{table_description}}",
+      "storageMediumProperties": {
+        "consumption": [
+          {
+            "name": "baselocation",
+            "value": "s3://env:$s3_bucket/data/{{target_database_base}}/{{target_table}}",
+            "required": true
+          },
+          {
+            "name": "database_name",
+            "value": "{{target_database}}",
+            "required": true
+          },
+          {
+            "name": "layer",
+            "value": "{{layer}}",
+            "required": true
+          },
+          {
+            "name": "location",
+            "value": "s3://env:$s3_bucket/data/{{target_database_base}}/{{target_table}}/{{partition_spec}}=${{partition_spec}}",
+            "required": true
+          },
+          {
+            "name": "partitions",
+            "value": "'{{partition_column}}':'{{partition_type}}'",
+            "required": true
+          },
+          {
+            "name": "table_name",
+            "value": "{{target_table}}",
+            "required": true
+          }
+        ]
+      },
+      "schema": {
+        "schemaType": "FLATTENED",
+        "fields": [
+          {
+            "name": "{{column_name}}",
+            "dataType": "{{data_type}}",
+            "nullable": true,
+            "description": "{{column_description}}"
+          }
+        ]
+      }
+    }
+  ],
+  "dependencies": [],
+  "environmentProperties": [
+    {
+      "name": "s3_bucket",
+      "properties": {
+        "dev": "{{s3_bucket_dev}}",
+        "uat": "{{s3_bucket_uat}}",
+        "prod": "{{s3_bucket_prd}}"
+      }
+    }
+  ],
+  "access_properties": []
+}

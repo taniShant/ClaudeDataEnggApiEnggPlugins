@@ -1,0 +1,291 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "capability_impact.schema.json",
+  "title": "Capability Impact Assessment",
+  "description": "Output contract for Capability Impact assessment. Reports affected capabilities, domains, evidence classification, and traceability to requirements. Does not score significance or determine governance routes (responsibility of downstream Architecture Significance assessment).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "assessment_type",
+    "assessment_status",
+    "input_provenance",
+    "findings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Assessment schema version. Must be '1.0'."
+    },
+    "assessment_type": {
+      "type": "string",
+      "const": "capability_impact",
+      "description": "Assessment type identifier."
+    },
+    "assessment_status": {
+      "type": "string",
+      "enum": ["completed", "completed_with_uncertainties", "failed"],
+      "description": "Assessment completion status. 'completed': all findings assessed with confidence. 'completed_with_uncertainties': all findings assessed; some have explicit uncertainty. 'failed': assessment could not complete (invalid input, provenance failure, etc.)."
+    },
+    "input_provenance": {
+      "type": "object",
+      "required": [
+        "requirements_path",
+        "requirements_sha256",
+        "capability_model_fingerprint",
+        "assessment_generated_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "requirements_path": {
+          "type": "string",
+          "description": "Path to requirements-analysis.json input"
+        },
+        "requirements_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 of raw Jira response (from requirements-analysis.json provenance)"
+        },
+        "capability_model_fingerprint": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "SHA-256 fingerprint of canonicalized capability model (proves which model version was used)"
+        },
+        "assessment_generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when assessment was generated"
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "capability_id",
+          "capability_name",
+          "capability_domain",
+          "capability_subdomain",
+          "impact_classification",
+          "impacted_by_requirement_ids",
+          "rationale",
+          "supporting_evidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^CAP-[0-9]+$",
+            "description": "Finding identifier (e.g., CAP-001)"
+          },
+          "capability_id": {
+            "type": "string",
+            "pattern": "^cap\\.[a-z0-9-]+\\.[a-z0-9-]+$",
+            "description": "Capability identifier from authoritative model"
+          },
+          "capability_name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Capability name (must match model exactly)"
+          },
+          "capability_domain": {
+            "type": "string",
+            "pattern": "^dom\\.[a-z0-9-]+$",
+            "description": "Domain identifier"
+          },
+          "capability_subdomain": {
+            "type": "string",
+            "pattern": "^sub\\.[a-z0-9-]+\\.[a-z0-9-]+$",
+            "description": "Sub-domain identifier"
+          },
+          "impact_classification": {
+            "type": "string",
+            "enum": ["direct", "inferred", "possible"],
+            "description": "Evidence classification. 'direct': requirement explicitly describes or names the capability. 'inferred': requirement outcome logically implies capability execution. 'possible': capability may be touched but requires architectural judgment."
+          },
+          "impacted_by_requirement_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z]+[0-9]{3}$"
+            },
+            "description": "List of requirement IDs that impact this capability (e.g., ['ER001', 'IR002'])"
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Explains why the requirement affects this capability"
+          },
+          "supporting_evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["requirement_id", "evidence_id", "evidence_field"],
+              "additionalProperties": false,
+              "properties": {
+                "requirement_id": {
+                  "type": "string",
+                  "pattern": "^[A-Z]+[0-9]{3}$",
+                  "description": "Requirement ID from requirements-analysis.json"
+                },
+                "evidence_id": {
+                  "type": "string",
+                  "pattern": "^[a-z_]+:[a-zA-Z0-9\\-]+$",
+                  "description": "Evidence unit ID (e.g., 'description:0', 'labels:1' for Jira; 'functional_requirements:FR-1', 'scope:0' for PRD/Brief)"
+                },
+                "evidence_field": {
+                  "type": "string",
+                  "enum": ["summary", "description", "status", "labels", "components", "linked_issues", "acceptance_criteria", "functional_requirements", "scope", "success_criteria", "vision", "problem", "solution", "assumptions", "dependencies", "constraints", "integration", "non_goals", "non_goal", "non-goals", "features"],
+                  "description": "Jira field or PRD/Brief section this evidence comes from"
+                }
+              }
+            },
+            "description": "Supporting evidence citations"
+          },
+          "uncertainty": {
+            "type": ["string", "null"],
+            "description": "Articulated explicit uncertainty (if any). Null if none."
+          },
+          "boundary_implications": {
+            "type": ["string", "null"],
+            "description": "Describes potential capability definition, domain, or ownership boundary effects (if any). Null if none. Feeds downstream boundary-change evaluation."
+          },
+          "cross_domain_effects": {
+            "type": ["string", "null"],
+            "description": "Describes cross-domain effects or coupling with other domains (if any). Null if none."
+          }
+        }
+      },
+      "description": "Capability impact findings"
+    },
+    "domain_summary": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": [
+          "domain_id",
+          "domain_name",
+          "affected_capability_count",
+          "affected_capability_ids",
+          "impact_classification_breakdown"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^dom\\.[a-z0-9-]+$"
+          },
+          "domain_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "affected_capability_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "affected_capability_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^cap\\.[a-z0-9-]+\\.[a-z0-9-]+$"
+            }
+          },
+          "impact_classification_breakdown": {
+            "type": "object",
+            "required": ["direct", "inferred", "possible"],
+            "additionalProperties": false,
+            "properties": {
+              "direct": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "inferred": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "possible": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "description": "Domain-level summary of affected capabilities"
+    },
+    "cross_domain_analysis": {
+      "type": "object",
+      "required": [
+        "affected_domain_count",
+        "affected_domain_ids",
+        "potential_boundary_changes",
+        "potential_ownership_changes",
+        "multiple_domains_affected"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "affected_domain_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "affected_domain_ids": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string",
+            "pattern": "^dom\\.[a-z0-9-]+$"
+          }
+        },
+        "potential_boundary_changes": {
+          "type": "boolean",
+          "description": "Whether any findings flag potential capability/domain boundary effects"
+        },
+        "potential_ownership_changes": {
+          "type": "boolean",
+          "description": "Whether any findings flag potential ownership or accountability changes"
+        },
+        "multiple_domains_affected": {
+          "type": "boolean",
+          "description": "True if affected_domain_count > 1"
+        }
+      },
+      "description": "Cross-domain analysis summary"
+    },
+    "uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "related_capabilities"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^UNC-[0-9]+$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Articulated unresolved question or data gap"
+          },
+          "related_capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^cap\\.[a-z0-9-]+\\.[a-z0-9-]+$"
+            },
+            "description": "Capability IDs this uncertainty affects"
+          }
+        }
+      },
+      "description": "Consolidated list of explicit uncertainties across all findings"
+    }
+  }
+}

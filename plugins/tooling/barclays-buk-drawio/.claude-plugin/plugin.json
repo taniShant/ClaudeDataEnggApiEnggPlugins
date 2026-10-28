@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-drawio",
+    "description": "Create, update, transform, and export draw.io diagrams through orchestrated multi-agent delegation with style-guided critique loops.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Vishal Khare",
+        "email": "vishal.khare1@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

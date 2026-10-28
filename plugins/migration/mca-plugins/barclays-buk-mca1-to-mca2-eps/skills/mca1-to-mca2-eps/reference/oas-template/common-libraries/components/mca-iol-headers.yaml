@@ -1,0 +1,1184 @@
+# -----------------------------------------------------------------------------
+# This file contains definitions of the IOL headers
+# -----------------------------------------------------------------------------
+X-AID:
+  name: X-AID
+  description: AID header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:    
+    type: string
+    pattern: ^[a-zA-Z0-9_-]*$
+    minLength: 0
+    maxLength: 30
+  example: "MAMYDP"
+    
+X-UserContext:
+  name: X-UserContext
+  description: UserContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/UserContext'
+  example: '{"UID":"USER12345","BUID":"UB1656000","EID":"12345678","userName":"John Doe","channel": {"CHN":"cciservicing","PRP":"LRP_MCSS","CHNSC":"SC01","LOC":"#PRP=RLB#"},"DVID":"DEV123456","role":"CUSTOMER_SERVICE_REP","geoLocation": {"longitude":"-0.1276","latitude":"51.5074","postCode":"SW1A 1AA"},"touchpointType":"VN"}'
+
+X-AccountContext:
+  name: X-AccountContext
+  description: AccountContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:    
+    $ref: '#/AccountContext'
+  example: '{"displayName":"Barclays Co. Ltd","displayOrder":"1","number":"40433667","sortCode":"201656","status":"A","productCode":"3067","cardNumber":"****-****-****-1234"}'
+  
+X-CustomerContext:
+  name: X-CustomerContext
+  description: CustomerContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/CustomerContext'
+  example: '{"identifiers":[{"id":"9859119787","sourceSystem":"CUSTOMER"}],"details":{"customerClass":"B","title":"MRS","foreName":"ROSEMARY","surName":"PERRYPERRYPERRY","dateOfBirth":"28/03/1965"}}'
+  
+X-AccountList:
+  name: X-AccountList
+  description: AccountList header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/AccountList'
+  example: '{"accounts":[{"identifiers":[{"id":"3102169426","sourceSystem":"SRV"}],"displayName":"Barclays Co. Ltd","displayOrder":1,"number":"40433667","sortCode":"201656","status":"A","productCode":"3067"}]}'
+
+X-CallerContext:
+  name: X-CallerContext
+  description: CallerContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/CallerContext'
+  example: '{"contactIdentifiers":[{"id":"3102169426","sourceSystem":"SRV"}],"contactType":"call","callerType":"Party","callerName":"Smith","callerTypeId":"SRC","callerCisId":"1212121212adasdasd12etertr","callerContactTelephone":"131-122-1212"}'
+
+X-CaseContext:
+  name: X-CaseContext
+  description: CaseContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/CaseContext'
+  example: '{"caseIdentifiers":[{"id":"3102169426","sourceSystem":"SRV"}]}'  
+
+X-ProcessContext:
+  name: X-ProcessContext
+  description: ProcessContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/ProcessContext'
+  example: '[{"key":"process-key","value":"value_1"}]'
+  
+X-SystemContext:
+  name: X-SystemContext
+  description: SystemContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/SystemContext'
+  example: '{"PID":"6b36bb2d-7e07-49bb-aeea-11e5ffd4179b","SID":"67aacd6d-652f-4cb8-8585-be04a0fe0dac"}'
+
+X-LocaleContext:
+  name: X-LocaleContext
+  description: LocaleContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/LocaleContext'
+  example: '{"lang":"en"}'
+
+X-SecureContext:
+  name: X-SecureContext
+  description: SecureContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/SecureContext'
+  example: '{"key1":"6b36bb2d-7e07-49bb-aeea-11e5ffd4179b","key2":"67aacd6d-652f-4cb8-8585-be04a0fe0dac"}'
+  
+X-MultipleCustomerContext:
+  name: X-MultipleCustomerContext
+  description: MultipleCustomerContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/MultipleCustomerContext'
+  example: '{"customers":[{"identifiers":[{"id":"3102169426","sourceSystem":"SRV"}],"baseDetails":{"title":"Mr.","middleName":"Steve","suffix":"JD","gender":"M","foreName":"John","surName":"Doe","dateOfBirth":"12/12/1975","customerClass":"Personal"},"authLevel":1}],"activeCustomersIdOnly":[{"id":"342561711","sourceSystem":"CS"}]}'
+  
+X-MultipleAccountsContext:
+  name: X-MultipleAccountsContext
+  description: MultipleAccountsContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/MultipleAccountsContext'
+  example: '{"relatedAccounts":[{"identifiers":[{"id":"3102169426","sourceSystem":"SRV"}],"displayName":"Barclays Co. Ltd","displayOrder":1,"number":"40433667","sortCode":"201656","status":"A","productCode":"3067","type":"debit"}]}'
+
+X-DeviceContext:
+  name: X-DeviceContext
+  description: DeviceContext header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  in: header
+  schema:
+    $ref: '#/DeviceContext'
+  example: '{"deviceId": "005735f64d2e284b13485d3aefc2dd955ce1b485e2521fca620edf8b8916596a","appId": "1234567890123456","regMethod": "HPS","regDate": "16/09/2023","ipAddress": "191.2.121.5","cookieId": "E9EEF4A3906EE7E3856EA10709BA9011","type": "Android"}'
+
+InternalTiaaRopcAuth:
+  type: apiKey
+  name: OAuthHeader
+  in: header
+  description: |
+    OAuth2.0 Resource Owner Password Credentials (ROPC) Grant authentication using TIAA-AS for MCA internal APIs. Token should be provided in OAuthHeader header as 'Bearer {token}'
+    example  
+    ```
+    OAuthHeader: Bearer eyJhbGciOiJSUzI1NiIs...
+    ```
+  
+# -----------------------------------------------------------------------------
+# Aliases (reusable content)
+# -----------------------------------------------------------------------------
+additionalProperties: &additionalProperties
+  description: Any additional properties must be strings with the following restrictions:-
+  type: string
+  nullable: true
+  minLength: 0
+  maxLength: 250
+  pattern: '^[\S\s]*$'
+  example: "An example - PERMITTED_VALUE."
+  
+BaseDetails:
+  type: object
+  description: Base Customer Details passed for performance purposes only
+  additionalProperties: false
+  properties:
+    title:
+      type: string
+      pattern: '^[a-zA-Z .]*$'
+      example: 'Mr.'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    foreName:
+      type: string
+      pattern: '^[a-zA-Z -'']*$'
+      example: 'John'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    middleName:
+      type: string
+      pattern: '^[a-zA-Z -'']*$'
+      example: 'Michael'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    surName:
+      type: string
+      pattern: '^[a-zA-Z -'']*$'
+      example: 'Smith'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    suffix:
+      type: string
+      pattern: '^[a-zA-Z -.'']*$'
+      example: 'Jr.'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    gender:
+      type: string
+      pattern: '^[a-zA-Z]*$'
+      example: 'Male'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    dateOfBirth:
+      type: string
+      pattern: '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$'
+      example: '15/03/1985'
+      nullable: true
+      minLength: 0
+      maxLength: 10
+    customerClass:
+      type: string
+      pattern: '^[a-zA-Z]*$'
+      example: 'PREMIER'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    registeredName:
+      type: string
+      pattern: '^[a-zA-Z -''.&]*$'
+      example: 'Smith & Associates Ltd.'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    tradingName:
+      type: string
+      pattern: '^[a-zA-Z -''.&]*$'
+      example: 'Smith Trading Co.'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+
+Details:
+  type: object
+  description: Details passed for performance purposes only
+  additionalProperties: false
+  properties:
+    title:
+      type: string
+      pattern: '^[a-zA-Z .]*$'
+      example: 'Mrs.'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    foreName:
+      type: string
+      pattern: '^[a-zA-Z -'']*$'
+      example: 'Jane'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    middleName:
+      type: string
+      pattern: '^[a-zA-Z -'']*$'
+      example: 'Elizabeth'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    surName:
+      type: string
+      pattern: '^[a-zA-Z -'']*$'
+      example: 'Doe'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    suffix:
+      type: string
+      pattern: '^[a-zA-Z -.'']*$'
+      example: 'Sr.'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    gender:
+      type: string
+      pattern: '^[a-zA-Z]*$'
+      example: 'Female'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    dateOfBirth:
+      type: string
+      pattern: '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$'
+      example: '20/07/1990'
+      nullable: true
+      minLength: 0
+      maxLength: 10
+    customerClass:
+      type: string
+      pattern: '^[a-zA-Z]*$'
+      example: 'STANDARD'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    registeredName:
+      type: string
+      pattern: '^[a-zA-Z -''.&]*$'
+      example: 'Doe Enterprises Ltd.'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    tradingName:
+      type: string
+      pattern: '^[a-zA-Z -''.&]*$'
+      example: 'Doe Trading'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    ageYears:
+      type: integer
+      minimum: 0
+      maximum: 255
+      example: 34
+    primaryCustomer:
+      type: boolean
+      example: true
+    countryOfNationality:
+      type: string
+      pattern: '^[a-zA-Z ]*$'
+      example: 'United Kingdom'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    countryOfResidency:
+      type: string
+      pattern: '^[a-zA-Z ]*$'
+      example: 'United Kingdom'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    relatedCustomerIds:
+      $ref: '#/RelatedCustomerIds'
+    addressLines:
+      type: string
+      pattern: '^[a-zA-Z0-9 ''./&,-]*$'
+      example: '123 Main Street, Apartment 4B'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    postCode:
+      type: string
+      pattern: '^[a-zA-Z0-9 -]*$'
+      example: 'SW1A 1AA'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    country:
+      type: string
+      pattern: '^[a-zA-Z ]*$'
+      example: 'United Kingdom'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    membershipId:
+      type: string
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'MEM123456'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    homePhoneNumber:
+      type: string
+      pattern: '^[a-zA-Z0-9 +)(-]*$'
+      example: '+44 20 1234 5678'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    officePhoneNumber:
+      type: string
+      pattern: '^[a-zA-Z0-9 +)(-]*$'
+      example: '+44 20 9876 5432'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    mobilePhoneNumber:
+      type: string
+      pattern: '^[a-zA-Z0-9 +)(-]*$'
+      example: '+44 7700 900123'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    emailAddress:
+      type: string
+      pattern: '^[a-zA-Z0-9_@.]*$'
+      example: 'jane.doe@example.com'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+
+Identifier:
+  type: object
+  description: The unique identifiers of the calling container, e.g. FullServe passes Customer System ID.
+  required:
+    - id
+    - sourceSystem
+  additionalProperties: false
+  properties:
+    id:
+      type: string
+      pattern: '^[a-zA-Z0-9]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+      example: 'CUST123456'
+    sourceSystem:
+      type: string
+      pattern: '^[a-zA-Z0-9]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+      description: Source system to which identifier belongs, e.g. Customer System
+      example: 'CustomerSystem'
+
+TokenIdentifier:
+  type: object
+  description: Access Token Identifier with expiry set to validate against the 3rd party system access e.g SmartPay.
+  additionalProperties: false
+  allOf:
+    - $ref: '#/Identifier'
+    - type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp till the token is valid for.
+          example: '2024-12-31T23:59:59Z'
+
+Identifiers:
+  type: array
+  description: The unique identifiers of the calling container, e.g. FullServe passes Customer System ID.
+  nullable: true
+  minItems: 0
+  maxItems: 20
+  items:
+    $ref: '#/Identifier'
+
+RelatedCustomerIds:
+  type: array
+  description: The related customer ids.
+  nullable: true
+  minItems: 0
+  maxItems: 100
+  items:
+    type: object
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+        pattern: '^[a-zA-Z0-9]*$'
+        nullable: true
+        minLength: 0
+        maxLength: 100
+        example: 'REL987654'
+      sourceSystem:
+        type: string
+        pattern: '^[a-zA-Z0-9]*$'
+        nullable: true
+        minLength: 0
+        maxLength: 100
+        description: Source system to which identifier belongs, e.g. Customer System
+        example: 'CustomerSystem'
+      type:
+        type: string
+        pattern: '^[a-zA-Z0-9]*$'
+        nullable: true
+        minLength: 0
+        maxLength: 100
+        description: Related Customer Type
+        example: 'JOINT'
+
+UserContext:
+  type: object
+  description: The customer (digital) or agent (assisted-channel) and channel details
+  additionalProperties: *additionalProperties
+  properties:
+    UID:
+      type: string
+      description: For a bank-user this will be the BRID, for Digital it will be username
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'USER12345'
+      nullable: true
+      minLength: 0
+      maxLength: 32
+    BUID:
+      type: string
+      description: 'Business Unit associated with the colleague Eg: UB1656000'
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'UB1656000'
+      nullable: true
+      minLength: 0
+      maxLength: 10
+    EID:
+      type: string
+      description: Unique employee id reference of the user requesting access to the application.
+      pattern: '^[0-9]*$'
+      example: '12345678'
+      nullable: true
+      minLength: 1
+      maxLength: 8
+    userName:
+      type: string
+      description: Username associated with the colleague
+      pattern: '^[a-zA-Z ''.&-]*$'
+      example: 'John Doe'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    channel:
+      $ref: '#/Channel'
+    DVID:
+      type: string
+      description: Device identity including PC for support purposes. In BUK world gotten from installed UCA bar. Web-only BC will use hard-coded value.
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'DEV123456'
+      nullable: true
+      minLength: 0
+      maxLength: 20
+    role:
+      type: string
+      description: For a bank-user this will be the role of the user.
+      pattern: '^[a-zA-Z0-9 _]*$'
+      example: 'CUSTOMER_SERVICE_REP'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    geoLocation:
+      $ref: '#/GeoLocation'
+    touchpointType:
+      type: string
+      description: Two letter code for Barclays local VAN, Community Site, POD, MicroPOD or Shared Banking Hub.
+      pattern: '^[A-Z]{2}$'
+      example: 'VN'
+      nullable: true
+      minLength: 0
+      maxLength: 2
+
+Channel:
+  type: object
+  description: Represents the channel which the request is coming from
+  required:
+    - CHN
+  additionalProperties: false
+  properties:
+    CHN:
+      type: string
+      description: Unique identifier for the requesting channel, e.g. cci_servicing, ukc_fraud and bcp_cc.
+      pattern: '^[a-zA-Z0-9]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 30
+      example: 'cciservicing'
+    PRP:
+      type: string
+      description: This unique identifier used by mainframe system to identify the system from where the request is coming. For e.g. LRP_MCSS or KIOSK OR SCV or IEB
+      pattern: '^[a-zA-Z0-9_-]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 20
+      example: 'LRP_MCSS'
+    CHNSC:
+      type: string
+      description: Channel subcode
+      pattern: '^[a-zA-Z0-9]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 10
+      example: 'SC01'
+    LOC:
+      type: string
+      description: 'Locality field eg: #PRP=RLB# for ROLB, #PRP=GLF# for co.uk, #PRP=P2P# for pingit, #PRP=BMB# for BMB, #PRP=BWL# for B Welcome etc'
+      pattern: '^[a-zA-Z0-9=#]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+      example: '#PRP=RLB#'
+
+GeoLocation:
+  type: object
+  description: Stores details about the Geographic location of the device from where the request is coming from.
+  additionalProperties: false
+  properties:
+    longitude:
+      type: string
+      description: Longitude of the device from where the request is coming from.
+      pattern: '^[0-9.-]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 20
+      example: '-0.1276'
+    latitude:
+      type: string
+      description: Latitude of the device from where the request is coming from.
+      pattern: '^[0-9.-]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 20
+      example: '51.5074'
+    postCode:
+      type: string
+      description: PostCode of the device from where the request is coming from.
+      pattern: '^[a-zA-Z0-9 ]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 10
+      example: 'SW1A 1AA'
+
+CustomerContext:
+  type: object
+  description: Customer in context, e.g. IDnV'ed
+  required:
+    - identifiers
+  additionalProperties: *additionalProperties
+  properties:
+    identifiers:
+      $ref: '#/Identifiers'
+    details:
+      $ref: '#/Details'
+    authLevel:
+      type: integer
+      description: Customer IDnV level according to container. May differ across containers and therefore be mapped by the receiving container.
+      minimum: 0
+      maximum: 1024
+      example: 3
+    idvMethod:
+      type: string
+      description: Method of verification done for the customer.
+      pattern: '^[a-zA-Z0-9]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+      example: 'BIOMETRIC'
+    idvStepUpMethodType:
+      type: string
+      description: For storing IDV Step up method type
+      pattern: '^[a-zA-Z0-9]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+      example: 'OTP'
+
+AccountContext:
+  type: object
+  additionalProperties: *additionalProperties
+  properties:
+    displayName:
+      type: string
+      description: Display Name for all product types.
+      #pattern: '^[^?*=]+$'
+      pattern: '^[\S\s]*$'
+      example: 'My Savings Account'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    displayOrder:
+      type: integer
+      description: Display order for product type
+      nullable: true
+      minimum: 0
+      maximum: 65536
+      example: 1
+    identifiers:
+      $ref: '#/Identifiers'
+    number:
+      type: string
+      description: Account number for all product types.
+      pattern: '^[a-zA-Z0-9*]*$'
+      example: '12345678'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    sortCode:
+      type: string
+      description: sort code where applicable for product type
+      pattern: '^[a-zA-Z0-9]*$'
+      example: '123456'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    status:
+      type: string
+      description: '[ACTION] Determine what status'' may be sent for different product types'
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'ACTIVE'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    productCode:
+      type: string
+      description: A group-wide product code to help determine the SoR.
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'SAV001'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    type:
+      type: string
+      description: The card/product type (Eg. debit Or credit) related to the Account / Card Number
+      pattern: '^[a-zA-Z0-9 -_]*$'
+      example: 'debit'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    cardId:
+      type: string
+      description: The card/payment device identifier (Eg.debit/credit) related to the account
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'CARD123456'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    cardNumber:
+      type: string
+      description: The card/payment device number (debit and credit) related to the account
+      pattern: '^[a-zA-Z0-9*-]*$'
+      example: '****-****-****-1234'
+      nullable: true
+      minLength: 0
+      maxLength: 24
+
+AccountList:
+  type: object
+  additionalProperties: false
+  properties:
+    accounts:
+      type: array
+      description: List of accounts for the customer
+      minItems: 0
+      maxItems: 1024
+      items:
+        type: object
+        additionalProperties: *additionalProperties
+        properties:
+          displayName:
+            type: string
+            description: Display Name for all product types.
+            #pattern: '^[^?*=]+$'
+            pattern: '^[\S\s]*$'
+            example: 'Current Account'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          displayOrder:
+            type: integer
+            nullable: true
+            minimum: 0
+            maximum: 65536  
+            description: Display order for product type
+            example: 1
+          identifiers:
+            $ref: '#/Identifiers'
+          number:
+            type: string
+            description: Account number for all product types.
+            pattern: '^[a-zA-Z0-9*]*$'
+            example: '87654321'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          sortCode:
+            type: string
+            description: sort code where applicable for product type
+            pattern: '^[a-zA-Z0-9]*$'
+            example: '654321'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          status:
+            type: string
+            description: '[ACTION] Determine what status'' may be sent for different product types'
+            pattern: '^[a-zA-Z0-9]*$'
+            example: 'ACTIVE'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          productCode:
+            type: string
+            description: A group-wide product code to help determine the SoR.
+            pattern: '^[a-zA-Z0-9]*$'
+            example: 'CUR001'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          type:
+            type: string
+            description: The card/product type (Eg. debit Or credit) related to the Account / Card Number
+            pattern: '^[a-zA-Z0-9 -_]*$'
+            example: 'credit'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          cardId:
+            type: string
+            description: The card/payment device identifier (Eg.debit/credit) related to the account
+            pattern: '^[a-zA-Z0-9]*$'
+            example: 'CARD789012'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          cardNumber:
+            type: string
+            description: The card/payment device number (debit and credit) related to the account
+            pattern: '^[a-zA-Z0-9*-]*$'
+            example: '****-****-****-5678'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+
+CallerContext:
+  type: object
+  description: '[CCTC-49]'
+  additionalProperties: *additionalProperties
+  properties:
+    contactIdentifiers:
+      $ref: '#/Identifiers'
+    contactType:
+      type: string
+      description: The type of contact (e.g. call, chat)
+      pattern: '^[a-zA-Z]*$'
+      example: 'call'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    callerName:
+      type: string
+      description: The person who initiated the call/contact - may be different than the customer
+      pattern: '^[a-zA-Z ''.&-]*$'
+      example: 'Jane Smith'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    callerType:
+      type: string
+      description: Caller type (e.g 3rd Party, Delegated Authorization etc)
+      pattern: '^[a-zA-Z]*$'
+      example: 'ThirdParty'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    callerTypeId:
+      type: string
+      description: Caller type Identifier for the customer
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'TP001'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    callerCisId:
+      type: string
+      description: Customer identifier for the caller who initiated the call
+      example: 'CIS987654'
+      pattern: '^[a-zA-Z0-9]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    callerContactTelephone:
+      type: string
+      description: Telephone for the caller who initiated the call
+      pattern: '^[a-zA-Z0-9 +)(-]*$'
+      example: '+44 7700 900456'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+
+CaseContext:
+  type: object
+  description: Holds the key identifiers for the case/issue at hand
+  additionalProperties: false
+  properties:
+    caseIdentifiers:
+      $ref: '#/Identifiers'
+
+ProcessContext:
+  type: string
+  description: key-value pairs specific to the business process. Documented in the Business Process itself
+  nullable: true
+  minLength: 0
+  maxLength: 1024
+  pattern: '^[\S\s]*$'
+  
+
+SystemContext:
+  type: object
+  additionalProperties: *additionalProperties
+  properties:
+    SID:
+      type: string
+      description: Session ID having a life span from start of user session until session closed. Can be used to trace session activity
+      pattern: '^[a-zA-Z0-9-]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+      example: '67aacd6d-652f-4cb8-8585-be04a0fe0dac'
+    PID:
+      type: string
+      description: Process ID (GUID) having a life span from the start of the business process until it's closed. Can be used to trace activities performed from this instance.
+      pattern: '^[a-zA-Z0-9-]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+      example: 'a1496d8c-5391-4fe3-921e-484a7f8132c2'
+    TID:
+      type: string
+      description: Tagging ID used for screen level analytics. Allows for different web analytics products to be used in a Tag Management scenario.
+      pattern: '^[a-zA-Z0-9-]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+      example: 'TID-tag345-mno678'
+    DLL:
+      type: string
+      description: Dynamic Log Level for request thread level execution.
+      enum:
+        - debug
+        - info
+        - warn
+        - error
+        - trace
+      example: 'info'
+    BBSID:
+      type: string
+      description: Behavioural Biometrics Session ID.
+      pattern: '^[a-z0-9-_]{1,36}$'
+      minLength: 1
+      maxLength: 36
+      example: 'bb-session-12345678-abcd-efgh'
+    TMSID:
+      type: string
+      description: Threat Metrics Session ID.
+      pattern: '^[a-zA-Z0-9-_]{1,128}$'
+      minLength: 1
+      maxLength: 128
+      example: 'TM-SESSION-ABCDEFGH12345678'
+
+LocaleContext:
+  type: object
+  description: key-value pairs specific to the locale
+  additionalProperties: false
+  properties:
+    lang:
+      type: string
+      description: Locale language.
+      pattern: '^[a-zA-Z]*$'
+      nullable: true
+      minLength: 0
+      maxLength: 10
+      example: 'en'
+
+SecureContext:
+  type: string
+  description: Secure context.
+  nullable: true
+  minLength: 0
+  maxLength: 4096
+  pattern: '^[\S\s]*$'
+
+MultipleCustomerContext:
+  type: object
+  description: Multiple Customer Context.
+  additionalProperties: *additionalProperties
+  properties:
+    customers:
+      type: array
+      description: List of Customers
+      minItems: 0
+      maxItems: 100
+      items:
+        type: object
+        required:
+          - identifiers
+        additionalProperties: *additionalProperties
+        properties:
+          identifiers:
+            $ref: '#/Identifiers'
+          baseDetails:
+            $ref: '#/BaseDetails'
+          authLevel:
+            type: integer
+            description: Customer IDnV level according to container. May differ across containers and therefore be mapped by the receiving container.
+            minimum: 0
+            maximum: 1024
+            example: 2
+    activeCustomersIdOnly:
+      type: array
+      description: The unique identifiers of the calling container, e.g. FullServe passes Customer System ID.
+      minItems: 0
+      maxItems: 100
+      items:
+        type: object
+        required:
+          - id
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            pattern: '^[a-zA-Z0-9]*$'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+            example: 'CUST789012'
+          sourceSystem:
+            type: string
+            pattern: '^[a-zA-Z0-9]*$'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+            description: Source system to which identifier belongs, e.g. Customer System
+            example: 'CustomerSystem'
+
+MultipleAccountsContext:
+  type: object
+  description: Multiple Accounts Context.
+  additionalProperties: false
+  properties:
+    relatedAccounts:
+      type: array
+      description: List of Related Accounts
+      minItems: 0
+      maxItems: 1024
+      items:
+        type: object
+        additionalProperties: *additionalProperties
+        properties:
+          displayName:
+            type: string
+            description: Display Name for all product types.
+            #pattern: '^[^?*=]+$'
+            pattern: '^[\S\s]*$'
+            example: 'Joint Savings'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          displayOrder:
+            type: integer
+            nullable: true
+            minimum: 0
+            maximum: 65536
+            description: Display order for product type
+            example: 2
+          identifiers:
+            $ref: '#/Identifiers'
+          number:
+            type: string
+            description: Account number for all product types.
+            pattern: '^[a-zA-Z0-9*]*$'
+            example: '11223344'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          sortCode:
+            type: string
+            description: sort code where applicable for product type
+            pattern: '^[a-zA-Z0-9]*$'
+            example: '112233'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          status:
+            type: string
+            description: '[ACTION] Determine what status'' may be sent for different product types'
+            pattern: '^[a-zA-Z0-9]*$'
+            example: 'ACTIVE'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          productCode:
+            type: string
+            description: A group-wide product code to help determine the SoR.
+            pattern: '^[a-zA-Z0-9]*$'
+            example: 'JSV001'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          type:
+            type: string
+            description: The card/product type (Eg. debit Or credit) related to the Account / Card Number
+            pattern: '^[a-zA-Z0-9 -_]*$'
+            example: 'savings'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          cardId:
+            type: string
+            description: The card/payment device identifier (Eg.debit/credit) related to the account
+            pattern: '^[a-zA-Z0-9]*$'
+            example: 'CARD445566'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+          cardNumber:
+            type: string
+            description: The card/payment device number (debit and credit) related to the account
+            pattern: '^[a-zA-Z0-9*-]*$'
+            example: '****-****-****-9012'
+            nullable: true
+            minLength: 0
+            maxLength: 100
+
+DeviceContext:
+  type: object
+  description: Device Context, information about the device from where the request is coming from.
+  additionalProperties: false
+  properties:
+    deviceId:
+      type: string
+      description: Device identity of the device from where the request is coming from.
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'DEV987654321'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    appId:
+      type: string
+      description: Application identity of the device from where the request is coming from.
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'APP123456'
+      nullable: true
+      minLength: 0
+      maxLength: 50
+    regMethod:
+      type: string
+      description: Registration method/process in which the device got registered.
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'BIOMETRIC'
+      nullable: true
+      minLength: 0
+      maxLength: 20
+    regDate:
+      type: string
+      description: 'Registration date on which the device got registered, for eg: 16/09/2023.'
+      pattern: '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$'
+      example: '16/09/2023'
+      nullable: true
+      minLength: 0
+      maxLength: 10
+    ipAddress:
+      type: string
+      description: IP Address (unique) of the device from where the request is coming from.
+      pattern: '^[0-9.]*$'
+      example: '192.168.1.100'
+      nullable: true
+      minLength: 0
+      maxLength: 20
+    cookieId:
+      type: string
+      description: Cookie identity of the device from where the request is coming from.
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'COOKIE789ABC'
+      nullable: true
+      minLength: 0
+      maxLength: 100
+    type:
+      type: string
+      description: Type of device from where the request is coming from.
+      pattern: '^[a-zA-Z0-9]*$'
+      example: 'MOBILE'
+      nullable: true
+      minLength: 0
+      maxLength: 40

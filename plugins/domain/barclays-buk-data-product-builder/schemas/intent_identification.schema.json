@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "intent_identification.schema.json",
+  "title": "Intent Identification (Multi-Table Support)",
+  "description": "Schema for intent_identification.json — output of the intent-identifier-agent. Array of intent records (one per unique target table in mapping). For single-table mappings, array contains one element.",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "required": [
+      "target_database",
+      "target_table",
+      "table_type",
+      "grain_description",
+      "primary_key_columns",
+      "partition_key_columns",
+      "eff_date_source",
+      "load_type",
+      "protegrity_de_mappings",
+      "identification_source"
+    ],
+    "properties": {
+    "target_database": {"type": "string"},
+    "target_table": {"type": "string"},
+    "table_type": {
+      "type": "string",
+      "enum": ["NonTransactional_SCD1", "NonTransactional_SCD2", "Transactional"],
+      "description": "NonTransactional_SCD2 = entity-state tables with full SCD2 history (expire+insert). NonTransactional_SCD1 = entity-state tables with overwrite-in-place (upsert, no history). Transactional = append-only event/fact tables."
+    },
+    "grain_description": {
+      "type": "string",
+      "description": "Human-readable grain statement (e.g. 'One row per case_id per effective period')"
+    },
+    "primary_key_columns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"},
+      "description": "Natural key column(s) for MERGE ON clause or uniqueness"
+    },
+    "partition_key_columns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"},
+      "description": "Partition column(s) — 'active' for NonTransactional_SCD2, 'dw_lod_tmp' for NonTransactional_SCD1, 'dw_bus_dt' for Transactional typically"
+    },
+    "eff_date_source": {
+      "type": "string",
+      "enum": ["explicit", "row_lst_mod_dte", "updated_at", "none"],
+      "description": "How eff_start_date is determined for NonTransactional tables. 'none' for Transactional."
+    },
+    "load_type": {
+      "type": "string",
+      "enum": ["Day0", "BAU", "full_then_incremental"],
+      "description": "Day0 = full/historical/retrospective/backfill load (synonyms: 'full', 'Day 0', 'initial load', 'all records'). BAU = incremental/delta/daily load (synonyms: 'incremental', 'Day 1', 'daily', 'since last run', 'new records'). full_then_incremental = both day0 and day1 generated."
+    },
+    "snapshot_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if source provides a full snapshot of all active entities (absence from source = deletion/deactivation at source). False (default) if source is a delta feed (absence = unchanged). Resolution priority: 0.5 = cdc_type_hint from mapping Additional Context ('snapshot'→true, 'delta'→false); 1 = domain knowledge CDC type ('full_snapshot'→true); 2 = default false."
+    },
+    "protegrity_de_mappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/protegretyDeMapping"
+      },
+      "description": "Empty array if no crypto required"
+    },
+    "identification_source": {
+      "type": "string",
+      "enum": ["intent_override", "mapping_column", "transformation_logic", "additional_context", "domain_knowledge", "user_prompt", "user_asked", "standalone_excel_parse"],
+      "description": "Primary source that resolved the intent fields. intent_override = resolved from session/intent_overrides.json (Priority 0, highest). mapping_column = resolved from optional mapping Excel columns Target Table Type / Key Column (Priority 0.5). additional_context = load_type resolved from Additional Context column (Priority 1.5)"
+    },
+      "custom_write_strategy": {
+        "type": ["string", "null"],
+        "description": "Non-null only when domain knowledge MD contains explicit unambiguous custom write/CDC instructions. When set, standard TargetWriter/run_cdc is NOT used."
+      }
+    }
+  },
+  "definitions": {
+    "protegretyDeMapping": {
+      "type": "object",
+      "required": ["source_column", "de_name", "operation"],
+      "properties": {
+        "source_column": {
+          "type": "string",
+          "description": "Column name in the transformation"
+        },
+        "de_name": {
+          "type": "string",
+          "description": "Protegrity Data Element name — regex-extracted from transformation logic, never guessed"
+        },
+        "operation": {
+          "type": "string",
+          "enum": ["tokenize", "detokenize"]
+        }
+      }
+    }
+  }
+}

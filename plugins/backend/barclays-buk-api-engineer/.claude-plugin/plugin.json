@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-api-engineer",
+    "description": "Ensures APIs and business logic are fully decoupled from screens and channels. Defines contracts, builds endpoints, generates documentation, and aligns to the domain model. Supports DAF (Spring Boot 3 microservices from markdown spec) and sMesh (Spring Boot 3 from OpenAPI spec) creation workflows.",
+    "version": "1.4.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

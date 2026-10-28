@@ -1,0 +1,24 @@
+# -----------------------------------------------------------------------------
+# Request Bodies
+# -----------------------------------------------------------------------------
+# This file contains the definition of request bodies. The underlying schema
+# in case of JSON content must be defined in models.yaml
+#
+# Naming Convention: '<OperationName>Request'
+#
+# A valid example must be provided for every request.
+# -----------------------------------------------------------------------------
+
+# TODO: Define request bodies for POST/PUT endpoints.
+# Example:
+#
+# UpdateResourceRequest:
+#   description: Update Resource request
+#   required: true
+#   content:
+#     application/json:
+#       schema:
+#         $ref: './models.yaml#/ResourceRequest'
+#       examples:
+#         updateResourceExample:
+#           $ref: '../examples/UpdateResourceRequest.json'

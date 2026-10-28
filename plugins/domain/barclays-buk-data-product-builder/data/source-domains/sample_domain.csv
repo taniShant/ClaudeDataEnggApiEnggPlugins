@@ -1,0 +1,6 @@
+Logical Entity and Attribute Report,,,,,,,,,,
+,,,,,,,,,,
+Entity Name,Table Name,Attribute Name,Column Name,Datatype,Length,Scale,Primary Key,Allow Nulls,Definition,Note
+SAMPLE ENTITY,SAMPLE_ENTITY,Entity Identifier,ENTITY_IDENTIFIER,BIGINT,,,K,N,Unique identifier for the entity,Example PK column
+SAMPLE ENTITY,SAMPLE_ENTITY,Entity Name,ENTITY_NAME,VARCHAR,200,,,Y,The display name of the entity,Example VARCHAR column
+SAMPLE ENTITY,SAMPLE_ENTITY,Effective Start Date,EFF_START_DATE,DATE,,,K,N,SCD Type 2 effective start date,Example date PK column

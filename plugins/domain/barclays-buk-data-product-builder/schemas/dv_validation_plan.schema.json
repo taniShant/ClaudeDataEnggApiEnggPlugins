@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dv_validation_plan.schema.json",
+  "title": "Data Validation Plan",
+  "description": "Dialect-neutral validation plan containing ordered checks with pass/fail criteria, severity levels, and input column references. Generated from a validation contract and rendered into engine-specific SQL by the DV renderer.",
+  "type": "object",
+  "required": ["plan_version", "target_database", "target_table", "table_type", "engine", "checks"],
+  "properties": {
+    "plan_version": {
+      "type": "string",
+      "description": "Semantic version of the validation plan schema (e.g., '1.0.0')"
+    },
+    "target_database": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*_db$",
+      "description": "Target database name (e.g., 'fdp_uk_mortgage_db')"
+    },
+    "target_table": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Target table name (e.g., 'mortgage_account')"
+    },
+    "table_type": {
+      "type": "string",
+      "enum": ["NonTransactional_SCD1", "NonTransactional_SCD2", "Transactional"],
+      "description": "Target table type classification from intent identification"
+    },
+    "engine": {
+      "type": "string",
+      "enum": ["athena", "databricks"],
+      "description": "SQL engine for routing to the correct dialect renderer (Athena SQL or Databricks SQL)"
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["check_id", "category", "description", "input_columns", "pass_criteria", "fail_criteria", "severity"],
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "pattern": "^(ER|SCD2|NC|DC|DT|BR)-\\d{2}$",
+            "description": "Unique check identifier. Prefix denotes category: ER=exact_reconciliation, SCD2=scd2_temporal, NC=null_check, DC=duplicate_check, DT=datatype_check, BR=business_rule."
+          },
+          "category": {
+            "type": "string",
+            "enum": ["exact_reconciliation", "scd2_temporal", "null_check", "duplicate_check", "datatype_check", "business_rule"],
+            "description": "Check category for grouping and filtering"
+          },
+          "subcategory": {
+            "type": "string",
+            "description": "Optional subcategory for finer-grained grouping (e.g., 'row_count', 'column_sum', 'gap_detection')"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what this check validates"
+          },
+          "input_columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Target column names referenced by this check"
+          },
+          "pass_criteria": {
+            "type": "string",
+            "description": "Condition that must hold for the check to pass (e.g., 'source_count == target_count')"
+          },
+          "fail_criteria": {
+            "type": "string",
+            "description": "Condition that indicates failure (e.g., 'mismatch_count > 0')"
+          },
+          "not_evaluated_conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Conditions under which this check is marked NOT_EVALUATED rather than PASS/FAIL (e.g., 'source table empty', 'crypto column — values not comparable')"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["blocker", "warning"],
+            "description": "Severity level: blocker halts sign-off, warning is advisory but does not block"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Additional check-specific parameters (e.g., tolerance thresholds, aggregation functions, filter expressions)"
+          },
+          "temporal_invariant": {
+            "type": "object",
+            "description": "SCD2 temporal invariant specification. Present only for scd2_temporal category checks.",
+            "properties": {
+              "invariant_type": {
+                "type": "string",
+                "description": "Type of temporal invariant (e.g., 'no_gap', 'no_overlap', 'single_current', 'boundary_inclusive')"
+              },
+              "date_columns": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Date columns involved in the invariant (e.g., ['eff_start_dt', 'eff_end_dt'])"
+              },
+              "sentinel_value": {
+                "type": "string",
+                "description": "High-end date sentinel for current records (e.g., '3499-12-31')"
+              }
+            }
+          }
+        }
+      },
+      "description": "Ordered array of validation checks to execute"
+    },
+    "assumptions_and_gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Known assumptions, data gaps, or limitations that may affect validation accuracy (e.g., 'crypto columns excluded from value comparison', 'no source profiling data available')"
+    }
+  }
+}

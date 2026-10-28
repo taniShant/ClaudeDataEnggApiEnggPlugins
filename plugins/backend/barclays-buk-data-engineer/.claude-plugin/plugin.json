@@ -1,0 +1,213 @@
+{
+  "name": "barclays-buk-data-engineer",
+  "version": "1.0.0",
+  "description": "Data Engineer AI Worker. Turns explicit data-engineering inputs into reviewable engineering artefacts, evidence, validation results and hand-off packs. Supports requirement interpretation, source discovery, profiling, mapping, modelling, technology assessment, ETL/ELT design, DB change, migration, DQ validation, lineage/metadata and MR advice.",
+  "owner": "BUK Data Engineering Practice",
+  "status": "draft",
+  "category": "backend",
+  "model": "sonnet",
+  "author": {
+    "name": "Barclays BUK",
+    "email": "barclaysai@barclays.com"
+  },
+  "dependencies": ["barclays-buk-standards"],
+  "extension_points": [
+    "context_resolvers",
+    "profiling_adapters",
+    "model_patterns",
+    "technology_candidates",
+    "code_generators",
+    "dq_rule_compilers",
+    "metadata_publishers",
+    "lineage_publishers",
+    "validators",
+    "handoff_renderers"
+  ],
+  "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
+  "source_register": [
+    {
+      "id": "LCT",
+      "url": "https://leancontrol.pr1.apaas4.barclays.intranet/buk.datalake.warehouse",
+      "purpose": "Business Outcome/control record, applicable controls, guild engagements, Risk Stories, evidence, decisions, exemptions and release status"
+    },
+    {
+      "id": "BDP",
+      "url": "https://bdp-aws.barcapint.com/",
+      "purpose": "Research existing sources and lineage before proposing pipelines or mappings"
+    },
+    {
+      "id": "ALATION",
+      "url": "https://gdc-aws.barcapint.com/",
+      "purpose": "Metadata, definitions, ownership, classifications, schemas, lineage"
+    },
+    {
+      "id": "DATA_MARKETPLACE",
+      "url": "https://prod.edm.barcapint.com/#/",
+      "purpose": "Determine whether an approved reusable data product/asset already exists"
+    },
+    {
+      "id": "BUK_DATA_PRODUCTS",
+      "url": "https://confluence.barcapint.com/spaces/SDWH/pages/2749079174/BUK+Data+Products+-+Data+Model+and+Mapping+Links+for+Reference",
+      "purpose": "Existing data-product models, mappings and reference links"
+    },
+    {
+      "id": "TADS_WELCOME",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/538450554/Welcome+to+TADS+and+Lean+Control",
+      "purpose": "TADS/LCP landing page — defines TADS as part of ERMF/ORF, primary objectives, complementary standards (CDMS, TCMS), and links to Operational Guide. Entry point for all TADS navigation.",
+      "confluence_page_id": "538450554",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "TADS_CONTROLS",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/1196955558/TADS+Controls",
+      "purpose": "Identify candidate applicable controls per TADS, control intent, required SME engagement and evidence expectations",
+      "confluence_page_id": "1196955558",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "TADS_OPERATIONAL_GUIDE",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/1177618711/TADS+Operational+Guide",
+      "purpose": "Detailed controls, reporting, governance, meeting minutes, TADS exemptions and operational procedures",
+      "confluence_page_id": "1177618711",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "TADS_MANDATORY_ARTEFACTS",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/1243750236/TADS+Mandatory+Artefacts",
+      "purpose": "Mandatory-artefact/evidence register — each artefact needs owner, target date, repository link, status, reviewer and validation evidence",
+      "confluence_page_id": "1243750236",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "TADS_MATURITY_CHECKLIST",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/812526252/TADS+Maturity+Checklist",
+      "purpose": "TADS maturity assessment checklist for products and services",
+      "confluence_page_id": "812526252",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "TADS_ROADMAP_2026",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/3712075932/TADS+Roadmap+2026",
+      "purpose": "Current TADS roadmap and planned changes for 2026",
+      "confluence_page_id": "3712075932",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_PROCESS_GUIDE",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/538452073/Lean+Control+Process+Guide",
+      "purpose": "Lean Control Process detailed guide — interaction framework between Product Delivery Teams and Control SMEs throughout iterative delivery",
+      "confluence_page_id": "538452073",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_GUILDS",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/561923193/Lean+Control+Guilds",
+      "purpose": "Guild structure, mandatory and elective guilds, guild roles and responsibilities",
+      "confluence_page_id": "561923193",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_GUILD_DATA_ARCHITECTURE",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/755597957/Data+Architecture",
+      "purpose": "Data Architecture guild — controls, engagement requirements and risk stories relevant to data engineering changes",
+      "confluence_page_id": "755597957",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_GUILD_SECURITY",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/755597965/Security",
+      "purpose": "Security guild — mandatory security control engagement for application development changes",
+      "confluence_page_id": "755597965",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_GUILD_ENTERPRISE_ARCHITECTURE",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/755597943/Enterprise+Architecture",
+      "purpose": "Enterprise Architecture guild — architectural alignment controls and engagement",
+      "confluence_page_id": "755597943",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_GUILD_SERVICE_TRANSITION",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/755597952/Service+Transition",
+      "purpose": "Service Transition guild — operational readiness and service introduction controls",
+      "confluence_page_id": "755597952",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_UEQ",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/538453294/Unified+Engagement+Questionnaire",
+      "purpose": "Unified Engagement Questionnaire — determines which guilds must be engaged based on change characteristics",
+      "confluence_page_id": "538453294",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_RISK_STORIES",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/449513485/Risk+Stories",
+      "purpose": "Risk Story creation, lifecycle, closure criteria and management — how potential risks become tracked work items",
+      "confluence_page_id": "449513485",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_BUSINESS_OUTCOMES",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/538446581/Business+Outcomes",
+      "purpose": "Business Outcome definition, creation in LCT, traceability to Risk Stories and releases",
+      "confluence_page_id": "538446581",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_RELEASES",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/806325690/Releases+in+LCT",
+      "purpose": "Release management in LCT — sign-off, change request association, conditions blocking release",
+      "confluence_page_id": "806325690",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_RELEASE_BLOCKERS",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/577768477/Conditions+blocking+your+Release+Sign+off+and+Release+Warnings",
+      "purpose": "Conditions that block release sign-off and release warnings in LCT",
+      "confluence_page_id": "577768477",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_CHANGE_REQUESTS",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/806325712/Change+Requests",
+      "purpose": "Change Request types, categories, ServiceFirst integration and LCT change tasks",
+      "confluence_page_id": "806325712",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "LCP_PRODUCT_SERVICE",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/806325433/Product+Service",
+      "purpose": "Product/Service definition, onboarding, lifecycle and scope determination in LCT",
+      "confluence_page_id": "806325433",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "TADS_GOVERNANCE_BUK",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/3696457478/TADS+Governance+BUK+-+MoM+2026",
+      "purpose": "BUK-specific TADS governance meeting minutes 2026 — decisions, actions and escalations",
+      "confluence_page_id": "3696457478",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "TADS_ML_ARTEFACT_BOT",
+      "url": "https://confluence.barcapint.com/spaces/AgileControl/pages/1254446638/Provide+TADS+ML+Artefact+Analysis+Bot+access+to+Artefacts",
+      "purpose": "TADS ML Artefact Analysis Bot — automated artefact assessment, access requirements and integration guidance",
+      "confluence_page_id": "1254446638",
+      "space_key": "AgileControl"
+    },
+    {
+      "id": "POLICY_HUB",
+      "url": "https://barclays.clausematch.com/portal/dashboard/documents?searchQuery=technology+application+development+standard",
+      "purpose": "Policy Hub — authoritative source for latest approved TADS, TCMS and CDMS versions. Always check here for current effective versions."
+    },
+    {
+      "id": "DE_STANDARDS",
+      "url": "https://barclays.sharepoint.com/sites/ChiefDataArchitecture/SitePages/Data-Principles-Policy-Standards-and-Architecture-Capabilities.aspx",
+      "purpose": "Data Principles, Policy, Standards and Architecture Capabilities"
+    }
+  ],
+  "review_cadence": "quarterly",
+  "next_review": "2026-10-13"
+}

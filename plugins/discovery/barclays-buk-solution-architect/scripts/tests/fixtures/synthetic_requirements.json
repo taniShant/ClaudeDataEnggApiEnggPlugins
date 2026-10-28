@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "requirement_type": "business_epic",
+  "source_jira_evidence": {
+    "issue_key": "TEST-123",
+    "raw_jira_response_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+  },
+  "explicit_requirements": [
+    {
+      "id": "ER001",
+      "requirement": "System must provide capability alpha functionality",
+      "supporting_evidence": ["summary:0"]
+    },
+    {
+      "id": "ER002",
+      "requirement": "Capability beta must be enhanced",
+      "supporting_evidence": ["description:0"]
+    }
+  ],
+  "inferred_requirements": [
+    {
+      "id": "IR001",
+      "requirement": "Cross-domain coordination will be required",
+      "reasoning": "Multiple capabilities affected suggests cross-domain impact",
+      "supporting_evidence": ["description:1"]
+    }
+  ],
+  "constraints_and_dependencies": [
+    {
+      "id": "CD001",
+      "constraint": "Must preserve backward compatibility",
+      "is_explicit": true,
+      "supporting_evidence": ["labels:0"]
+    }
+  ],
+  "ambiguities_and_unknowns": [
+    {
+      "id": "AMB001",
+      "ambiguity": "Performance requirements not specified",
+      "impact": "Cannot determine if current architecture suffices",
+      "clarification_needed": "What are the latency targets?"
+    }
+  ],
+  "key_concepts": [
+    {
+      "concept": "Capability Alpha",
+      "definition": "Core functionality for test domain",
+      "supporting_evidence": ["summary:0"]
+    }
+  ]
+}

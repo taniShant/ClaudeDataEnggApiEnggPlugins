@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-ux-designer",
+    "description": "Understands customer needs, brand, and design patterns to generate journey options that solve a problem. Produces UX designs, journey maps, and research insights.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

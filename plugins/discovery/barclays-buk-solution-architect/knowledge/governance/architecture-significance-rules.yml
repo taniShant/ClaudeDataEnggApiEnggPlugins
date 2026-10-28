@@ -1,0 +1,231 @@
+version: 2.0.0
+model:
+  name: architecture-significance
+  thresholds:
+    elevated: 4
+    significant: 8
+  scoring:
+    low: 1
+    medium: 2
+    high: 4
+  confidence:
+    high: all mandatory evidence present and directly supports findings
+    medium: minor assumptions remain but route is unlikely to change
+    low: missing or conflicting evidence could change route
+
+hard_triggers:
+  # 1. FINANCIAL (per PDF Appendix: Significance Criteria)
+  - id: HT-FIN-01
+    title: Material financial impact
+    route: SIGNIFICANT
+    category: financial
+    question: Does the change involve investment exceeding £1 million, create significant licensing commitments, or have material financial implications (including tactical vs strategic cost mismatches)?
+    examples:
+      - Investment exceeds £1 million
+      - Significant licensing commitment exists
+      - Material financial implications exist
+      - Short-term tactical cost creating long-term strategic burden
+      - Vendor lock-in with high switching/exit costs
+      - Aggregator contracts with material exit penalties
+    evidence: [cost analysis, investment justification, licensing terms, TCO modeling, financial impact assessment]
+
+  # 2. TECHNOLOGY (per PDF Appendix: Significance Criteria)
+  - id: HT-TECH-01
+    title: New or materially different technology use
+    route: SIGNIFICANT
+    category: technology
+    question: Does the change introduce a new technology, product, hosting model, integration pattern, or create material technology risk?
+    examples:
+      - New technology introduced
+      - New hosting model introduced
+      - New integration pattern introduced
+      - Material technology risk exists
+      - Legacy technology retirement or modernisation
+      - New programming language or framework adoption
+    evidence: [technology catalogue status, evaluation, lifecycle and support model, technology strategy alignment, risk assessment]
+
+  # 3. STRATEGIC (per PDF Appendix: Significance Criteria)
+  - id: HT-STR-01
+    title: Breaks approved strategy, creates strategic misalignment, or introduces new patterns
+    route: SIGNIFICANT
+    category: strategic
+    question: Does the change break approved architecture strategy, create misalignment with target state, introduce new architectural patterns, or alter risk/security/resilience posture?
+    examples:
+      - Breaks approved architecture strategy
+      - Creates misalignment with target state
+      - Introduces new architectural patterns
+      - Material legal, regulatory or compliance impact (licensing, regulatory obligations)
+      - Security posture changes (cryptography, authentication, trust boundaries, privileged access)
+      - Resilience posture changes (availability targets, uptime requirements, RTO/RPO changes)
+      - NFR changes (load capacity, latency targets, throughput changes)
+      - Deviation from platform roadmap or technology strategy
+    evidence: [strategic position, deviation rationale, approval for exception, regulatory guidance, threat model, resilience assessment, NFR specifications]
+
+  # 4. DOMAIN & CAPABILITY (per PDF Appendix: Significance Criteria)
+  - id: HT-DOM-01
+    title: Domain or capability boundary change
+    route: SIGNIFICANT
+    category: domain_and_capability
+    question: Does the change introduce a new domain/sub-domain, change domain boundaries, add/remove/redefine capabilities, move capabilities between domains, or change data/domain ownership or accountability?
+    examples:
+      - New domain or sub-domain introduced
+      - Domain boundary changes
+      - Capability added, removed, or redefined
+      - Capability moved between domains
+      - Data or domain ownership changes
+      - Accountability model changes
+    evidence: [domain model, capability model, accountable owners, boundary clarification, ownership documentation]
+
+  # 5. DATA (per PDF Appendix: Significance Criteria)
+  - id: HT-DATA-01
+    title: Material data architecture change
+    route: SIGNIFICANT
+    category: data
+    question: Does the change involve significant data movement, introduce new data store/platform, or create material changes to data classification, sensitivity, retention, lifecycle, or introduce cross-domain data sharing?
+    examples:
+      - Significant data movement required
+      - New data store or platform introduced
+      - Material change to data classification, sensitivity, retention or lifecycle
+      - Cross-domain data sharing introduced or changed
+      - New authoritative data source introduced
+      - Regulatory data flow updates (GDPR, BCBS239, PSD2, ICO/CRA)
+      - Critical Data Elements (CDEs) impact or introduction
+    evidence: [data model, classification, lineage, ownership, control assessment, CDE mapping, regulatory guidance]
+
+  # 6. COMPLEXITY (per PDF Appendix: Significance Criteria)
+  - id: HT-CPLX-01
+    title: Multiple domains, platforms, or complex organisational change
+    route: SIGNIFICANT
+    category: complexity
+    question: Does the change impact multiple domains, multiple platforms, involve complex organisational change, or create material cross-domain coupling/dependencies?
+    examples:
+      - Multiple domains impacted
+      - Multiple platforms impacted
+      - Complex organisational change involved
+      - Material cross-domain impact or coupling
+      - Cross-business-unit impact
+      - Multi-domain orchestration patterns
+      - Service Management updates required
+    evidence: [impact map, domain-owner positions, dependency plan, organisational change plan, Service Management assessment]
+
+  # 7. COMMERCIAL (per PDF Appendix: Significance Criteria)
+  - id: HT-COM-01
+    title: Third-party product introduction or material supplier change
+    route: SIGNIFICANT
+    category: commercial
+    question: Does the change introduce a third-party product, external service, new supplier, or create supplier lock-in considerations or material licensing impacts?
+    examples:
+      - Third-party product introduced
+      - Supplier lock-in considerations exist
+      - Material licensing impacts exist
+      - New aggregator partnership (credit broker, Open Banking integrator)
+      - External API dependency introduction
+      - Supplier relationship changes with lock-in risk
+      - Material contract or data-sharing agreement
+    evidence: [supplier assessment, contract terms, data flows, exit strategy, service obligations and SLAs, licensing review]
+
+indicators:
+  - id: IN-CPLX-01
+    dimension: complexity
+    question: Does the change span multiple systems, teams, environments or release trains with non-trivial dependencies?
+    examples: ["Multi-domain orchestration", "Multi-channel coordinated deployment (iOS, Android, web)", "Complex knowledge transfer across teams"]
+
+  - id: IN-SCALE-01
+    dimension: scale
+    question: Does the change materially increase transaction volume, concurrency, users, data volume or geographic reach?
+    examples: ["Load increase from 10 calls/day to 2000/second", "New geographic regions or data centers", "Order-of-magnitude data growth"]
+
+  - id: IN-CUST-01
+    dimension: customer_and_colleague
+    question: Does it materially change a customer or colleague journey, introduce a channel, or create inconsistent omnichannel behaviour?
+    examples: ["Multi-lender comparison experience embedded in lending journey", "New digital interaction channel", "Inconsistent experience across web and mobile"]
+
+  - id: IN-FIN-01
+    dimension: financial
+    question: Does it create material investment, run cost, licensing commitment, stranded cost or long-term total-cost consequence?
+    examples: ["Aggregator partnership with per-query pricing", "Licensing commitment exceeding £1M", "Tactical cost creating long-term strategic burden"]
+
+  - id: IN-DEL-01
+    dimension: delivery
+    question: Does it require unusual sequencing, migration, coexistence, cutover or rollback complexity?
+    examples: ["Coordinated mobile app and web release", "Staged rollout with monitoring gates", "Graceful degradation fallback procedures"]
+
+  - id: IN-PREC-01
+    dimension: precedent
+    question: Could the decision become a precedent copied by other teams or constrain future options?
+    examples: ["Session-based sensitive data caching as reusable pattern", "Multi-source ranking algorithm precedent", "Integration pattern that others may replicate"]
+
+  - id: IN-DEBT-01
+    dimension: debt
+    question: Does it create, extend or materially change architecture or technology debt?
+    examples: ["Legacy barclayloan-calculator (Java 1.5) reliability concerns", "Session cache + third-party dependency operational debt", "Modernization deferral creating future burden"]
+
+  - id: IN-NFR-01
+    dimension: quality_attributes
+    question: Are NFRs new, materially changed, conflicting or not evidenced?
+    examples: ["New 99.5% uptime target", "Latency targets 5s P95 soft check, 3s render P95", "Security or resilience posture elevation"]
+
+  - id: IN-ORG-01
+    dimension: organisation
+    question: Does it require material changes to ownership, skills, process, controls or organisational responsibilities?
+    examples: ["New service ownership post-hackathon", "Cross-domain team coordination required", "New on-call support model"]
+
+  - id: IN-UNK-01
+    dimension: uncertainty
+    question: Are key assumptions unvalidated or are authoritative architecture sources missing or conflicting?
+    examples: ["Aggregator partner not yet selected", "Domain boundary ownership unclear", "Pattern catalogue missing for validation"]
+
+aligned_change_conditions:
+  - id: AC-01
+    statement: Domain, capability and ownership boundaries remain unchanged.
+  - id: AC-02
+    statement: Approved technologies, products, hosting models and patterns are used within their documented intended use.
+  - id: AC-03
+    statement: The change conforms to current principles, standards, strategy, target state and roadmaps.
+  - id: AC-04
+    statement: Data classification, data flows, residency, retention, lineage and authoritative-source position remain within approved bounds.
+  - id: AC-05
+    statement: Security, privacy, resilience and operational controls are unchanged or satisfied by an existing approved control pattern.
+  - id: AC-06
+    statement: Integrations reuse approved contracts and do not create material new coupling or cross-domain impact.
+  - id: AC-07
+    statement: NFRs remain within proven platform envelopes and are supported by evidence.
+  - id: AC-08
+    statement: No material supplier, licensing, commercial, legal or regulatory commitment is introduced.
+  - id: AC-09
+    statement: No material architectural debt, exception, precedent or difficult-to-reverse decision is created.
+  - id: AC-10
+    statement: Engineering ownership, implementation design, automated checks, test evidence, rollout and rollback are clear.
+
+mandatory_evidence:
+  - change boundary and intended outcome
+  - impacted domains, capabilities, systems and business units
+  - applicable strategy, roadmap, standards, patterns and platform direction
+  - data architecture, integration points and cross-domain impact
+  - security, privacy, resilience, operational and regulatory impact
+  - NFRs, scale assumptions and user experience impact
+  - supplier, third-party, hosting and channel impact
+  - reversibility, cost model (tactical vs strategic), debt and key risks
+  - Service Management and operational support model impact
+  - accountable decision owners and cross-domain stakeholders
+
+governance_routes:
+  NOT_SIGNIFICANT:
+    route_description: "Change is business-as-usual within existing patterns, boundaries, and approved technologies. No architecture governance required beyond lightweight engineering alignment review."
+    artefacts: [change record, pattern and standard references, implementation design, automated conformance evidence]
+    reviews: [engineering review, optional architecture confirmation]
+    approvals: [delivery owner under delegated authority]
+
+  MORE_INFORMATION_REQUIRED:
+    route_description: "Evidence is insufficient to determine significance. Missing mandatory evidence blocks assessment. Collect specified information, then reassess."
+    artefacts: [minimum evidence request with prioritized gaps]
+    reviews: [triage with accountable architect]
+    approvals: []
+    follow_up: "Reassess once evidence gaps are closed"
+
+  SIGNIFICANT:
+    route_description: "One or more significance criteria triggered. Material governance required. Change impacts strategy, domain boundaries, cross-domain coupling, NFRs, resilience, cost model, operations, user experience, data architecture, security, regulations, or introduces new patterns/technology/third parties."
+    artefacts: [architecture impact or vision, ADRs for material decisions, domain impact assessment, NFRs specification, risk and control evidence, delivery conformance plan]
+    reviews: [peer review, domain-owner review, cross-domain review (if applicable), triggered specialist assurance, architecture governance via DAR/ARB]
+    approvals: [accountable architecture authority and any required control/risk/regulatory owners]
+    escalation: "If multiple hard triggers or cross-organizational impact: escalate to enterprise architecture and executive review"

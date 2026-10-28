@@ -1,0 +1,89 @@
+schema_version: '1.0'
+domain:
+  id: dom.recoveries
+  name: Recoveries
+  description: "The Recoveries domain manages the recovery of seriously delinquent, defaulted, or charged-off debt through internal specialised recovery teams, external debt collection agencies, legal action, enforcement activities, and debt sale strategies. It focuses on maximising recovery from accounts where standard collections approaches have been exhausted, whilst maintaining regulatory compliance, appropriate customer treatment standards, and effective vendor management. The domain balances recovery objectives with cost-effectiveness and regulatory obligations throughout the recovery lifecycle."
+  owner: cc
+  bian_links:
+    -
+      title: Account Recovery
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=35767"
+  sub_domains:
+    -
+      id: sub.rec.recoveries-case-lifecycle
+      name: Recoveries Case Lifecycle
+      description: Manages the entry of accounts into recoveries and the successful exit of accounts from recoveries.
+      capabilities:
+        -
+          id: cap.rec.enter-accounts-into-recoveries
+          name: Enter Accounts Into Recoveries
+          description: "The ability to move accounts into recoveries when collections activities have been exhausted or accounts are written off, assess each account and direct it to the most appropriate recovery method such as in-house recovery teams, external agencies, legal action, or sale to debt purchasers."
+        -
+          id: cap.rec.exit-accounts-from-recoveries
+          name: Exit Accounts From Recoveries
+          description: "The ability to close accounts that are leaving recoveries because they have been settled, fully recovered, sold to another company, or closed as unrecoverable, update account records, remove recovery markers, complete closure processes, and archive records appropriately."
+    -
+      id: sub.rec.recoveries-communications-and-closure-management
+      name: "Recoveries Communications & Closure Management"
+      description: "Coordinates recoveries communications and manages debts that are being closed, abandoned, or no longer actively pursued."
+      capabilities:
+        -
+          id: cap.rec.manage-recovery-communications
+          name: Manage Recovery Communications
+          description: "The ability to coordinate customer letters and notifications throughout the recovery process including default notices, legal letters, repossession warnings, debt sale notifications, and settlement offers, ensuring communications follow regulations, use appropriate tone and timing, and keep complete records."
+        -
+          id: cap.rec.manage-unrecoverable-debt
+          name: Manage Unrecoverable Debt
+          description: "The ability to identify debts that are too old to pursue legally and stop recovery action on these accounts, decide when to stop pursuing debt because recovery costs more than we would get back, and close accounts that cannot be recovered whilst keeping records in case customers voluntarily make contact or acknowledge the debt in future."
+    -
+      id: sub.rec.recoveries-external-channel-management
+      name: Recoveries External Channel Management
+      description: Manages external recovery channels including debt collection agencies and debt sale processes.
+      capabilities:
+        -
+          id: cap.rec.execute-debt-sales
+          name: Execute Debt Sales
+          description: "The ability to sell portfolios of debt to other companies including valuing the debt, preparing information, selecting purchasers, notifying customers, monitoring how purchasers treat customers after sale and forwarding any payments customers send to us for sold accounts."
+        -
+          id: cap.rec.manage-debt-collection-agencies
+          name: Manage Debt Collection Agencies
+          description: "The ability to select and oversee external debt collection agencies including choosing agencies, placing accounts with them, monitoring their performance, tracking recovery rates, checking they treat customers fairly, bringing accounts back in-house if needed, processing payments and keeping records up to date."
+    -
+      id: sub.rec.recoveries-governance-performance-and-cost-insight
+      name: "Recoveries Governance, Performance & Cost Insight"
+      description: "Provides recoveries performance analysis, cost insight, and reporting to support governance, planning, and continuous improvement."
+      capabilities:
+        -
+          id: cap.rec.analyse-recovery-performance-and-costs
+          name: Analyse Recovery Performance and Costs
+          description: "The ability to track how well recovery activities are working including success rates from in-house teams, external agencies, legal action, and debt sales, monitor recovery costs including legal fees, agency fees, and enforcement costs, and provide information for regulatory reports, business planning, and financial forecasting."
+    -
+      id: sub.rec.recoveries-internal-recovery-and-payment-resolution
+      name: "Recoveries Internal Recovery & Payment Resolution"
+      description: "Conducts in-house recovery activity, manages repayment negotiations, and handles authorised third-party representatives acting on behalf of customers."
+      capabilities:
+        -
+          id: cap.rec.conduct-internal-recovery
+          name: Conduct Internal Recovery
+          description: "The ability to manage specialist recovery activities using in-house teams before passing accounts to external agencies, analyse what recovery approaches work best and gather customer information to make informed decisions whilst maximising recoveries and following regulations."
+        -
+          id: cap.rec.establish-recovery-payment-solutions
+          name: Establish Recovery Payment Solutions
+          description: "The ability to negotiate and agree payment arrangements with customers on defaulted accounts, design affordable repayment plans based on what customers can pay or agree reduced settlement amounts to close accounts faster, monitor whether customers keep to agreements and adjust plans when circumstances change, and process immediate payments across different channels."
+        -
+          id: cap.rec.manage-third-party-representatives
+          name: Manage Third-Party Representatives
+          description: "The ability to handle accounts where customers have appointed representatives such as debt management companies, debt charities, or legal representatives to act on their behalf, check representative authority, coordinate payment plans across multiple debts, and ensure customers are treated fairly."
+    -
+      id: sub.rec.recoveries-legal-and-formal-claims
+      name: "Recoveries Legal & Formal Claims"
+      description: Manages legal recovery actions and formal claims processes such as insolvency and probate-related recovery activity.
+      capabilities:
+        -
+          id: cap.rec.administer-formal-recovery-claims
+          name: Administer Formal Recovery Claims
+          description: "The ability to submit formal claims when customers enter bankruptcy or insolvency arrangements, process accounts where customers have died including identifying estates and making claims through probate, and track and allocate any payments received from insolvency proceedings or estates."
+        -
+          id: cap.rec.pursue-legal-recovery-action
+          name: Pursue Legal Recovery Action
+          description: "The ability to take legal action to recover debt through court proceedings, charging orders, property repossession, and enforcement where appropriate, mainly used for secured lending such as mortgages where the cost is justified, and for unsecured lending, maintain the legal validity of debts for future debt purchasers."

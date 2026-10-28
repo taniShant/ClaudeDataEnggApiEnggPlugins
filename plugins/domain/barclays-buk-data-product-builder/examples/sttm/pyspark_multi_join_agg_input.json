@@ -1,0 +1,62 @@
+{
+  "$schema": "sttm-plugin/v1/extended",
+  "target_source": {
+    "format": "excel",
+    "artifact": "input/target_schema.xlsx"
+  },
+  "target": {
+    "database": "bdp_uk_reporting_db",
+    "table": "branch_performance",
+    "table_description": "Business Data Product - branch-level lending performance metrics aggregated from loan accounts",
+    "table_type": "Transactional",
+    "columns": [
+      {"name": "branch_id", "description": "Unique branch identifier", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "branch_name", "description": "Branch display name from reference data", "datatype": "string", "nullable": "Y", "key_column": "N"},
+      {"name": "total_loan_value", "description": "Sum of active loan amounts for the branch", "datatype": "decimal(18,2)", "nullable": "Y", "key_column": "N"},
+      {"name": "active_loan_count", "description": "Count of active loans for the branch", "datatype": "int", "nullable": "Y", "key_column": "N"},
+      {"name": "avg_loan_amount", "description": "Average loan amount across active loans", "datatype": "decimal(18,2)", "nullable": "Y", "key_column": "N"},
+      {"name": "reporting_date", "description": "Date the report was generated", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "dw_lod_tmp", "description": "Load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "fdp_uk_lending_db",
+      "table": "loan_account",
+      "columns": [
+        {"name": "loan_id", "datatype": "string"},
+        {"name": "branch_id", "datatype": "string"},
+        {"name": "loan_amount", "datatype": "decimal(18,2)"},
+        {"name": "active", "datatype": "string"}
+      ]
+    },
+    {
+      "database": "fdp_uk_branch_db",
+      "table": "branch_ref",
+      "columns": [
+        {"name": "branch_id", "datatype": "string"},
+        {"name": "branch_name", "datatype": "string"}
+      ]
+    }
+  ],
+  "code": {
+    "type": "pyspark",
+    "content": "from pyspark.sql import functions as F\n\nloans = spark.table(\"fdp_uk_lending_db.loan_account\")\nbranches = spark.table(\"fdp_uk_branch_db.branch_ref\")\n\nresult = (\n    loans\n    .filter(F.col(\"active\") == \"1\")\n    .join(branches, loans.branch_id == branches.branch_id, \"left\")\n    .groupBy(branches.branch_id, branches.branch_name)\n    .agg(\n        F.sum(\"loan_amount\").alias(\"total_loan_value\"),\n        F.count(\"loan_id\").alias(\"active_loan_count\"),\n        F.avg(\"loan_amount\").alias(\"avg_loan_amount\")\n    )\n    .withColumn(\"reporting_date\", F.current_date())\n    .withColumn(\"dw_lod_tmp\", F.current_timestamp())\n)"
+  },
+  "multi_source": {
+    "strategy": "join",
+    "primary_source": "fdp_uk_lending_db.loan_account",
+    "secondary_sources": [
+      {
+        "source": "fdp_uk_branch_db.branch_ref",
+        "join_type": "LEFT",
+        "join_key": "branch_id"
+      }
+    ]
+  },
+  "configuration": {
+    "load_type": "Day1",
+    "partition_columns": ["reporting_date"],
+    "audit_columns": {"load_timestamp": "dw_lod_tmp"}
+  }
+}

@@ -1,0 +1,1353 @@
+# =============================================================================
+# STTM Plugin — Interview Questionnaire
+# =============================================================================
+# Structured intake questionnaire for gathering mapping information from users.
+# Used by the Guided Engine (Step 7 Phase A) before automated resolution.
+#
+# Design principles:
+#   - Target-side questions are NEVER asked (provided via input Excel)
+#   - Questions are adaptive: skipped when inferrable from other inputs
+#   - Progressive flow: scope → mapping → transformation → loading → refinement
+#   - Answers map directly to Input Contract fields (Section 3 of design doc)
+# =============================================================================
+
+schema_version: "1.0"
+plugin: "sttm-generator"
+
+# -----------------------------------------------------------------------------
+# INPUT ASSUMPTIONS
+# The following are ALWAYS provided by the user as an Excel document and are
+# never asked about in this questionnaire:
+#   - Target Database
+#   - Target Table Name
+#   - Target Column Name
+#   - Target Column Description (business meaning)
+#   - Target Column Data Type
+#   - Target Column Null Flag
+#   - Target Table Description
+# -----------------------------------------------------------------------------
+
+profiling_resolution:
+  description: "Profiling data is resolved from Excel or user input only. No JSON profiling file accepted."
+  priority_chain:
+    - priority: 1
+      source: user_direct_answer
+      description: "User directly provides the metric during interview or guided mode"
+    - priority: 2
+      source: excel_profiling_report
+      description: "Excel workbook with profiling data provided by user"
+  when_missing:
+    action: ask_user
+    sql_recommendations: profiling_queries.sql
+    explain_why: true
+    continue_on_null: true
+
+interview:
+  passes:
+    - id: scope
+      name: "Pass 1 — Source System Scope"
+      description: "Establish where the data comes from"
+      categories: [source_system, column_mapping]
+
+    - id: source_target_io
+      name: "Pass 1.5 — Source & Target I/O Mode"
+      description: "Determine whether sources/targets are database tables, parquet files, or a mix"
+      categories: [source_io_mode, file_source_schema, target_io_mode, file_target_write_mode, file_target_partitioning]
+
+    - id: transformation
+      name: "Pass 2 — Transformation & SCD"
+      description: "Establish how data is transformed and versioned"
+      categories: [transformation_hints, temporal_scd]
+
+    - id: loading
+      name: "Pass 3 — Data Loading Strategy"
+      description: "Establish load type scope, then Day 0 and Day 1 loading patterns"
+      categories: [load_type_scope, day0_retrospective, day1_incremental]
+
+    - id: refinement
+      name: "Pass 4 — Operational & Ambiguity"
+      description: "Resolve operational context and remaining unknowns"
+      categories: [operational_context, ambiguity_resolution]
+
+  # ---------------------------------------------------------------------------
+  # DELIVERY PROTOCOL — Controls how questions are presented to the user
+  # ---------------------------------------------------------------------------
+  delivery_protocol:
+    mode: sequential            # sequential = one question at a time with user pause
+    max_group_size: 3           # max questions in a delivery_group presented together
+    pass_state_tracking:
+      persist_after_each_answer: true
+      fields:
+        - passes_completed          # array of pass names fully done
+        - current_pass              # pass name in progress (null between passes)
+        - current_pass_next_question_id  # next Q to ask on resume
+        - current_pass_questions_answered # progress counter within pass
+      storage: "output/.intermediate/interview_summary.json"
+      resume_behavior: "skip_to_current_pass_next_question_id"
+    gateway_questions: ["1.3", "1.5.1", "1.5.4", "4.1", "5.0"]
+    cross_pass_dependencies:
+      - from: "1.5.1"
+        affects_passes: [source_target_io]
+        affects_questions: ["1.5.3"]
+      - from: "1.5.4"
+        affects_passes: [source_target_io, transformation, loading]
+        affects_questions: ["1.5.6", "1.5.7", "4.1", "5.0"]
+      - from: "4.1"
+        affects_passes: [loading]
+        affects_questions: ["5.4", "5.11", "5.14", "5.17", "5.19a"]
+
+categories:
+
+  # ===========================================================================
+  # CATEGORY 1: SOURCE SYSTEM IDENTIFICATION
+  # ===========================================================================
+  source_system:
+    name: "Source System Identification"
+    description: "Identifies source databases, tables, and join relationships"
+    questions:
+
+      - id: "1.1"
+        question: "What is the primary source database?"
+        resolves: "Source Database column"
+        maps_to: "sources[].database"
+        delivery_group: source_identity
+        answer_type: text
+        required: true
+        skip_if:
+          - condition: "SQL code contains fully-qualified table references (db.table)"
+            evidence_source: sql_code
+          - condition: "Design document explicitly names the source database"
+            evidence_source: design_doc
+
+      - id: "1.2"
+        question: "What are the source tables involved?"
+        resolves: "Source Table Name column"
+        maps_to: "sources[].table"
+        delivery_group: source_identity
+        answer_type: list
+        required: true
+        skip_if:
+          - condition: "SQL FROM/JOIN clauses enumerate all source tables"
+            evidence_source: sql_code
+          - condition: "Design document explicitly lists source tables"
+            evidence_source: design_doc
+
+      - id: "1.3"
+        question: "Is there a single anchor/master table or multiple tables joined together?"
+        resolves: "Join complexity and primary source identification"
+        maps_to: "joins[], multi_source.primary_source"
+        gateway: true
+        gateway_impact:
+          - option: "Single table"
+            activates: []
+            summary: "+0 additional questions (simplest path)"
+          - option: "Multiple tables — joined"
+            activates: ["1.4", "7.1"]
+            summary: "+2 questions (join conditions, source precedence)"
+          - option: "Multiple tables — UNION"
+            activates: ["1.3b", "7.1"]
+            summary: "+1-2 questions (UNION semantics, source precedence)"
+        answer_type: choice
+        options:
+          - "Single table — all columns come from one source"
+          - "Multiple tables — joined to combine attributes"
+          - "Multiple tables — UNION to combine rows"
+        required: true
+        skip_if:
+          - condition: "SQL has only one table in FROM clause"
+            evidence_source: sql_code
+
+      - id: "1.3b"
+        question: "For UNION-based SQL: Is each SELECT branch a distinct source system (e.g., current vs legacy accounts), or are they partitions of the same source (e.g., regional splits)?"
+        resolves: "UNION semantics — distinct systems vs partitioned source"
+        maps_to: "multi_source.union_semantics"
+        note: "Source system identity is now declared via 'source_system:<value>' in the mapping Additional Context (Column K). This question focuses on UNION branch semantics only — not source system labeling."
+        answer_type: choice
+        options:
+          - "distinct_systems — each branch is a different source system"
+          - "partitioned_source — branches are partitions of the same logical source"
+        required: true
+        depends_on: "1.3 == 'Multiple tables — UNION to combine rows'"
+        skip_if:
+          - condition: "SQL UNION branches reference tables from different databases"
+            evidence_source: sql_code
+
+      - id: "1.4"
+        question: >
+          For each pair of joined tables, what is the join condition?
+          Specify BOTH sides: {left_table}.{left_column} = {right_table}.{right_column}
+          (join key names may differ between tables — state both explicitly).
+          Example: TETLTCCC.FRC_RSN_CDE = ref_src_decode.src_code
+        resolves: "Lineage resolution path and join logic for each table pair"
+        maps_to: "joins[].on"
+        answer_type: join_pair_list
+        answer_format: "{left_table}.{left_column} = {right_table}.{right_column}"
+        example: "TETLCAAC.STG_ID = TETLTCCC.STG_ID, TETLTCTP.dmc_cde = third_party.dmc_cde"
+        required: true
+        depends_on: "1.3 != 'Single table'"
+        skip_if:
+          - condition: "JOIN ON clause present in SQL"
+            evidence_source: sql_code
+          - condition: "Source dictionary relationships.json or join_candidates.json specifies join conditions for discovered tables"
+            evidence_source: metadata_files
+        clarification_prompt: >
+          Note: Join keys may have different column names on each side.
+          Please provide the full condition for each join (e.g., if the driver
+          table uses FRC_RSN_CDE but the lookup table calls it src_code,
+          state: TETLTCCC.FRC_RSN_CDE = ref_src_decode.src_code).
+
+      - id: "1.4b"
+        question: >
+          The code contains parameterized variables ({parameter_list}).
+          What date range or business context do these parameters represent?
+          (e.g., ':billing_period = current billing cycle YYYYMM',
+          ':bp_minus_2 = billing period minus 2 months')
+        resolves: "Parameter variable semantics and date range context"
+        maps_to: "configuration.parameters"
+        also_populates_additional_context:
+          key: parameter_definitions
+          transform: "direct"
+        answer_type: key_value_map
+        answer_format: "parameter_name = description/value"
+        required: false
+        depends_on: "code_prescan.parameter_count > 0"
+        examples:
+          - ":billing_period = Current billing cycle in YYYYMM format"
+          - ":bp_minus_2 = Billing period minus 2 months"
+          - ":bp_first_day = First day of the billing period (DATE)"
+        skip_if:
+          - condition: "No parameterized variables detected in code pre-scan (parameter_count == 0)"
+            evidence_source: code_prescan
+          - condition: "Design document explicitly defines all parameter variables and their meanings"
+            evidence_source: design_doc
+
+      - id: "1.5"
+        question: "Are there any reference/lookup tables from other databases?"
+        resolves: "Cross-database source entries"
+        maps_to: "sources[] with different database"
+        note: "Cross-database sources that represent independent data flows should be identified via 'source_system:<value>' in Additional Context. This question applies to lookup/reference tables within the SAME flow. Multiple databases in a mapping do NOT imply multiple source systems."
+        answer_type: list
+        required: false
+        skip_if:
+          - condition: "SQL references tables from multiple databases"
+            evidence_source: sql_code
+
+  # ===========================================================================
+  # CATEGORY 2: COLUMN-LEVEL SOURCE MAPPING
+  # ===========================================================================
+  column_mapping:
+    name: "Column-Level Source Mapping"
+    description: "Maps each target column to its source table and column"
+    questions:
+
+      - id: "2.1"
+        question: "For each target column — which source table.column maps to it?"
+        resolves: "Source Column Name for every row"
+        maps_to: "mapping row: Source Column Name"
+        answer_type: column_map
+        required: true
+        skip_if:
+          - condition: "SQL SELECT list aliases match all target column names"
+            evidence_source: sql_code
+
+      - id: "2.2"
+        question: "Are any target columns sourced from multiple tables/columns?"
+        resolves: "Multi-source or multi-column derivation"
+        maps_to: "multi_source, business_logic"
+        answer_type: list
+        required: false
+        skip_if:
+          - condition: "SQL expressions for each column reference only single source"
+            evidence_source: sql_code
+
+      - id: "2.3"
+        question: "Are any target columns hardcoded constants? What are the values?"
+        resolves: "Hardcoded source entries and literal values"
+        maps_to: "Source = 'Hardcoded', business_logic = literal"
+        delivery_group: column_extras
+        answer_type: key_value_map
+        required: false
+        examples:
+          - "account_source_system_key = 10001011"
+          - "product_category_code = 'Personal Loan'"
+        skip_if:
+          - condition: "Column description explicitly states 'hardcoded'"
+            evidence_source: target_excel
+
+      - id: "2.4"
+        question: "Are any target columns not applicable for this product/scope?"
+        resolves: "N/A columns that should be set to NULL"
+        maps_to: "Source = 'N/A', business_logic = 'NULL'"
+        delivery_group: column_extras
+        answer_type: list
+        required: false
+        skip_if:
+          - condition: "Column description contains 'not applicable'"
+            evidence_source: target_excel
+
+      - id: "2.5"
+        question: "Are any target columns system-generated? (e.g., load timestamps, derived flags)"
+        resolves: "System and derived column markers"
+        maps_to: "Source = '(system)' or '(derived)'"
+        delivery_group: column_extras
+        answer_type: list
+        required: false
+        skip_if:
+          - condition: "Column names match audit column patterns (dw_lod_tmp, dw_upd_lod_tmp, active, eff_end_date)"
+            evidence_source: config_convention
+
+  # ===========================================================================
+  # PASS 1.5 — Source & Target I/O Mode
+  # ===========================================================================
+  # Determines whether sources/targets are database tables, parquet files,
+  # or a mix. Affects downstream questions: SCD type, load type, audit columns.
+  # Questions auto-skip when evidence is available from code prescan or config.
+
+  source_io_mode:
+    name: "Source I/O Mode"
+    description: "Determines whether source datasets are database tables or parquet files"
+    questions:
+
+      - id: "1.5.1"
+        question: "Are any source datasets read from parquet files rather than database tables?"
+        resolves: "Source I/O mode classification"
+        maps_to: "session_state.io_mode"
+        gateway: true
+        gateway_impact:
+          - option: "No — all sources are database tables"
+            activates: []
+            summary: "+0 additional questions (default table path)"
+          - option: "Yes — one or more sources are parquet files"
+            activates: ["1.5.3"]
+            summary: "+1 question (schema mode)"
+        answer_type: choice
+        options:
+          - "No — all sources are database tables"
+          - "Yes — one or more sources are parquet files"
+        default: "No — all sources are database tables"
+        required: true
+        skip_if:
+          - condition: "code_prescan.file_read_count > 0"
+            resolved_value: "Yes — one or more sources are parquet files"
+            confidence: 0.90
+          - condition: "config_overrides.source_io is not null"
+            resolved_value: "Yes — one or more sources are parquet files"
+            confidence: 0.99
+          - condition: "mapping_parsed.file_source_detected == true"
+            resolved_value: "Yes — one or more sources are parquet files"
+            confidence: 1.0
+
+  file_source_schema:
+    name: "File Source Schema"
+    description: "Determines schema handling for parquet file sources"
+    questions:
+
+      - id: "1.5.3"
+        question: >
+          For each parquet file source, do you have an explicit schema (column names and types)?
+          If yes, place a JSON schema file in input/source_metadata/{logical_name}_schema.json.
+          If no, schema will be inferred from the parquet file at runtime.
+        resolves: "Schema mode for file sources"
+        maps_to: "session_state.source_io.sources[].schema_mode"
+        answer_type: choice
+        options:
+          - "Explicit schema provided"
+          - "Infer from parquet file"
+        default: "Infer from parquet file"
+        required: true
+        depends_on: "1.5.1 == 'Yes — one or more sources are parquet files'"
+        skip_if: []
+
+  target_io_mode:
+    name: "Target I/O Mode"
+    description: "Determines whether the target output is a database table or parquet file"
+    questions:
+
+      - id: "1.5.4"
+        question: "Is the target output a parquet file or a database table?"
+        resolves: "Target I/O mode classification"
+        maps_to: "session_state.io_mode"
+        gateway: true
+        gateway_impact:
+          - option: "Database table (default)"
+            activates: []
+            summary: "+0 additional questions (default table path)"
+          - option: "Parquet file"
+            activates: ["1.5.6", "1.5.7"]
+            summary: "+2 questions (write mode, partitioning)"
+        answer_type: choice
+        options:
+          - "Database table (default)"
+          - "Parquet file"
+        default: "Database table (default)"
+        required: true
+        skip_if:
+          - condition: "code_prescan.file_write_count > 0"
+            resolved_value: "Parquet file"
+            confidence: 0.90
+          - condition: "config_overrides.target_io is not null"
+            resolved_value: "Parquet file"
+            confidence: 0.99
+          - condition: "mapping_parsed.file_target_detected == true"
+            resolved_value: "Parquet file"
+            confidence: 1.0
+
+  file_target_write_mode:
+    name: "File Target Write Mode"
+    description: "Determines the write mode for parquet target output"
+    questions:
+
+      - id: "1.5.6"
+        question: >
+          What write mode should be used for the parquet target?
+            - overwrite: Replace all data on each run (Day0-like, full rebuild)
+            - append: Add new partition data on each run (Day1-like, incremental)
+        resolves: "Parquet target write mode"
+        maps_to: "session_state.target_io.write_mode"
+        answer_type: choice
+        options:
+          - "overwrite"
+          - "append"
+        default: "overwrite"
+        required: true
+        depends_on: "1.5.4 == 'Parquet file'"
+        skip_if: []
+
+  file_target_partitioning:
+    name: "File Target Partitioning"
+    description: "Determines partition columns for parquet target output"
+    questions:
+
+      - id: "1.5.7"
+        question: >
+          Which columns should the parquet output be partitioned by?
+          Common choices: dw_bus_dt (for daily partitions), year/month (for time-based).
+          Leave empty for no partitioning.
+        resolves: "Parquet target partition columns"
+        maps_to: "session_state.target_io.partition_by"
+        answer_type: list
+        default: []
+        required: false
+        depends_on: "1.5.4 == 'Parquet file'"
+        skip_if: []
+
+  # Cross-pass impact of Pass 1.5 answers:
+  #   - Q1.5.4 = "Parquet file" AND Q4.1 = SCD2 → FIO3 blocker warning, re-route to SCD1/Transactional
+  #   - Q1.5.6 = "overwrite" → maps naturally to Day0 load type (Q5.0)
+  #   - Q1.5.6 = "append" → maps naturally to Day1 load type (Q5.0)
+  #   - Volumetrics questions (Q5.9a-d) still apply to file sources
+
+  # ===========================================================================
+  # CATEGORY 3: TRANSFORMATION HINTS
+  # ===========================================================================
+  transformation_hints:
+    name: "Transformation Hints"
+    description: "Identifies transformation patterns applied to source data"
+    questions:
+
+      - id: "3.1"
+        question: "Are any source columns conditional — value depends on another column? (e.g., 'if type = C use X, else Y')"
+        resolves: "CASE WHEN transformation pattern"
+        maps_to: "business_logic (CASE WHEN)"
+        delivery_group: transform_patterns_a
+        answer_type: structured
+        required: false
+        examples:
+          - column: "case_type_key"
+            rule: "If ACC_ETD_RVY_DTE is NOT NULL then 'R', else 'C'"
+        skip_if:
+          - condition: "CASE WHEN expressions found in SQL for relevant columns"
+            evidence_source: sql_code
+
+      - id: "3.2"
+        question: "Are there source date/numeric columns stored in a different format than target? (e.g., integer dates YYYYMMDD, percentage as whole number)"
+        resolves: "CAST and format conversion requirements"
+        maps_to: "business_logic (CAST/TO_DATE)"
+        delivery_group: transform_patterns_a
+        answer_type: list
+        required: false
+        examples:
+          - "COL_ETD_DTE stored as integer YYYYMMDD, target needs TIMESTAMP"
+          - "rate_pct stored as 75, target needs 0.75"
+        skip_if:
+          - condition: "Explicit CAST/TO_DATE in SQL"
+            evidence_source: sql_code
+          - condition: "Profiling detects format mismatch vs target type (from Excel report or user answer)"
+            evidence_source: profiling_any
+
+      - id: "3.3"
+        question: "Are there any COALESCE / fallback patterns? (try source A, if NULL fall back to source B)"
+        resolves: "Multi-source priority and default values"
+        maps_to: "business_logic (COALESCE), default_value"
+        delivery_group: transform_patterns_b
+        answer_type: structured
+        required: false
+        examples:
+          - column: "dmc_id"
+            rule: "Use TETLTCTP.dmc_cde first, if NULL use third_party.third_party_id"
+        skip_if:
+          - condition: "COALESCE function present in SQL"
+            evidence_source: sql_code
+
+      - id: "3.4"
+        question: "Are there any code-to-value decodes? (e.g., 'ACT' → 'ACTIVE', 'D' → 'DIGITAL')"
+        resolves: "Decode / CASE WHEN mapping transformation"
+        maps_to: "business_logic (CASE WHEN with literals)"
+        delivery_group: transform_patterns_b
+        answer_type: structured
+        required: false
+        skip_if:
+          - condition: "CASE WHEN with literal IN lists found in SQL"
+            evidence_source: sql_code
+
+      - id: "3.5"
+        question: "Are there any crypto operations on any columns? (tokenize/detokenize using Protegrity UDFs)"
+        resolves: "Crypto UDF identification and DE names"
+        maps_to: "crypto"
+        delivery_group: crypto_agg
+        answer_type: structured
+        required: false
+        examples:
+          - column: "sort_code"
+            direction: "detokenize"
+            de: "UK_TOK_SORTCOD_L0R0_NUM_DE"
+        skip_if:
+          - condition: "protect/unprotect UDF calls found in SQL"
+            evidence_source: sql_code
+          - condition: "Crypto config file provided"
+            evidence_source: crypto_config
+
+      - id: "3.6"
+        question: "Are any columns aggregated from source? (SUM, MAX, COUNT across rows)"
+        resolves: "Aggregation transformation detection"
+        maps_to: "aggregations[]"
+        delivery_group: crypto_agg
+        answer_type: structured
+        required: false
+        skip_if:
+          - condition: "Aggregate/window functions found in SQL"
+            evidence_source: sql_code
+
+      - id: "3.7"
+        question: "Is the primary key a natural key from source, or derived/composite from multiple columns?"
+        resolves: "Key derivation logic"
+        maps_to: "business_logic for PK column"
+        answer_type: choice
+        options:
+          - "Natural key — direct mapping from single source column"
+          - "Composite — derived from multiple source columns (e.g., concatenation)"
+          - "Surrogate — system-generated sequence or UUID"
+        required: true
+        skip_if:
+          - condition: "PK column has single-column direct mapping in SQL"
+            evidence_source: sql_code
+
+      - id: "3.8"
+        question: "Are there any default/fallback values when source is NULL?"
+        resolves: "Default Value column"
+        maps_to: "default_value"
+        answer_type: key_value_map
+        required: false
+        examples:
+          - "stock_indicator = 'N' when derivation yields NULL"
+          - "payment_method = 'UNKNOWN' when source is NULL"
+        skip_if:
+          - condition: "COALESCE with literal fallback found in SQL"
+            evidence_source: sql_code
+
+  # ===========================================================================
+  # CATEGORY 4: TEMPORAL & SCD CONTEXT
+  # ===========================================================================
+  temporal_scd:
+    name: "Temporal & SCD Context"
+    description: "Establishes SCD type and temporal management rules"
+    questions:
+
+      - id: "4.1"
+        question: "Is this table SCD2, SCD1, transactional (append-only), or snapshot?"
+        resolves: "Target Table Type classification"
+        maps_to: "configuration.scd.type"
+        gateway: true
+        gateway_impact:
+          - option: "SCD2"
+            activates: ["4.2", "4.3", "4.4", "4.5", "4.6", "5.4", "5.11", "5.14", "5.17", "5.19a"]
+            summary: "+8-10 questions (versioning, CDC, merge strategy)"
+          - option: "SCD1"
+            activates: ["4.4", "5.11", "5.14", "5.17"]
+            summary: "+3-5 questions (CDC, merge, delete handling)"
+          - option: "Transactional"
+            activates: []
+            summary: "+0 temporal/CDC questions (simplest path)"
+          - option: "Snapshot"
+            activates: ["5.11", "5.17"]
+            summary: "+1-3 questions (CDC detection, delete handling)"
+        answer_type: choice
+        options:
+          - "SCD2 — history-preserving with effective dates"
+          - "SCD1 — overwrite in place"
+          - "Transactional — append-only, no updates"
+          - "Snapshot — periodic full refresh"
+        required: true
+        skip_if:
+          - condition: "Target columns include eff_start_date + eff_end_date + active"
+            evidence_source: target_excel
+            inferred_answer: "SCD2"
+          - condition: "Design document explicitly states table type (SCD2, SCD1, transactional, or snapshot)"
+            evidence_source: design_doc
+
+      - id: "4.2"
+        question: "Which source column drives the effective start date (eff_start_date)?"
+        resolves: "SCD2 temporal anchor"
+        maps_to: "configuration.scd.source_mod_column"
+        answer_type: text
+        required: true
+        depends_on: "4.1 == 'SCD2'"
+        skip_if:
+          - condition: "SQL explicitly assigns a source column to eff_start_date"
+            evidence_source: sql_code
+
+      - id: "4.3"
+        question: "What is the high-end date for open/current records? (e.g., 3499-12-31, 9999-12-31)"
+        resolves: "eff_end_date literal value"
+        maps_to: "configuration.scd.high_end_date"
+        answer_type: text
+        required: true
+        depends_on: "4.1 == 'SCD2'"
+        default: "3499-12-31"
+        skip_if:
+          - condition: "Enterprise standard defined in config"
+            evidence_source: config_convention
+
+      - id: "4.4"
+        question: "Which columns should be excluded from CDC change detection hash?"
+        resolves: "CDC merge configuration"
+        maps_to: "configuration.cdc_hash_exclusions"
+        also_populates_additional_context:
+          key: cdc_exclude
+          transform: "join_list(',')"
+        answer_type: list
+        required: false
+        depends_on: "4.1 in ['SCD2', 'SCD1']"
+        default: ["dw_lod_tmp", "dw_upd_lod_tmp"]
+        skip_if:
+          - condition: "Audit column names match exclusion convention"
+            evidence_source: config_convention
+
+      - id: "4.5"
+        question: "When a new version is detected, how should eff_end_date be set on the previous active record?"
+        resolves: "Temporal stitching — closing formula for superseded versions"
+        maps_to: "configuration.scd.close_date_formula"
+        delivery_group: scd2_closeout
+        answer_type: choice
+        options:
+          - "new_eff_start_date — close previous version on the day the new version starts"
+          - "new_eff_start_date - 1 day — gap-free at day granularity"
+          - "batch_date - 1 — close on the day before processing"
+          - "Custom expression — specify below"
+        required: true
+        depends_on: "4.1 == 'SCD2'"
+        default: "new_eff_start_date"
+        skip_if:
+          - condition: "MERGE SQL explicitly shows eff_end_date assignment logic"
+            evidence_source: sql_code
+
+      - id: "4.6"
+        question: "Does the SCD2 timeline operate at day precision or timestamp precision?"
+        resolves: "Temporal grain — determines version boundary handling and same-day dedup"
+        maps_to: "configuration.scd.temporal_grain"
+        delivery_group: scd2_closeout
+        answer_type: choice
+        options:
+          - "Day — one version per business day maximum; eff_start/end are DATE type"
+          - "Timestamp — multiple versions per day possible; eff_start/end are TIMESTAMP type"
+        required: true
+        depends_on: "4.1 == 'SCD2'"
+        skip_if:
+          - condition: "Target DDL specifies eff_start_date as DATE (implies day grain)"
+            evidence_source: target_excel
+            inferred_answer: "Day"
+          - condition: "Target DDL specifies eff_start_date as TIMESTAMP (implies timestamp grain)"
+            evidence_source: target_excel
+            inferred_answer: "Timestamp"
+
+  # ===========================================================================
+  # CATEGORY 5 GATEWAY: LOAD TYPE SCOPE
+  # ===========================================================================
+  load_type_scope:
+    name: "Load Type Scope"
+    description: "Determines which load types are in scope before asking Day 0 / Day 1 questions"
+    questions:
+
+      - id: "5.0"
+        question: "Which load types are in scope for this mapping?"
+        resolves: "Load type scope — gates Day 0 and Day 1 question categories"
+        maps_to: "configuration.load_type"
+        gateway: true
+        gateway_impact:
+          - option: "Both"
+            activates: ["5.1-5.10", "5.11-5.23"]
+            summary: "+15-20 questions (Day 0 + Day 1 loading)"
+          - option: "Day 0 only"
+            activates: ["5.1-5.10"]
+            summary: "+8-10 questions (Day 0 only — no incremental)"
+          - option: "Day 1 only"
+            activates: ["5.11-5.23"]
+            summary: "+8-12 questions (Day 1 only — no historical load)"
+        also_populates_additional_context:
+          key: load_type
+          transform: |
+            map({
+              "Both": "full_then_incremental",
+              "Day 0 only": "day0",
+              "Day 1 only": "BAU"
+            })
+        answer_type: choice
+        options:
+          - "Both — Day 0 initial/historical load + Day 1 incremental/BAU"
+          - "Day 0 only — initial/historical load only (no incremental)"
+          - "Day 1 only — incremental/BAU only (no initial load)"
+        required: false
+        default: "Both"
+        skip_if:
+          - condition: "Input contract or design document specifies load_type"
+            evidence_source: design_doc
+
+  # ===========================================================================
+  # CATEGORY 5A: DAY 0 — RETROSPECTIVE / INITIAL FULL LOAD
+  # ===========================================================================
+  day0_retrospective:
+    name: "Day 0 — Retrospective / Initial Full Load"
+    description: "Establishes scope and strategy for the initial historical data load"
+    skip_category_if: "5.0 == 'Day 1 only'"
+    questions:
+
+      - id: "5.1"
+        question: "What is the historical data range for Day 0? (e.g., from 2015-01-01 to current)"
+        resolves: "Retrospective boundary"
+        maps_to: "configuration.day0.date_range"
+        answer_type: date_range
+        required: true
+        skip_if: []  # Always ask
+
+      - id: "5.2"
+        question: "Is the full history available in source, or only a truncated window?"
+        resolves: "Data completeness risk flag"
+        maps_to: "configuration.day0.history_availability"
+        answer_type: choice
+        options:
+          - "Full history available — all records since inception"
+          - "Truncated — source only retains last N months/years"
+          - "Archived — history exists in separate archive tables"
+          - "Unknown — need to verify with source system team"
+        required: true
+        skip_if:
+          - condition: "Source metadata shows full retention policy"
+            evidence_source: metadata_files
+
+      - id: "5.3"
+        question: "Are there different source tables or archive tables for historical data vs current?"
+        resolves: "Day 0 source routing (different tables for history)"
+        maps_to: "configuration.day0.archive_sources"
+        answer_type: structured
+        required: false
+        depends_on: "5.2 == 'Archived'"
+        examples:
+          - current_table: "TETLCAAC"
+            archive_table: "TETLCAAC_HIST"
+            cutover_date: "2023-01-01"
+        skip_if:
+          - condition: "Single source table covers full historical range"
+            evidence_source: metadata_files
+
+      - id: "5.4"
+        question: "Should Day 0 reconstruct SCD2 history (multiple versions per key) or load as a single point-in-time snapshot?"
+        resolves: "Historical versioning strategy"
+        maps_to: "configuration.day0.reconstruction_mode"
+        answer_type: choice
+        options:
+          - "Reconstruct history — create multiple SCD2 versions per key from historical changes"
+          - "Single snapshot — load all current records with one eff_start_date"
+          - "Hybrid — reconstruct where history available, snapshot for remainder"
+        required: true
+        depends_on: "4.1 == 'SCD2'"
+        skip_if: []  # Always ask for SCD2 tables
+
+      - id: "5.5"
+        question: "What source column determines the historical ordering for SCD2 reconstruction?"
+        resolves: "Version sequencing logic for historical rebuild"
+        maps_to: "configuration.day0.ordering_column"
+        answer_type: text
+        required: true
+        depends_on: "5.4 == 'Reconstruct history'"
+        skip_if:
+          - condition: "Same as answer to 4.2 (SCD source mod column)"
+            evidence_source: previous_answer
+
+      - id: "5.5a"
+        question: "During Day 0 SCD2 reconstruction, how should temporal gaps (missing intermediate versions) and overlaps be handled?"
+        resolves: "Gap/overlap handling policy for historical timeline reconstruction"
+        maps_to: "configuration.day0.gap_overlap_handling"
+        answer_type: structured
+        required: true
+        depends_on: "5.4 == 'Reconstruct history'"
+        examples:
+          - gaps: "Fill forward — extend previous version's eff_end_date to next start - 1"
+            overlaps: "Latest-wins — take record with latest modification timestamp"
+          - gaps: "Leave as-is — source doesn't guarantee continuity"
+            overlaps: "Flag for review"
+        structured_fields:
+          - field: gap_policy
+            question: "When there is a temporal gap between two consecutive versions for the same key:"
+            options:
+              - "Fill forward — extend previous version's eff_end_date to cover the gap"
+              - "Leave as-is — gaps are acceptable (source does not guarantee continuity)"
+              - "Flag for review — mark gap periods in provenance for manual inspection"
+            default: "Fill forward"
+          - field: overlap_policy
+            question: "When two versions for the same key have overlapping effective dates:"
+            options:
+              - "Latest-wins — keep the record with the most recent modification timestamp"
+              - "First-wins — keep the earliest record in the ordering column"
+              - "Flag for review — mark overlapping periods in provenance for manual inspection"
+            default: "Latest-wins"
+        skip_if: []  # Always ask for reconstruction mode
+
+      - id: "5.6"
+        question: "For Day 0, should all records use their actual historical dates for eff_start_date, or a single load date?"
+        resolves: "eff_start_date assignment strategy for Day 0"
+        maps_to: "configuration.day0.eff_date_strategy"
+        answer_type: choice
+        options:
+          - "Actual dates — use source modification date per record"
+          - "Single load date — all records get the same eff_start_date (Day 0 run date)"
+          - "Reconstructed dates — derive from historical ordering column"
+        required: true
+        depends_on: "4.1 == 'SCD2'"
+        skip_if: []  # Always ask for SCD2 tables
+
+      - id: "5.7"
+        question: "Is there a cutoff filter for Day 0? (e.g., only load accounts opened after a certain date, exclude accounts closed before X)"
+        resolves: "Day 0 WHERE clause / filter predicate"
+        maps_to: "configuration.day0.filter_predicate"
+        answer_type: text
+        required: false
+        examples:
+          - "Only accounts with COL_ETD_DTE >= '2020-01-01'"
+          - "Exclude accounts where status = 'TEST'"
+        skip_if: []  # Always ask
+
+      - id: "5.8"
+        question: "Are there any data quality exclusions for Day 0? (e.g., skip test accounts, incomplete records, specific status codes)"
+        resolves: "Day 0 data quality filter"
+        maps_to: "configuration.day0.exclusion_rules"
+        answer_type: list
+        required: false
+        examples:
+          - "Exclude STG_ID < 1000 (test data)"
+          - "Exclude records where BNK_ACC_UNQ_IDR IS NULL"
+        skip_if: []  # Always ask
+
+      - id: "5.9"
+        question: "What is the expected Day 0 row volume? (ballpark for performance planning)"
+        resolves: "Volume estimate for partitioning and batching strategy"
+        maps_to: "configuration.day0.estimated_volume"
+        answer_type: text
+        required: false
+        examples:
+          - "~2 million records"
+          - "500K current + 3M historical versions"
+        skip_if:
+          - condition: "Profiling row count data available (from Excel report or user answer)"
+            evidence_source: profiling_any
+
+      # --- Per-Source-Table Volumetrics (templated — asked per unique source table) ---
+      # These questions are repeated for EACH unique source table discovered during INGEST.
+      # They populate source_volumetrics[] fields and enable accurate broadcast_hint calculation.
+
+      - id: "5.9a"
+        question: "For source table `{source_database}.{source_table}`, approximately how many rows does it contain at steady state?"
+        resolves: "Per-table row count for broadcast hint and performance planning"
+        maps_to: "source_volumetrics[{source_database}.{source_table}].estimated_rows"
+        answer_type: integer
+        required: false
+        repeats_per: source_table
+        examples:
+          - "120000000"
+          - "500"
+          - "Unknown"
+        sql_recommendation: "SELECT COUNT(*) AS row_count FROM {source_database}.{source_table};"
+        skip_if:
+          - condition: "Profiling row_count available for this source table (from Excel report or user answer)"
+            evidence_source: profiling_any
+            scope: per_table
+
+      - id: "5.9b"
+        question: "For source table `{source_database}.{source_table}`, what is the approximate total size in GB?"
+        resolves: "Per-table storage size for capacity planning"
+        maps_to: "source_volumetrics[{source_database}.{source_table}].estimated_size_gb"
+        answer_type: decimal
+        required: false
+        repeats_per: source_table
+        examples:
+          - "85"
+          - "0.001"
+          - "Unknown"
+        sql_recommendation: "SELECT SUM(data_length + index_length) / (1024*1024*1024) AS size_gb FROM information_schema.tables WHERE table_schema = '{source_database}' AND table_name = '{source_table}';"
+        skip_if:
+          - condition: "Profiling estimated_size available for this source table (from Excel report or user answer)"
+            evidence_source: profiling_any
+            scope: per_table
+
+      - id: "5.9c"
+        question: "For source table `{source_database}.{source_table}`, approximately how many rows are added or changed daily?"
+        resolves: "Per-table daily increment for Day 1 sizing and scheduling"
+        maps_to: "source_volumetrics[{source_database}.{source_table}].daily_increment_rows"
+        answer_type: integer
+        required: false
+        repeats_per: source_table
+        examples:
+          - "500000"
+          - "0"
+          - "Unknown"
+        sql_recommendation: "SELECT COUNT(*) AS daily_delta FROM {source_database}.{source_table} WHERE modified_date >= CURRENT_DATE - INTERVAL '1' DAY;"
+        skip_if:
+          - condition: "Profiling daily_delta_rows available for this source table (from Excel report or user answer)"
+            evidence_source: profiling_any
+            scope: per_table
+
+      - id: "5.9d"
+        question: "For source table `{source_database}.{source_table}`, what is the approximate daily delta size in GB?"
+        resolves: "Per-table daily delta size for storage and scheduling"
+        maps_to: "source_volumetrics[{source_database}.{source_table}].daily_increment_size_gb"
+        answer_type: decimal
+        required: false
+        repeats_per: source_table
+        examples:
+          - "0.35"
+          - "0"
+          - "Unknown"
+        sql_recommendation: "SELECT SUM(bytes) / (1024*1024*1024) AS daily_delta_gb FROM {source_database}.{source_table} WHERE modified_date >= CURRENT_DATE - INTERVAL '1' DAY;"
+        skip_if:
+          - condition: "Profiling daily_delta_size available for this source table (from Excel report or user answer)"
+            evidence_source: profiling_any
+            scope: per_table
+
+      - id: "5.10"
+        question: "Should Day 0 load be idempotent? (re-runnable without producing duplicates)"
+        resolves: "INSERT OVERWRITE vs MERGE logic for Day 0"
+        maps_to: "configuration.day0.idempotent"
+        answer_type: choice
+        options:
+          - "Yes — re-runnable, uses INSERT OVERWRITE or partition-level replace"
+          - "No — single-run only, uses INSERT INTO"
+        required: true
+        default: "Yes"
+        skip_if: []  # Always ask
+
+  # ===========================================================================
+  # CATEGORY 5B: DAY 1 — INCREMENTAL / BAU LOAD
+  # ===========================================================================
+  day1_incremental:
+    name: "Day 1 — Incremental / BAU Load"
+    description: "Establishes strategy for ongoing incremental data loads"
+    skip_category_if: "5.0 == 'Day 0 only'"
+    questions:
+
+      - id: "5.11"
+        question: "What is the CDC mechanism? (how are new/changed records identified)"
+        resolves: "Incremental detection strategy"
+        maps_to: "configuration.day1.cdc_mechanism"
+        depends_on: "4.1 in ['SCD2', 'SCD1', 'Snapshot']"
+        also_populates_additional_context:
+          key: cdc_type
+          transform: |
+            map({
+              "Timestamp-based": "delta",
+              "Flag-based": "delta",
+              "Log-based": "delta",
+              "Full diff": "snapshot"
+            })
+        answer_type: choice
+        options:
+          - "Timestamp-based — filter on last_modified > last_load_timestamp"
+          - "Flag-based — source has a changed/new flag column"
+          - "Log-based — CDC from transaction log (Debezium, DMS, etc.)"
+          - "Full diff — compare full source snapshot against current target"
+        required: true
+        skip_if:
+          - condition: "SQL contains WHERE clause filtering on timestamp/date"
+            evidence_source: sql_code
+          - condition: "Design document explicitly specifies CDC mechanism (e.g., 'timestamp-based CDC', 'log-based CDC')"
+            evidence_source: design_doc
+
+      - id: "5.12"
+        question: "Which source column identifies new/changed records since last load?"
+        resolves: "CDC filter column"
+        maps_to: "configuration.day1.cdc_column"
+        answer_type: text
+        required: true
+        depends_on: "5.11 in ['Timestamp-based', 'Flag-based']"
+        examples:
+          - "row_lst_mod_dte"
+          - "last_modified_timestamp"
+          - "change_flag = 'Y'"
+        skip_if:
+          - condition: "Explicit filter in SQL WHERE clause"
+            evidence_source: sql_code
+
+      - id: "5.13"
+        question: "What is the process frequency? (how often does Day 1 run)"
+        resolves: "Scheduling and SLA context"
+        maps_to: "configuration.day1.frequency"
+        also_populates_additional_context:
+          key: process_frequency
+          transform: |
+            map({
+              "Daily": "daily",
+              "Intra-day (multiple times per day)": "daily",
+              "Hourly": "daily",
+              "Weekly": "weekly",
+              "Event-driven (triggered by upstream)": "daily"
+            })
+        answer_type: choice
+        options:
+          - "Daily"
+          - "Intra-day (multiple times per day)"
+          - "Hourly"
+          - "Weekly"
+          - "Event-driven (triggered by upstream)"
+        required: true
+        skip_if:
+          - condition: "Design document specifies process frequency"
+            evidence_source: design_doc
+
+      - id: "5.13b"
+        question: >
+          Does this table require rolling deletion of aged data?
+          If yes, provide the SQL WHERE-clause predicate defining the deletion boundary.
+          Format: A SQL predicate suitable for a WHERE clause.
+          Example: dw_bus_dt < CURRENT_DATE - INTERVAL 7 YEARS
+        resolves: "Rolling deletion policy predicate for data retention"
+        maps_to: "configuration.day1.rolling_deletion_predicate"
+        also_populates_additional_context:
+          key: rolling_deletion_predicate
+          transform: "direct"
+        answer_type: text
+        answer_format: "SQL WHERE-clause predicate (e.g., column < CURRENT_DATE - INTERVAL N YEARS)"
+        example: "dw_bus_dt < CURRENT_DATE - INTERVAL 7 YEARS"
+        required: false
+        depends_on: "5.0 != 'Day 0 only'"
+        skip_if:
+          - condition: "SQL code contains DELETE with date-based WHERE predicate on target table"
+            evidence_source: sql_code
+          - condition: "Design document specifies data retention or rolling deletion policy"
+            evidence_source: design_doc
+
+      - id: "5.14"
+        question: "For SCD2 — should changed records close the previous version and insert a new row, or update in place (SCD1)?"
+        resolves: "MERGE strategy (close+insert vs upsert)"
+        maps_to: "configuration.day1.merge_strategy"
+        answer_type: choice
+        options:
+          - "Close + Insert — set eff_end_date on old row, insert new row with new eff_start_date"
+          - "Update in place — overwrite current row (SCD1 behavior)"
+          - "Both — some columns trigger new version, others update in place"
+        required: true
+        depends_on: "4.1 in ['SCD2', 'SCD1']"
+        skip_if:
+          - condition: "Table type is SCD2 (implies close+insert)"
+            evidence_source: previous_answer
+            inferred_answer: "Close + Insert"
+
+      - id: "5.15"
+        question: "For self-join SQL: The same table '{table}' is joined to itself. What does each reference represent? (e.g., current vs prior period, parent vs child row)"
+        resolves: "Self-join alias semantic meaning"
+        maps_to: "self_join.alias_semantics"
+        answer_type: text
+        required: true
+        depends_on: "SQL contains self-join pattern"
+        skip_if:
+          - condition: "Alias names clearly indicate roles (e.g., curr/prev, parent/child)"
+            evidence_source: sql_code
+
+      - id: "5.16"
+        question: "For MERGE SQL: The MATCHED branch — does it close the existing record and insert a new one (SCD2 close+insert), or update the existing record in place (SCD1 overwrite)?"
+        resolves: "MERGE strategy for SCD handling"
+        maps_to: "merge.strategy"
+        answer_type: choice
+        options:
+          - "close_insert — close existing record (set eff_end_date), insert new version"
+          - "update_in_place — update existing record's columns directly (SCD1)"
+        required: true
+        depends_on: "SQL contains MERGE statement"
+        skip_if:
+          - condition: "MERGE WHEN MATCHED clause explicitly sets eff_end_date (implies close+insert)"
+            evidence_source: sql_code
+            inferred_answer: "close_insert"
+
+      - id: "5.17"
+        question: "How are deletes handled in source? (what happens when a source record is removed)"
+        resolves: "Delete detection logic"
+        maps_to: "configuration.day1.delete_handling"
+        answer_type: choice
+        options:
+          - "Soft delete — source has a deleted/inactive flag"
+          - "Physical delete — record disappears from source"
+          - "Not applicable — source never deletes records"
+        required: true
+        skip_if:
+          - condition: "Table type is Transactional (append-only — source records are never updated or deleted)"
+            evidence_source: previous_answer
+            inferred_answer: "Not applicable"
+          - condition: "Design document explicitly specifies delete handling strategy"
+            evidence_source: design_doc
+
+      - id: "5.18"
+        question: "If a source record is deleted — should the target mark it inactive, physically remove it, or ignore?"
+        resolves: "Delete propagation strategy in target"
+        maps_to: "configuration.day1.delete_propagation"
+        answer_type: choice
+        options:
+          - "Mark inactive — close SCD2 record (set eff_end_date, active=0)"
+          - "Physical delete — remove from target"
+          - "Ignore — do not propagate deletes"
+          - "Flag — add a soft-delete indicator column"
+        required: true
+        depends_on: "5.17 != 'Not applicable'"
+        skip_if: []  # Always ask
+
+      - id: "5.19"
+        question: "Are there any late-arriving records? (records arriving after their business date)"
+        resolves: "Late-arrival handling pattern"
+        maps_to: "configuration.day1.late_arrival"
+        answer_type: choice
+        options:
+          - "Yes — common; need lookback window"
+          - "Yes — rare; handle as exception"
+          - "No — records always arrive on their business date"
+          - "Unknown — need to verify"
+        required: true
+        skip_if: []  # Always ask
+
+      - id: "5.19a"
+        question: "When a late-arriving record falls within an existing SCD2 version's date range, how should the timeline be stitched?"
+        resolves: "Late-arrival temporal stitching strategy for SCD2 version chain"
+        maps_to: "configuration.day1.late_arrival_stitch_strategy"
+        answer_type: choice
+        options:
+          - "Split — end-date the existing version at late record's date, insert new version, re-chain subsequent versions"
+          - "Append only — insert at timeline end regardless of business date (accept timeline impurity)"
+          - "Reject — flag for manual review, do not insert into version chain"
+          - "Collapse — merge late record's attributes into the version that covers its date range"
+        required: true
+        depends_on: "5.19 in ['Yes — common', 'Yes — rare'] AND 4.1 == 'SCD2'"
+        skip_if: []  # Always ask when late arrivals + SCD2
+
+      - id: "5.20"
+        question: "What is the partition column for incremental writes?"
+        resolves: "Partition strategy for write operations"
+        maps_to: "configuration.partition_columns"
+        also_populates_additional_context:
+          key: partition_key
+          transform: "direct"
+        answer_type: text
+        required: true
+        examples:
+          - "dw_bus_dt (business date)"
+          - "active (SCD2 partition)"
+          - "dw_bus_dt, active (composite)"
+        skip_if:
+          - condition: "DDL contains PARTITIONED BY clause"
+            evidence_source: ddl_files
+          - condition: "Column named 'dw_bus_dt' or 'active' present in target"
+            evidence_source: target_excel
+          - condition: "Design document explicitly specifies partition column or partitioning strategy"
+            evidence_source: design_doc
+
+      - id: "5.21"
+        question: "Should Day 1 process only current-day changes, or use a lookback window? (e.g., last 3 days for late arrivals)"
+        resolves: "Lookback window size for incremental processing"
+        maps_to: "configuration.day1.lookback_days"
+        answer_type: text
+        required: true
+        depends_on: "5.19 in ['Yes — common', 'Yes — rare']"
+        examples:
+          - "Current day only"
+          - "3-day lookback"
+          - "7-day lookback for month-end"
+        skip_if:
+          - condition: "Design document specifies lookback"
+            evidence_source: design_doc
+
+      - id: "5.22"
+        question: "Are there ordering/deduplication rules when multiple changes arrive for the same key in one batch?"
+        resolves: "Intra-batch priority and deduplication logic"
+        maps_to: "configuration.day1.dedup_strategy"
+        also_populates_additional_context:
+          - key: duplicates_ts_col
+            transform: "extract_column_name()"
+          - key: dedup_order
+            transform: "extract_ordering_direction(default='desc')"
+        answer_type: structured
+        required: true
+        examples:
+          - "Take the latest by row_lst_mod_dte"
+          - "Take the record with highest sequence number"
+          - "No deduplication — all changes create separate versions"
+        skip_if: []  # Always ask
+
+      - id: "5.23"
+        question: "Should the load process validate that key columns are unique before writing? (catches unexpected duplicates early)"
+        resolves: "Unique key validation flag for load pipeline"
+        maps_to: "configuration.day1.validate_unique_keys"
+        also_populates_additional_context:
+          key: validate_unique_keys
+          transform: |
+            map({"Yes": "true", "No": "false"})
+        answer_type: choice
+        options:
+          - "Yes — validate uniqueness and reject/alert on duplicates"
+          - "No — trust source deduplication; skip validation"
+        required: false
+        default: "true"
+        skip_if:
+          - condition: "Design document specifies unique key validation requirement"
+            evidence_source: design_doc
+
+  # ===========================================================================
+  # CATEGORY 6: OPERATIONAL CONTEXT
+  # ===========================================================================
+  operational_context:
+    name: "Operational Context"
+    description: "Dependencies, shared filters, and dual-path scenarios"
+    questions:
+
+      - id: "6.1"
+        question: "Are there upstream table dependencies? (table X must load before this table)"
+        resolves: "Load orchestration and sequencing"
+        maps_to: "configuration.dependencies"
+        delivery_group: operational
+        answer_type: list
+        required: false
+        examples:
+          - "fdp_uk_coll_rcvry_db.ref_src_decode must be loaded first"
+          - "e_loans_tallyman_db tables must be refreshed by T+1"
+        skip_if:
+          - condition: "Design document or DAG specification available"
+            evidence_source: design_doc
+
+      - id: "6.2"
+        question: "Are there any row-filtering conditions applied in BOTH Day 0 and Day 1?"
+        resolves: "Shared WHERE clause across both load types"
+        maps_to: "configuration.shared_filters"
+        delivery_group: operational
+        answer_type: text
+        required: false
+        examples:
+          - "Exclude test accounts (STG_ID < 1000)"
+          - "Only records where product_category = 'Personal Loan'"
+        skip_if:
+          - condition: "SQL WHERE clause is present and applies to all scenarios"
+            evidence_source: sql_code
+
+      - id: "6.3"
+        question: "Is there a different source-to-target mapping between Day 0 and Day 1? (e.g., different source columns or tables used)"
+        resolves: "Dual-path mapping flag — whether separate logic needed per load type"
+        maps_to: "configuration.dual_path"
+        answer_type: choice
+        options:
+          - "No — same mapping logic for both Day 0 and Day 1"
+          - "Yes — different source tables for Day 0 (e.g., archive) vs Day 1 (current)"
+          - "Yes — different transformation logic (e.g., Day 0 needs date reconstruction)"
+          - "Yes — both different sources and different logic"
+        required: true
+        skip_if:
+          - condition: "Same SQL provided for both load types"
+            evidence_source: sql_code
+
+  # ===========================================================================
+  # CATEGORY 7: AMBIGUITY RESOLUTION
+  # ===========================================================================
+  ambiguity_resolution:
+    name: "Ambiguity Resolution"
+    description: "Resolves remaining unknowns and edge cases"
+    questions:
+
+      - id: "7.1"
+        question: "When a record exists in multiple source tables — what is the priority/precedence?"
+        resolves: "Deduplication and COALESCE ordering across sources"
+        maps_to: "multi_source.priority"
+        answer_type: structured
+        required: false
+        depends_on: "1.3 != 'Single table'"
+        examples:
+          - "TETLTCTP.dmc_cde takes priority over third_party.third_party_id"
+          - "Most recent record by date wins"
+        skip_if:
+          - condition: "Only single source table involved"
+            evidence_source: previous_answer
+
+      - id: "7.2"
+        question: "Are there any columns where the source mapping is unknown or TBD?"
+        resolves: "Known unknowns — flagged for guided mode Phase B"
+        maps_to: "_meta.questions"
+        answer_type: list
+        required: false
+        examples:
+          - "stock_indicator — business rule not fully documented"
+          - "case_exit_type_key — pending confirmation from BA"
+        skip_if: []  # Always ask
+
+      - id: "7.3"
+        question: "Are there any business rules that aren't captured in source data? (e.g., complex derivations from multiple signals)"
+        resolves: "Complex derived column logic requiring business knowledge"
+        maps_to: "business_logic for specific columns"
+        answer_type: structured
+        required: false
+        examples:
+          - column: "stock_indicator"
+            rule: "Derived from RT_ACCT_STAT, ARR_AMT, CUD_IND, CHG_OFF_DNE_IND — exact rules pending"
+          - column: "case_id"
+            rule: "Concatenation of STG_ID and formatted COL_ETD_DTE"
+        skip_if: []  # Always ask
+
+# =============================================================================
+# ANSWER TYPE DEFINITIONS
+# =============================================================================
+answer_types:
+  text:
+    description: "Free-text response"
+    validation: "Non-empty string"
+
+  list:
+    description: "One or more items (comma-separated or bullet list)"
+    validation: "At least one item if required"
+
+  choice:
+    description: "Single selection from predefined options"
+    validation: "Must match one of the options"
+
+  key_value_map:
+    description: "Column = value pairs"
+    validation: "Each entry must have column name and value"
+    format: "column_name = value"
+
+  column_map:
+    description: "Target column → source table.column mapping"
+    validation: "Each target column should have a source assignment"
+    format: "target_column: source_table.source_column"
+
+  join_pair_list:
+    description: "One or more join conditions specifying both sides"
+    validation: "Each entry must have left_table.left_column = right_table.right_column format"
+    format: "{left_table}.{left_column} = {right_table}.{right_column}"
+    example: "TETLCAAC.STG_ID = TETLTCCC.STG_ID, TETLTCTP.dmc_cde = third_party.dmc_cde"
+
+  structured:
+    description: "Complex answer with multiple attributes"
+    validation: "Depends on question context"
+
+  date_range:
+    description: "Start date and end date"
+    validation: "Valid dates, start <= end"
+    format: "YYYY-MM-DD to YYYY-MM-DD"

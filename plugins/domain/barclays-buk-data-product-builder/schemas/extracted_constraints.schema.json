@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "STTM Extracted Constraints",
+  "description": "Structured constraints extracted from SQL AST by the STTM lineage agent. Used by DE's /parse-mapping and /gen-transform to enforce anti-hallucination constraints without lossy regex re-extraction.",
+  "type": "object",
+  "properties": {
+    "join_predicates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["left_table", "left_column", "operator", "right_table", "right_column", "confidence", "source"],
+        "properties": {
+          "left_table": { "type": "string", "description": "FQN of left table (database.table)" },
+          "left_column": { "type": "string", "description": "Column name on left side" },
+          "operator": { "type": "string", "enum": ["=", "!=", "<>", "<", ">", "<=", ">=", "BETWEEN", "IN"] },
+          "right_table": { "type": "string", "description": "FQN of right table (database.table)" },
+          "right_column": { "type": "string", "description": "Column name on right side (for BETWEEN: 'col1 AND col2')" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "source": { "type": "string", "enum": ["sql_ast", "regex_extraction", "interview"] }
+        }
+      }
+    },
+    "filter_predicates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["table", "column", "operator", "value", "confidence", "source"],
+        "properties": {
+          "table": { "type": "string", "description": "FQN of filtered table" },
+          "column": { "type": "string" },
+          "operator": { "type": "string" },
+          "value": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+          "value_type": { "type": "string", "enum": ["string", "integer", "decimal", "date", "timestamp", "boolean"] },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "source": { "type": "string", "enum": ["sql_ast", "regex_extraction", "interview"] },
+          "step_reference": { "type": ["string", "null"], "description": "Step N reference for multi-step filters" }
+        }
+      }
+    },
+    "locked_literals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["column", "operator", "value", "context", "confidence"],
+        "properties": {
+          "column": { "type": "string" },
+          "operator": { "type": "string" },
+          "value": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+          "context": { "type": "string", "description": "WHERE clause filter, CASE condition, join literal, etc." },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "window_specifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["function", "partition_by", "order_by"],
+        "properties": {
+          "function": { "type": "string", "enum": ["ROW_NUMBER", "RANK", "DENSE_RANK", "LAG", "LEAD", "NTILE", "FIRST_VALUE", "LAST_VALUE", "SUM", "COUNT", "AVG", "MIN", "MAX"] },
+          "partition_by": { "type": "array", "items": { "type": "string" } },
+          "order_by": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["column", "direction"],
+              "properties": {
+                "column": { "type": "string" },
+                "direction": { "type": "string", "enum": ["ASC", "DESC"] }
+              }
+            }
+          },
+          "filter_condition": { "type": ["string", "null"], "description": "e.g., '= 1' for ROW_NUMBER dedup" },
+          "purpose": { "type": ["string", "null"], "enum": ["dedup_latest", "dedup_first", "ranking", "lag_comparison", "lead_comparison", "running_total", null] }
+        }
+      }
+    },
+    "aggregate_specifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["function", "column", "group_by"],
+        "properties": {
+          "function": { "type": "string" },
+          "column": { "type": "string" },
+          "group_by": { "type": "array", "items": { "type": "string" } },
+          "having": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

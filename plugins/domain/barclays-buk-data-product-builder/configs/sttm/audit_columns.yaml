@@ -1,0 +1,194 @@
+schema_version: "1.0"
+
+# Audit columns are determined SOLELY by the Table Type axis of the 4-axis
+# classification model. The keys below map directly to classification.table_type values:
+#   NonTransactional_SCD2
+#   NonTransactional_SCD1
+#   Transactional
+# Data Product Type (FDP/CDP/BDP) and Crypto Aspect do NOT affect audit columns.
+
+table_types:
+  NonTransactional_SCD2:
+    columns:
+      - name: eff_start_date
+        description: "SCD2 effective start date"
+        datatype: date
+        nullable: "N"
+        key_column: "N"
+        # eff_start_date always requires a real source — requires_source: true enforces this
+        source_database: "{{source_database}}"  # Must be resolved from source mod column — never (system)
+        source_table: "{{source_table}}"        # Must be resolved from source mod column
+        source_column: "{{source_mod_column}}"  # Must be resolved from source mod column
+        business_logic_template: "CAST(TO_DATE(CAST({{source_mod_column}} AS STRING), 'yyyyMMdd') AS DATE)"
+        additional_context: "SCD2 audit column; always NOT NULL"
+        transformation_type: "Derived"
+        requires_source: true  # Must have a real source column for modification date
+        note: "eff_start_date is NOT system-generated - it must source from a real column"
+
+      - name: eff_end_date
+        description: "SCD2 effective end date"
+        datatype: date
+        nullable: "N"
+        key_column: "N"
+        source_database: "(derived)"
+        source_table: "(derived)"
+        source_column: "(derived)"
+        business_logic_template: "CAST('{{high_end_date}}' AS DATE)"
+        close_logic_template: "{{close_date_formula}}"  # Applied to previous active record during MERGE; default: new_eff_start_date
+        additional_context: "High-end date for open records; closed records use close_date_formula (default: new_eff_start_date)"
+        transformation_type: "Derived"
+        default_value: "{{high_end_date}}"
+        requires_source: false
+
+      - name: active
+        description: "Active record flag"
+        datatype: string
+        nullable: "N"
+        key_column: "N"
+        source_database: "(derived)"
+        source_table: "(derived)"
+        source_column: "(derived)"
+        business_logic_template: "CASE WHEN eff_end_date = CAST('{{high_end_date}}' AS DATE) THEN '1' ELSE '0' END"
+        additional_context: "System-managed; partition column"
+        transformation_type: "Derived"
+        requires_source: false
+
+      - name: dw_lod_tmp
+        description: "Load timestamp"
+        datatype: timestamp
+        nullable: "N"
+        key_column: "N"
+        source_database: "(system)"
+        source_table: "(system)"
+        source_column: "(system)"
+        business_logic_template: "current_timestamp()"
+        additional_context: "System audit column; {{load_type_context}}"
+        transformation_type: "Derived"
+        requires_source: false
+
+      - name: dw_upd_lod_tmp
+        description: "Update load timestamp"
+        datatype: timestamp
+        nullable: "N"
+        key_column: "N"
+        source_database: "(system)"
+        source_table: "(system)"
+        source_column: "(system)"
+        business_logic_template: "current_timestamp()"
+        additional_context: "System audit column; Excluded from CDC hash"
+        transformation_type: "Derived"
+        requires_source: false
+        cdc_hash_excluded: true
+
+  NonTransactional_SCD1:
+    columns:
+      - name: dw_lod_tmp
+        description: "Load timestamp"
+        datatype: timestamp
+        nullable: "N"
+        key_column: "N"
+        source_database: "(system)"
+        source_table: "(system)"
+        source_column: "(system)"
+        business_logic_template: "current_timestamp()"
+        additional_context: "System audit column"
+        transformation_type: "Derived"
+        requires_source: false
+
+      - name: dw_upd_lod_tmp
+        description: "Update load timestamp"
+        datatype: timestamp
+        nullable: "N"
+        key_column: "N"
+        source_database: "(system)"
+        source_table: "(system)"
+        source_column: "(system)"
+        business_logic_template: "current_timestamp()"
+        additional_context: "System audit column; Excluded from CDC hash"
+        transformation_type: "Derived"
+        requires_source: false
+        cdc_hash_excluded: true
+
+  Transactional:
+    columns:
+      - name: dw_bus_dt
+        description: "Business date for the transaction/event partition"
+        datatype: date
+        nullable: "N"
+        key_column: "N"
+        source_database: "(system)"
+        source_table: "(system)"
+        source_column: "(system)"
+        business_logic_template: "Business date partition — derived from pipeline execution date or source event date"
+        additional_context: "Partition column; {{load_type_context}}"
+        transformation_type: "Derived"
+        requires_source: false
+
+      - name: dw_lod_tmp
+        description: "Load timestamp"
+        datatype: timestamp
+        nullable: "N"
+        key_column: "N"
+        source_database: "(system)"
+        source_table: "(system)"
+        source_column: "(system)"
+        business_logic_template: "current_timestamp()"
+        additional_context: "System audit column; {{load_type_context}}"
+        transformation_type: "Derived"
+        requires_source: false
+
+defaults:
+  high_end_date: "3499-12-31"
+  load_type_context_day0: "Day0 = full/initial load"
+  load_type_context_day1: "Day1 = incremental load"
+
+enforcement:
+  description: >
+    Audit column generation is MANDATORY based on classification.table_type.
+    Missing audit columns trigger validation rule A7 (blocker).
+  scd2_required: [eff_start_date, eff_end_date, active, dw_lod_tmp, dw_upd_lod_tmp]
+  scd1_required: [dw_lod_tmp, dw_upd_lod_tmp]
+  transactional_required: [dw_bus_dt, dw_lod_tmp]
+
+# =============================================================================
+# File Target Overrides
+# =============================================================================
+# When target io_mode is 'file' (parquet), audit column applicability depends
+# on the write_mode. These overrides are checked AFTER the standard table_type
+# audit column selection above.
+#
+# SCD2 on file targets is NOT SUPPORTED because overwrite/append modes cannot
+# implement the CDC two-phase merge pattern required for SCD2 history tracking.
+# Validation rule FIO3 blocks this combination.
+
+file_target_overrides:
+  description: >
+    Audit column rules for parquet file targets. Applied when session_state.io_mode
+    is 'file' and session_state.target_io is present. Standard table_type rules above
+    still determine WHICH audit columns are candidates; these overrides then filter
+    the set based on write_mode feasibility.
+
+  overwrite:
+    # Full replace on each run — only load timestamp is meaningful.
+    # dw_upd_lod_tmp is excluded because every run replaces all data (no "update" concept).
+    NonTransactional_SCD2: NOT_SUPPORTED   # FIO3 blocker — overwrite cannot implement CDC merge
+    NonTransactional_SCD1:
+      required: [dw_lod_tmp]
+      excluded: [dw_upd_lod_tmp]
+      reason: "Full overwrite replaces all data; update timestamp is meaningless"
+    Transactional:
+      required: [dw_bus_dt, dw_lod_tmp]
+      excluded: []
+      reason: "Same as table target — dw_bus_dt partitions daily data, dw_lod_tmp tracks load time"
+
+  append:
+    # New partition data added on each run — both load and update timestamps apply.
+    NonTransactional_SCD2: NOT_SUPPORTED   # FIO3 blocker — append cannot implement CDC merge
+    NonTransactional_SCD1:
+      required: [dw_lod_tmp, dw_upd_lod_tmp]
+      excluded: []
+      reason: "Append mode preserves previous data; update timestamp tracks latest additions"
+    Transactional:
+      required: [dw_bus_dt, dw_lod_tmp]
+      excluded: []
+      reason: "Same as table target — dw_bus_dt partitions, dw_lod_tmp tracks load time"

@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DataQualityRule",
+  "description": "Schema for a data quality rule definition. Captures the dimension, expression, scope, threshold, severity, lifecycle state, ownership, and evidence for a single DQ rule across its full lifecycle from candidate through to monitored in production.",
+  "type": "object",
+  "required": [
+    "rule_id",
+    "dimension",
+    "description",
+    "scope",
+    "expression",
+    "threshold",
+    "severity",
+    "lifecycle_state",
+    "owner",
+    "failure_handling"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "rule_id": {
+      "type": "string",
+      "description": "Unique identifier for this data quality rule."
+    },
+    "dimension": {
+      "type": "string",
+      "description": "Data quality dimension this rule addresses.",
+      "enum": [
+        "completeness",
+        "validity",
+        "uniqueness",
+        "consistency",
+        "timeliness",
+        "accuracy",
+        "reconciliation"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this rule checks."
+    },
+    "scope": {
+      "type": "object",
+      "description": "Scope defining which entity, field, and optional filter condition this rule applies to.",
+      "required": ["entity", "field"],
+      "additionalProperties": false,
+      "properties": {
+        "entity": {
+          "type": "string",
+          "description": "Table or entity name this rule applies to."
+        },
+        "field": {
+          "type": "string",
+          "description": "Field or column name this rule applies to. Use '*' for row-level or table-level rules."
+        },
+        "condition": {
+          "type": "string",
+          "description": "Optional filter condition (SQL WHERE clause fragment) to restrict the scope of the rule."
+        }
+      }
+    },
+    "expression": {
+      "type": "string",
+      "description": "The rule expression or logic, typically as a SQL predicate or function call."
+    },
+    "threshold": {
+      "type": "string",
+      "description": "Acceptable threshold for the rule (e.g. '100%', '>=99.5%', '0 failures')."
+    },
+    "severity": {
+      "type": "string",
+      "description": "Severity of a rule failure.",
+      "enum": [
+        "info",
+        "warning",
+        "critical",
+        "blocking"
+      ]
+    },
+    "lifecycle_state": {
+      "type": "string",
+      "description": "Current lifecycle state of this rule.",
+      "enum": [
+        "candidate",
+        "proposed",
+        "approved",
+        "implemented",
+        "evidenced",
+        "monitored"
+      ]
+    },
+    "owner": {
+      "type": "string",
+      "description": "Team or individual responsible for this rule."
+    },
+    "approver": {
+      "type": "string",
+      "description": "Team or individual required to approve this rule before implementation."
+    },
+    "source_ref": {
+      "type": "string",
+      "description": "Reference to the source entity or system where the rule originates."
+    },
+    "target_ref": {
+      "type": "string",
+      "description": "Reference to the target entity or system where the rule is applied."
+    },
+    "schedule": {
+      "type": "string",
+      "description": "Schedule on which this rule is executed (e.g. 'daily at 06:00', 'on ingest', 'continuous')."
+    },
+    "failure_handling": {
+      "type": "string",
+      "description": "Action to take when the rule fails (e.g. quarantine, alert, block load, log only)."
+    },
+    "evidence": {
+      "type": "array",
+      "description": "References to evidence that supports or validates this rule.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "lineage_ref": {
+      "type": "string",
+      "description": "Reference to a lineage record linking this rule to its governing policy or requirement."
+    }
+  }
+}

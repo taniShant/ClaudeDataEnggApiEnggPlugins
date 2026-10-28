@@ -1,0 +1,15 @@
+{
+  "capability_count": 56,
+  "digests": {
+    "graph-data.json": "39da2f2679a1c3ece2dc07473bb078e5ab4f2b7eff0d6e41f24f4bb67f4ed52f"
+  },
+  "edge_counts": {
+    "complements": 12,
+    "overlaps_with": 4,
+    "precedes": 14
+  },
+  "generated_at": "2026-09-23T08:20:11.035797+00:00",
+  "graph_compiler_version": "1.0",
+  "schema_version": "1.0",
+  "source_revision": "346ead6eeb5fa088ab46bda1db7b7296eda22c4a"
+}

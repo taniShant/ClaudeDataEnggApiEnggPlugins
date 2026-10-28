@@ -1,0 +1,65 @@
+schema_version: "1.0"
+
+# Crypto configuration for Protegrity tokenization/detokenization
+# DE = Data Element (Protegrity concept)
+
+de_naming:
+  convention: "UK_TOK_{DATA_CLASS}_{LEVEL}{ROTATION}_{TYPE}_DE"
+  components:
+    country: "UK"
+    prefix: "TOK"
+    data_class: "Identifier for the type of data (e.g., ACCT, SORTCOD, NI_NUM)"
+    level: "L0, L1, L2 — security level"
+    rotation: "R0, R1, R2 — key rotation version"
+    type: "NUM (numeric), ID (identifier), STR (string)"
+  examples:
+    - de: "UK_TOK_ACCT_L0R0_NUM_DE"
+      description: "Account number, Level 0, Rotation 0, Numeric"
+    - de: "UK_TOK_ACCT_L2R1_NUM_DE"
+      description: "Account number, Level 2, Rotation 1, Numeric"
+    - de: "UK_TOK_SORTCOD_L0R0_NUM_DE"
+      description: "Sort code, Level 0, Rotation 0, Numeric"
+    - de: "UK_TOK_NI_NUM_L0R0_ID_DE"
+      description: "National Insurance number, Level 0, Rotation 0, Identifier"
+
+udf_naming:
+  pattern: "cloud_api_udf_{DE}_{direction}"
+  directions:
+    unprotect: "Detokenize — convert tokenized value back to clear text"
+    protect: "Tokenize — convert clear text to tokenized value"
+  examples:
+    - "cloud_api_udf_UK_TOK_ACCT_L0R0_NUM_DE_unprotect"
+    - "cloud_api_udf_UK_TOK_ACCT_L2R1_NUM_DE_protect"
+
+directions:
+  detokenize:
+    description: "Source is tokenized (encrypted); target receives clear text"
+    udf_direction: "unprotect"
+    source_column_hint: "Usually has _encrypted suffix"
+    logic_template: "cloud_api_udf_{{de}}_unprotect({{source_column}})"
+    additional_context_template: "Detokenize using Protegrity DE: {{de}}"
+
+  tokenize:
+    description: "Source is clear text; target stores tokenized value"
+    udf_direction: "protect"
+    source_column_hint: "Usually has _clear suffix"
+    logic_template: "cloud_api_udf_{{de}}_protect({{source_column}})"
+    additional_context_template: "Tokenize using Protegrity DE: {{de}}; source is clear text"
+
+  both:
+    description: "Source is tokenized with one DE; target needs different DE. Requires nested unprotect then protect."
+    nesting_order: "protect(unprotect(source_column))"
+    nesting_rule: "unprotect INSIDE, protect OUTSIDE"
+    logic_template: "cloud_api_udf_{{target_de}}_protect(cloud_api_udf_{{source_de}}_unprotect({{source_column}}))"
+    additional_context_template: "Detokenize source DE ({{source_de}}) then re-tokenize with target DE ({{target_de}})"
+    validation:
+      - "Source DE must differ from target DE"
+      - "Both DEs must be valid (match naming convention)"
+      - "Nesting order must be correct (unprotect inside protect)"
+
+constraints:
+  - "DE names must NEVER be inferred or guessed — must be explicitly provided"
+  - "If crypto columns detected but no DE provided → blocker → guided mode"
+  - "Level/Rotation suffix (LxRx) encodes security policy — never assume"
+  - "Direction must be explicitly specified (detokenize, tokenize, or both)"
+  - "Source DE ≠ Target DE for 'both' direction (SC8 validation rule)"

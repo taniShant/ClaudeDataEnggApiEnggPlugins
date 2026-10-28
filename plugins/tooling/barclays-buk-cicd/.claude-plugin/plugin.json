@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-cicd",
+    "description": "BUK CI/CD tooling — agents and skills for diagnosing, debugging, and understanding CI/CD pipelines across GitLab and Harness. Covers Java, JavaScript, Go, and Python stacks.",
+    "version": "0.2.0",
+    "author": {
+        "name": "BUK DevOps Team",
+        "email": "sourabh.agrawal1@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

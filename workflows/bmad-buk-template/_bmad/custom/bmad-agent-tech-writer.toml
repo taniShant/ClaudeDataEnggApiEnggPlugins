@@ -1,0 +1,33 @@
+# BUK override for BMAD Technical Writer agent (Paige)
+# Injects BUK architecture documentation, ADR standards, and OpenAPI documentation requirements.
+
+[persistent_facts]
+architecture_docs = """
+All architecture documentation must comply with BUK standards.
+Load barclays-buk-standards:adr and apply:
+- Architecture Decision Records (ADRs) required for all significant design decisions
+- ADR format: context, decision, consequences, status, owner
+- Diagrams in Mermaid or C4 model format
+- NFRs documented alongside functional requirements
+- All APIs must have OpenAPI 3.x spec in the same repository as the implementation
+"""
+
+api_documentation = """
+Load barclays-buk-standards:api-design for API documentation requirements:
+- OpenAPI 3.x spec with all endpoints, request/response schemas, and error codes
+- Authentication requirements documented (OAuth 2.0/OIDC)
+- Rate limiting and throttling documented
+- Versioning strategy documented
+- Examples for all request/response payloads
+"""
+
+buk_plugin = """
+Use barclays-buk-solution-architect plugin for architecture artefacts.
+Invoke: barclays-buk-solution-architect:solution-architect-agent
+Outputs to OUTPUT_PATH: architecture diagrams, ADRs, NFR documentation, technical design documents.
+"""
+
+[[menu]]
+code = "barclays-buk-arch"
+description = "Generate BUK architecture documentation, ADRs, and technical design"
+skill = "barclays-buk-solution-architect:solution-architect-agent"

@@ -1,0 +1,152 @@
+apply plugin: 'java'
+apply plugin: 'com.barclays.api.bap-bld-lib-kotlin-int-test-gradle-plugin'
+apply plugin: 'com.barclays.api.bap-bld-lib-plugin'
+apply plugin: "info.solidsoft.pitest"
+apply plugin: 'checkstyle'
+
+apply from: "${rootDir}/gradle/common/mutation.gradle"
+
+buildscript {
+
+    repositories {
+        mavenLocal()
+        maven {
+            url 'https://nexus.barcapint.com/nexus/content/groups/barclays/'
+        }
+
+    }
+    dependencies {
+        classpath("gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.9")
+    }
+}
+group = "${GROUP_ID}"
+version = "${VERSION}"
+
+java {
+    sourceCompatibility = '21'
+}
+
+repositories {
+    maven {
+        url 'https://nexus.barcapint.com/nexus/content/groups/barclays/'
+    }
+}
+configurations {
+    //excluded due to slf4j conflict (api-core-boot resolves the required logger implementation)
+    all*.exclude module: 'spring-boot-starter-logging'
+    all*.exclude module: 'logback-classic'
+    all*.exclude module: 'slf4j-simple'
+}
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+//////////////////////////////////////
+//         Dependencies             //
+//////////////////////////////////////
+dependencies {
+    implementation(platform("com.barclays.api:sdk3:${SDK3_VERSION}"))
+
+    /////////////////////// STANDARD API DEPENDENCIES ////////////////////////////
+    //API SDK3
+    implementation 'com.barclays.api:bap-bld-lib-request-validator'
+    implementation 'com.barclays.api:bap-bld-lib-restapi'
+    implementation 'com.barclays.api:bap-bld-lib-meshconnector'
+
+    // Spring Retry — provides @Retryable and @Recover for gateway resilience
+    implementation 'org.springframework.retry:spring-retry'
+
+    implementation 'commons-io:commons-io:2.16.1'
+    implementation 'commons-lang:commons-lang:2.6'
+
+    implementation('org.springframework.boot:spring-boot-starter-web') {
+        exclude group: 'org.apache.tomcat.embed', module: 'tomcat-embed-core'
+    }
+    implementation 'org.json:json:20231013'
+
+    // https://projectlombok.org
+    implementation 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor('org.projectlombok:lombok:1.18.38')
+    //jackson
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    //test dependencies
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.platform:junit-platform-suite-api:1.10.1'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+    testImplementation 'org.mockito:mockito-core:5.9.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.9.0'
+    testImplementation 'com.github.meanbeanlib:meanbean:3.0.0-M9'
+    // Karate
+    testImplementation('com.intuit.karate:karate-core:1.4.1')
+    testImplementation('com.intuit.karate:karate-junit5:1.4.1')
+    testImplementation('net.masterthought:cucumber-reporting:5.4.0') {
+        exclude group: 'commons-io', module: 'commons-io'
+    }
+    testImplementation('com.barclays.api:functional-test-generator:1.0.068') {
+        exclude group: 'commons-io', module: 'commons-io'
+        exclude group: 'com.thoughtworks.xstream', module: 'xstream'
+    }
+    testImplementation 'com.thoughtworks.xstream:xstream:1.4.21'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+bootJar {
+    archiveFileName.set 'app.jar'
+    archiveClassifier.set ''
+    archiveVersion.set(version)
+    rootSpec.exclude("**/application*.properties",
+            "**/bootstrap*.properties",
+            "**/application*.yml",
+            "**/bootstrap*.yml",
+            "**/application*.yaml",
+            "**/bootstrap*.yaml")
+    rootSpec.exclude("**/raml")
+    destinationDirectory = file("$buildDir/libs")
+}
+jar {
+    dependsOn(tasks.bootJar)
+    archiveFileName.set("infrastructure.jar")
+}
+generateStubsLauncherScripts {
+    dependsOn(tasks.jar)
+}
+build {
+    dependsOn(tasks.generateStubsLauncherScripts, tasks.integrationTest)
+}
+
+cyclonedxBom {
+    outputName = "gl-sbom-bom"
+}
+
+checkstyle {
+    toolVersion '9.3'
+    ignoreFailures = true
+    configFile file("${rootDir}/config/checkstyle.xml")
+}
+checkstyleMain {
+    source = 'src/main/java'
+}
+checkstyleTest {
+    source = 'src/test/java'
+}
+tasks.register('allCheckstyle') {
+    group = 'Verification'
+    description = 'Runs all Checkstyle tasks'
+    dependsOn checkstyleMain, checkstyleTest
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    include 'com/**/*MockTest.class'
+    exclude 'com/**/*RealTest.class'
+}
+
+integrationTest {
+    reports.html.destination(file("${reporting.baseDir}/${name}"))
+}

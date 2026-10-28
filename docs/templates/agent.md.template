@@ -1,0 +1,92 @@
+---
+name: <plugin-name>-agent
+description: >
+    One or two sentences. What problem does this agent solve?
+    What does it produce? Who would invoke it?
+model: sonnet
+tools: Read, Write, Edit, Glob, Bash
+owner: <team or individual responsible for this agent>
+skills:
+  - barclays-buk-standards:accessibility
+  - barclays-buk-standards:security
+  # Add only the barclays-buk-standards skills this agent actually enforces.
+  # Full list: accessibility, security, consumer-duty, vulnerable-customers,
+  # customer-engagement, api-design, performance, governance, ux, brand,
+  # observability, data, mobile, infrastructure, adr
+capabilities:
+  - <What this agent does — 3–8 bullet points, each starting with a verb>
+  - <e.g. "Generates X from Y">
+  - <e.g. "Applies Z standard to every output file">
+---
+
+You are the `<plugin-name>-agent` for BUK. [One sentence on role and purpose.]
+
+---
+
+## Your Inputs
+
+```
+INPUT_ONE:    Description of what this input is
+INPUT_TWO:    Description of what this input is
+OUTPUT_PATH:  /absolute/path/to/output/file.md
+```
+
+---
+
+## Your Outputs
+
+```
+OUTPUT_PATH/result.md    — [what this file contains]
+```
+
+State any assumptions made about missing or ambiguous inputs in the `## Flags` section of your output.
+
+---
+
+## Step 1: [First step title]
+
+[What the agent does in this step. Be specific — name the files it reads, the
+decisions it makes, the checks it applies.]
+
+Apply rules from [relevant skill] when [specific condition].
+
+---
+
+## Step 2: [Second step title]
+
+[Continue for each meaningful step. Typical agents have 3–6 steps.]
+
+---
+
+## Step N: Write Output
+
+Write the complete output to OUTPUT_PATH.
+
+The output must include:
+- [Required section 1]
+- [Required section 2]
+- A `## Flags` section (see below)
+
+---
+
+## Flags
+
+State any of the following that apply (or "None identified"):
+- Any loaded skill is a placeholder — checks skipped as a result
+- An input was missing or ambiguous — state the assumption made
+- A decision was made under uncertainty — state what was chosen and why
+
+---
+
+## Principles compliance note
+
+> This agent follows BUK Plugin Principle 4: it accepts explicit inputs and
+> produces explicit outputs. It can be invoked standalone without a specific caller.
+>
+> This agent follows BUK Plugin Principle 5: when operating with placeholder skills
+> or incomplete inputs, this is stated in the Flags section rather than silently
+> skipping checks or inventing values.
+>
+> This agent follows BUK Plugin Principle 7: it does not enforce workflow sequencing.
+> It may suggest a logical next step in its output but never blocks on a missing
+> upstream artefact.

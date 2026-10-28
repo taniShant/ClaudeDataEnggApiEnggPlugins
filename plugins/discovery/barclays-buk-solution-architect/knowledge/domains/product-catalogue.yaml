@@ -1,0 +1,46 @@
+schema_version: '1.0'
+domain:
+  id: dom.product-catalogue
+  name: Product Catalogue
+  description: "Product Catalogue provides a centralized domain to aggregate, maintain, and expose a consistent representation of personalized and non-personalized products, offerings and benefits & rewards across the bank without performing eligibility evaluation, decisioning, or product fulfilment. It acts as a non-authoritative representation layer, consolidating product information from multiple product domains to enable unified discovery and presentation across all channels, while preserving ownership of product data, lifecycle, and eligibility within their respective domains. It adds business value by addressing fragmented product information across systems today and provides a central, standardized view of products across all channels, in future. It addresses the current fragmentation of product information across systems by providing a central, standardised view of products, positioning the bank towards a unified and reusable product representation model. This enables consistent customer journeys, simplified channel integration and scalable product discovery & presentation."
+  owner: capl
+  bian_links:
+    -
+      title: Product Deployment
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=40177"
+    -
+      title: Product Design
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=44093"
+    -
+      title: Product Directory
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=34953"
+    -
+      title: Product Training
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=39991"
+    -
+      title: Sales Product
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=37972"
+    -
+      title: Service Directory
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=46148"
+    -
+      title: Special Pricing Conditions
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=47199"
+  sub_domains:
+    -
+      id: sub.pc.product-catalogue
+      name: Product Catalogue
+      description: "Product Catalogue provides a centralized capability to aggregate, maintain, and expose a consistent representation of personalized and non-personalized products, offerings and benefits & rewards across the bank. It acts as a non-authoritative representation layer, consolidating product information from multiple product domains to enable unified discovery and presentation across all channels, while preserving ownership of product data, lifecycle, and eligibility within their respective domains. It adds business value by addressing fragmented product information across systems today and provides a central, standardized view of products across all channels, in future. Positions the bank towards a more unified and reusable product representation model.  Enabling consistent customer journeys, simplified channel integration and scalable product discovery & presentation."
+      capabilities:
+        -
+          id: cap.pc.aggregate-product-information
+          name: Aggregate Product Information
+          description: "Aggregate and standardise product information from multiple domains (e.g. product, offers, benefits and rewards) into a consistent, non-authoritative catalogue representation for enterprise-wide use. This capability aggregates product data from multiple domains, normalises and standardises attributes into a common structure, and resolves inconsistencies within the catalogue representation. It represents indicative attributes (such as pricing references, criteria, and benefits) and incorporates non-decisioning references to eligibility and conditions, while preserving source domain ownership."
+        -
+          id: cap.pc.expose-product-catalogue
+          name: Expose Product Catalogue
+          description: "Expose a unified, consumable view of product catalogue data to channels, colleagues, and third parties via standardised interfaces. This capability provides read-only, non-decisioning access to product listings, descriptions, and availability, enabling product search, filtering, and discovery while ensuring consistent representation across all channels."
+        -
+          id: cap.pc.maintain-product-catalogue
+          name: Maintain Product Catalogue
+          description: "Maintain a curated catalogue of product offerings, including structure, classification, descriptive attributes, and proposition representation for internal governance. It maintains catalogue hierarchy, manages listings and metadata, curates non-authoritative attributes, and represents variants and bundled propositions for catalogue purposes. It controls catalogue-level visibility and representation without performing decisioning or entitlement logic, ensuring consistency and completeness. The capability standardises product representation within the catalogue and does not define source product structures, perform eligibility or decisioning, or control customer-specific visibility."

@@ -1,0 +1,44 @@
+{
+  "$schema": "sttm-plugin/v1/core",
+  "target_source": {
+    "format": "excel",
+    "artifact": "input/target_schema.xlsx"
+  },
+  "target": {
+    "database": "fdp_uk_mortgage_db",
+    "table": "mortgage_account",
+    "table_description": "Foundation Data Product - mortgage account entity-state table with SCD2 history",
+    "table_type": "NonTransactional_SCD2",
+    "columns": [
+      {"name": "mortgage_account_id", "description": "Unique identifier for the mortgage account", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "outstanding_balance", "description": "Outstanding mortgage balance", "datatype": "decimal(18,2)", "nullable": "Y", "key_column": "N"},
+      {"name": "account_status", "description": "Current account status", "datatype": "string", "nullable": "Y", "key_column": "N"},
+      {"name": "eff_start_date", "description": "SCD2 effective start date", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "eff_end_date", "description": "SCD2 effective end date", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "active", "description": "Active record flag", "datatype": "string", "nullable": "N", "key_column": "N"},
+      {"name": "dw_lod_tmp", "description": "Load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "e_ilp_db",
+      "table": "account_wm",
+      "columns": [
+        {"name": "account_id", "datatype": "string"},
+        {"name": "balance_amt", "datatype": "float"},
+        {"name": "status_code", "datatype": "string"},
+        {"name": "row_lst_mod_dte", "datatype": "int"}
+      ]
+    }
+  ],
+  "code": {
+    "type": "sql",
+    "content": "SELECT account_id, CAST(balance_amt AS DECIMAL(18,2)) AS outstanding_balance, CASE WHEN status_code IN ('ACT','OPN') THEN 'ACTIVE' WHEN status_code = 'CLS' THEN 'CLOSED' ELSE 'UNKNOWN' END AS account_status FROM e_ilp_db.account_wm"
+  },
+  "configuration": {
+    "load_type": "Day0",
+    "scd": {"type": "scd2", "effective_start": "eff_start_date", "effective_end": "eff_end_date", "active_flag": "active", "high_end_date": "3499-12-31", "source_mod_column": "row_lst_mod_dte"},
+    "audit_columns": {"load_timestamp": "dw_lod_tmp"},
+    "partition_columns": ["active"]
+  }
+}

@@ -1,0 +1,39 @@
+schema_version: '1.0'
+domain:
+  id: dom.bereavements
+  name: Bereavements
+  description: Bereavements domain is responsible for managing all banking activities that arise following the death of a customer. Its purpose is to ensure Barclays responds in a timely, compliant, empathetic, and controlled manner, safeguarding customer assets while supporting legal representatives, beneficiaries, and next of kin. The Bereavements domain enables Barclays to treat bereavement not as an ad-hoc operational process, but as a structured, reusable, and governed business capability, ensuring consistent outcomes across brands, regions, and product lines while placing customer care at the centre of execution.
+  owner: cc
+  bian_links:
+    - title: Party Lifecycle Management
+      url: https://bian.org/servicelandscape-12-0-0/object_20.html?object=29780
+    - title: Payment Execution
+      url: https://bian.org/servicelandscape-12-0-0/object_21.html?object=39023
+    - title: Regulatory Compliance
+      url: https://bian.org/servicelandscape-12-0-0/object_22.html?object=46420
+  sub_domains:
+    - id: sub.brv.deceased-customer-estate-administration
+      name: Deceased Customer Estate Administration
+      description: Deceased Customer Estate Administration covers the end-to-end management of a customer's financial relationships following notification of death. It enables the verification of customer death notifications; the application of appropriate account restrictions and safeguarding controls; and the establishment and management of executor, administrator, and third-party authority. The sub-domain supports the valuation of estate assets, the identification and resolution of liabilities and debts, and the execution of estate payments and disbursements in accordance with legal authority. It also ensures regulatory and tax reporting obligations are fulfilled, enabling the orderly, compliant, and fair settlement, transfer, or closure of customer products and relationships throughout the estate lifecycle.
+      capabilities:
+        - id: cap.brv.manage-account-restrictions-and-safeguards
+          name: Manage Account Restrictions and Safeguards
+          description: Manages bereavement-related account safeguarding by setting and maintaining appropriate account restrictions, enabling protection from unauthorised activity while allowing permitted actions in line with legal, regulatory, and policy obligations, with auditable control throughout estate administration.
+        - id: cap.brv.manage-executor-and-third-party-authority
+          name: Manage Executor and Third-Party Authority
+          description: Manages the verified authority of estate representatives and other third parties acting for a deceased customer, encompassing validation of legal entitlement and recording of roles, permissions, and limitations, enabling compliant servicing instructions, safeguarded access to information, and auditable estate administration.
+        - id: cap.brv.process-estate-payments-and-disbursements
+          name: Process Estate Payments and Disbursements
+          description: Processes authorised estate payments and disbursements by enabling controlled release and distribution of eligible balances to verified estate representatives and beneficiaries, ensuring compliance with authority, policy, and safeguarding requirements while maintaining accurate, traceable, and auditable settlement records.
+        - id: cap.brv.provide-estate-asset-valuation
+          name: Provide Estate Asset Valuation
+          description: Provides an accurate and consolidated valuation of a deceased customer's estate by establishing a complete view of assets and liabilities held with the bank, enabling transparent estate administration, informed executor decisions, and compliant reporting of estate value and obligations.
+        - id: cap.brv.report-regulatory-and-tax-compliance
+          name: Report Regulatory and Tax Compliance
+          description: Provides regulatory and tax reporting outcomes required following a customer bereavement, enabling accurate, timely, and auditable submission of statutory disclosures and estate-related tax information in line with legal, regulatory, and policy obligations throughout the bereavement lifecycle.
+        - id: cap.brv.resolve-liabilities-and-debts
+          name: Resolve Liabilities and Debts
+          description: Resolves outstanding liabilities associated with a bereavement by determining payable obligations and supporting settlement and closure in line with legal, regulatory, and policy requirements, enabling accurate, controlled, and auditable estate financial settlement and compliant administration.
+        - id: cap.brv.verify-customer-death-notification
+          name: Verify Customer Death Notification
+          description: Verifies reported customer deaths by confirming notifications against authoritative evidence, enabling accurate update of customer bereavement status and safe initiation of bereavement servicing, account safeguarding, and required downstream controls in a compliant and consistent manner.

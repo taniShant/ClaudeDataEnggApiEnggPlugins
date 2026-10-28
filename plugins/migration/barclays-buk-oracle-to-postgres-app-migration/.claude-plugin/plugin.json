@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-oracle-to-postgres-app-migration",
+    "description": "Oracle to PostgreSQL Spring Boot application migration — clones repo, migrates connectivity (driver, dialect, properties, entities, config, tests), generates validation tests, produces audit reports, commits & creates MR.",
+    "version": "1.0.0",
+    "author": {
+        "name": "Mohan Singh",
+        "email": "mohan.singh1@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

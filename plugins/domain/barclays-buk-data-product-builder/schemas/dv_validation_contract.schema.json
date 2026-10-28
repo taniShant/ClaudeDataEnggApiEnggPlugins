@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dv_validation_contract.schema.json",
+  "title": "Data Validation Contract",
+  "description": "Normalized intermediate between parsed source-to-target mapping and the validation plan. Captures target table structure, column lineage, SCD2 metadata, and engine-specific naming conventions needed to generate dialect-neutral validation checks.",
+  "type": "object",
+  "required": ["target_database", "target_table", "table_type", "engine", "primary_key_columns", "columns"],
+  "$defs": {
+    "base_column": {
+      "type": "object",
+      "required": ["name", "datatype", "nullable"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Column name in snake_case"
+        },
+        "datatype": {
+          "type": "string",
+          "description": "Column data type"
+        },
+        "nullable": {
+          "type": "string",
+          "enum": ["Y", "N"],
+          "description": "Whether column is nullable"
+        },
+        "key_column": {
+          "type": "string",
+          "enum": ["Y", "N"],
+          "description": "Whether column is a primary key"
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "completed", "failed", "skipped"],
+      "description": "Lifecycle status"
+    }
+  },
+  "properties": {
+    "target_database": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*_db$",
+      "description": "Target database name (e.g., 'fdp_uk_mortgage_db')"
+    },
+    "target_table": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Target table name (e.g., 'mortgage_account')"
+    },
+    "table_type": {
+      "type": "string",
+      "enum": ["NonTransactional_SCD1", "NonTransactional_SCD2", "Transactional"],
+      "description": "Target table type classification from intent identification"
+    },
+    "engine": {
+      "type": "string",
+      "enum": ["athena", "databricks"],
+      "description": "SQL engine used for validation query rendering"
+    },
+    "primary_key_columns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "minItems": 1,
+      "description": "Primary key columns that define the grain of the target table"
+    },
+    "partition_key_columns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "description": "Partition key columns used for date-scoped validation filtering"
+    },
+    "columns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "allOf": [
+          { "$ref": "#/$defs/base_column" },
+          {
+            "type": "object",
+            "properties": {
+              "source_database": {
+                "type": "string",
+                "description": "Source database name where this column originates"
+              },
+              "source_table": {
+                "type": "string",
+                "description": "Source table name where this column originates"
+              },
+              "source_column": {
+                "type": "string",
+                "description": "Source column name (before transformation)"
+              },
+              "business_logic": {
+                "type": ["string", "null"],
+                "description": "Transformation expression from the mapping document (null for direct mappings)"
+              },
+              "transformation_type": {
+                "type": "string",
+                "description": "Transformation category (e.g., Direct, Derived, Hardcoded, Lookup)"
+              },
+              "is_audit_column": {
+                "type": "boolean",
+                "default": false,
+                "description": "True if this column is a framework audit column (e.g., dw_bus_dt, dw_ins_dt)"
+              },
+              "is_crypto": {
+                "type": "boolean",
+                "default": false,
+                "description": "True if this column undergoes tokenization or detokenization"
+              }
+            }
+          }
+        ]
+      },
+      "description": "Target table columns with lineage and transformation metadata"
+    },
+    "scd2_metadata": {
+      "type": "object",
+      "description": "SCD2-specific temporal metadata. Present only when table_type is NonTransactional_SCD2.",
+      "properties": {
+        "eff_start_date_source": {
+          "type": "string",
+          "description": "Source column or expression used to derive the effective start date"
+        },
+        "high_end_date_sentinel": {
+          "type": "string",
+          "default": "3499-12-31",
+          "description": "Sentinel value for the high-end date on current (open) records"
+        },
+        "temporal_boundary_convention": {
+          "type": "string",
+          "enum": ["inclusive"],
+          "description": "Boundary convention for SCD2 date ranges. BUK CDAO uses inclusive (start <= t <= end)."
+        },
+        "close_logic": {
+          "type": ["string", "null"],
+          "description": "Expression or rule used to close prior records (null if standard close_insert pattern)"
+        }
+      }
+    },
+    "audit_columns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "description": "List of framework audit column names (e.g., ['dw_bus_dt', 'dw_ins_dt', 'dw_upd_dt'])"
+    },
+    "control_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The as-of date for validation, rendered as DATE '{{control_date}}' placeholder in generated SQL"
+    },
+    "validation_mode": {
+      "type": "string",
+      "enum": ["day0", "day1", "steady_state"],
+      "default": "steady_state",
+      "description": "Validation mode governing which checks are applicable: day0 (initial load), day1 (first incremental), steady_state (BAU)"
+    },
+    "source_database": {
+      "type": "string",
+      "description": "Athena engine: source database name for 2-part naming (database.table)"
+    },
+    "source_catalog": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Databricks engine: Unity Catalog name for source tables (3-part: catalog.schema.table). Resolved value, not a {{placeholder}} token."
+    },
+    "source_schema": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Databricks engine: source schema name for 3-part naming (catalog.schema.table). Resolved value, not a {{placeholder}} token."
+    },
+    "target_catalog": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Databricks engine: Unity Catalog name for the target table (3-part: catalog.schema.table). Resolved value, not a {{placeholder}} token."
+    },
+    "target_schema": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Databricks engine: target schema name for 3-part naming (catalog.schema.table). Resolved value, not a {{placeholder}} token."
+    }
+  },
+  "if": {
+    "properties": {
+      "engine": { "const": "databricks" }
+    },
+    "required": ["engine"]
+  },
+  "then": {
+    "required": ["target_database", "target_table", "table_type", "engine", "primary_key_columns", "columns",
+                 "source_catalog", "source_schema", "target_catalog", "target_schema"]
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ArchitectureDecisionRecord",
+  "description": "Schema for an Architecture Decision Record (ADR). Captures the structured rationale for a technology or design decision including problem context, hard constraints, candidate options, evaluation criteria, scoring matrix, recommendation, and conditions under which the decision should be revisited.",
+  "type": "object",
+  "required": [
+    "adr_id",
+    "title",
+    "status",
+    "created_by",
+    "created_at",
+    "problem_statement",
+    "hard_constraints",
+    "approved_candidates",
+    "decision_criteria",
+    "evaluation_matrix",
+    "recommendation",
+    "alternatives_rejected",
+    "trade_offs",
+    "conditions_that_change_decision",
+    "evidence_refs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "adr_id": {
+      "type": "string",
+      "description": "Unique identifier for this ADR."
+    },
+    "title": {
+      "type": "string",
+      "description": "Short descriptive title for the decision being recorded."
+    },
+    "status": {
+      "type": "string",
+      "description": "Current lifecycle status of this ADR.",
+      "enum": [
+        "proposed",
+        "accepted",
+        "deprecated",
+        "superseded"
+      ]
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Identity of the person or agent that created this ADR."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this ADR was created."
+    },
+    "problem_statement": {
+      "type": "string",
+      "description": "Description of the problem or decision that needs to be made."
+    },
+    "hard_constraints": {
+      "type": "array",
+      "description": "Non-negotiable constraints that eliminate any option that does not satisfy them.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "approved_candidates": {
+      "type": "array",
+      "description": "Technology or design candidates that passed the hard constraint filter and are under evaluation.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "decision_criteria": {
+      "type": "array",
+      "description": "Criteria used to evaluate the candidates, each with a weight and its source.",
+      "items": {
+        "type": "object",
+        "required": ["criterion", "weight", "weight_source"],
+        "additionalProperties": false,
+        "properties": {
+          "criterion": {
+            "type": "string",
+            "description": "Name or description of the evaluation criterion."
+          },
+          "weight": {
+            "type": "number",
+            "description": "Relative weight assigned to this criterion in the evaluation.",
+            "minimum": 0
+          },
+          "weight_source": {
+            "type": "string",
+            "description": "Justification or reference for the weight assigned to this criterion."
+          }
+        }
+      }
+    },
+    "evaluation_matrix": {
+      "type": "array",
+      "description": "Scored evaluation of each candidate against the decision criteria.",
+      "items": {
+        "type": "object",
+        "required": ["candidate", "scores"],
+        "additionalProperties": false,
+        "properties": {
+          "candidate": {
+            "type": "string",
+            "description": "Name of the candidate being evaluated."
+          },
+          "scores": {
+            "type": "object",
+            "description": "Map of criterion name to score value for this candidate.",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "recommendation": {
+      "type": "string",
+      "description": "The recommended decision or selected candidate with justification."
+    },
+    "alternatives_rejected": {
+      "type": "array",
+      "description": "Candidates that were considered but rejected, with reasons.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "trade_offs": {
+      "type": "array",
+      "description": "Known trade-offs accepted as part of this decision.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conditions_that_change_decision": {
+      "type": "array",
+      "description": "Conditions or events that would trigger a review or reversal of this decision.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_approver": {
+      "type": "string",
+      "description": "Identity of the human approver required to ratify this decision."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "description": "References to evidence sources that support this decision.",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+# -----------------------------------------------------------------------------
+# Models
+# -----------------------------------------------------------------------------
+# This file contains schemas for all the models, except for the top level
+# primary data documents which are in the content-models.yaml file.
+#
+# Naming Convention:
+# For single resource models must be defined as '<ResourceName>'
+# For collection resource models must be defined as '<ResourceName>List'
+#
+# NOTE: MCA2 convention drops the 'Bean' suffix used in MCA1.
+#
+# All models defined here must be referenced in the openapi.yaml file under
+# components -> schemas
+# -----------------------------------------------------------------------------
+
+# TODO: Define models derived from the migrated Java DTOs.
+# Example:
+#
+# ResourceRequest:
+#   title: ResourceRequest
+#   description: ResourceRequest data format
+#   type: object
+#   required:
+#     - id
+#   additionalProperties: false
+#   nullable: false
+#   deprecated: false
+#   properties:
+#     id:
+#       type: string
+#       description: Resource identifier
+#       pattern: '^[a-zA-Z0-9]{1,50}$'
+#       minLength: 1
+#       maxLength: 50
+#       example: "ABC123"

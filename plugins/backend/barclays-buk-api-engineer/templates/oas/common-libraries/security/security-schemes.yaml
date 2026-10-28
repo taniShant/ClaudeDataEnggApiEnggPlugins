@@ -1,0 +1,14 @@
+# -----------------------------------------------------------------------------
+# NOTICE: DO NOT CHANGE this file in your project.
+# Raise a pull request to oas-template in case of fixes and improvements.
+# -----------------------------------------------------------------------------
+
+InternalTiaaUsRopcAuth:
+  type: oauth2
+  description: OAuth2.0 Resource Owner Password Credentials (ROPC) Grant authentication using TIAA-US for internal APIs
+  flows:
+    password:
+      tokenUrl: 'https://api.barclays.com/oauth2/token'
+      scopes:
+        read: 'read only'
+        write: 'write only'

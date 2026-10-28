@@ -1,0 +1,374 @@
+{
+  "skill_name": "mts-reference",
+  "skill_path": "plugins/mts-migrate-toolkit/skills/mts-reference",
+  "description": "Validates that the mts-reference skill improves Claude's ability to answer MTS documentation and migration questions over a broad set of realistic scenarios.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "doservice-transport-classification",
+      "prompt": "I'm looking at a BUK Spring Boot service called scp-eps-fullserve-buk. I found this call: serviceManager.doService(\"RETRIEVECUSTOMER\", \"GET_CUSTOMER_FULL\", requestEdo). The dependency tree includes egs-ods-customer-mf.jar in the Gradle cache. What transport pattern is this and how should I document the TDL tables and WMID parameters?",
+      "expected_output": "Should identify transport as mainframe-mq, explain the WMID-CUST-PRM → TDLCUST mapping, describe the 3-tier confidence approach for compiled JAR extraction, and reference the doService pattern structure (serviceManager.doService(SERVICE_NAME, methodName, requestEdo)).",
+      "assertions": [
+        {
+          "id": "transport-identified",
+          "description": "Response identifies transport pattern as mainframe-mq (or equivalent mainframe MQ description)",
+          "check": "contains any of: mainframe-mq, mainframe MQ, IBM MQ, CICS mainframe"
+        },
+        {
+          "id": "wmid-mentioned",
+          "description": "Response references WMID parameters or WMID-CUST-PRM specifically",
+          "check": "contains any of: WMID, WMID-CUST-PRM"
+        },
+        {
+          "id": "tdl-table-mentioned",
+          "description": "Response mentions TDL tables or TDLCUST",
+          "check": "contains any of: TDL, TDLCUST, TDL table"
+        },
+        {
+          "id": "ebs-egs-architecture",
+          "description": "Response demonstrates understanding of EBS/EGS framework",
+          "check": "contains any of: EBS, EGS, Enterprise Business Service, Enterprise Gateway Service"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "compiled-jar-extraction-approach",
+      "prompt": "I'm trying to document a BUK Spring Boot application's EGS service. The Gradle cache only has the compiled egs-ods-accounts-mf.jar (no -sources.jar). I need to find out which WMID parameters the AccountsTransaction class uses and what the program code and version code are. How should I approach this without source code?",
+      "expected_output": "Should describe the 3-tier compiled JAR extraction approach: Tier 1 (constant pool parser for WMID strings), Tier 2 (ROP/RIP files for authoritative lists with types), Tier 3 (javap for exact program/version codes). Should mention confidence levels and that Tier 3 requires javap on the system.",
+      "assertions": [
+        {
+          "id": "tier1-mentioned",
+          "description": "Response mentions constant pool parsing or Tier 1 approach",
+          "check": "contains any of: constant pool, Tier 1, .class bytes, zipfile"
+        },
+        {
+          "id": "rop-rip-mentioned",
+          "description": "Response mentions ROP/RIP files (Tier 2)",
+          "check": "contains any of: ROP, RIP, riprop, Tier 2"
+        },
+        {
+          "id": "javap-mentioned",
+          "description": "Response mentions javap for exact values (Tier 3)",
+          "check": "contains any of: javap, Tier 3, getProgramCode, getVersionCode"
+        },
+        {
+          "id": "confidence-tags",
+          "description": "Response mentions confidence levels/tags for extracted data",
+          "check": "contains any of: confidence, verified-from-bytecode, partial-from-bytecode, verified-from-rop-rip"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "api-replacement-search-strategy",
+      "prompt": "I need to find an ODS API replacement for an MTS service that reads from TDLCUST and TDLCORD tables. The service is called CustomerAddressRetrieveGateway and it returns customer name, address lines, and correspondence address. What's the best way to search for candidate replacement APIs in the Backstage catalogue?",
+      "expected_output": "Should describe the 3-layer search strategy (Backstage catalogue Layer 1, Confluence search Layer 2, Backstage direct Layer 3), explain TDL table overlap scoring, suggest using the backstage_lookup script, mention API types (pAPI for provider APIs that could replace mainframe data services), and reference the api_search_strategy reference.",
+      "assertions": [
+        {
+          "id": "layered-search",
+          "description": "Response describes a multi-layer or structured search approach",
+          "check": "contains any of: layer, Layer 1, Layer 2, search strategy, Backstage, Confluence"
+        },
+        {
+          "id": "api-type-awareness",
+          "description": "Response mentions API types relevant to provider/data APIs",
+          "check": "contains any of: pAPI, iAPI, provider API, internal API"
+        },
+        {
+          "id": "scoring-or-matching",
+          "description": "Response mentions scoring or field overlap for matching",
+          "check": "contains any of: score, overlap, TDL overlap, field mapping, match"
+        },
+        {
+          "id": "customer-domain-awareness",
+          "description": "Response identifies customer/party domain as relevant",
+          "check": "contains any of: customer, party, TDLCUST, buk-domain-customer"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "migration-strategy-selection",
+      "prompt": "I've completed mts-documentation and api-replacement-match for CustomerGateway.retrievePersonalCustomerFullDetails. The match report shows a Strong Match (score 0.87) against srv-custcore-api. There's already an existing microservice repo for srv-custcore-api. Which migration strategy should I use and what files will be generated?",
+      "expected_output": "Should recommend Strategy B (integrating into an existing microservice), explain the dual-path code generation approach, list the expected generated files (controller, REST client, converter, config, tests, issues doc), and mention the feature flag pattern for dual-path routing.",
+      "assertions": [
+        {
+          "id": "strategy-b-identified",
+          "description": "Response identifies Strategy B as appropriate for existing microservice",
+          "check": "contains any of: Strategy B, existing microservice, strategy B"
+        },
+        {
+          "id": "dual-path-code",
+          "description": "Response mentions dual-path code or feature flag migration pattern",
+          "check": "contains any of: dual-path, feature flag, dual path, flag-based"
+        },
+        {
+          "id": "generated-files-listed",
+          "description": "Response lists expected generated file types",
+          "check": "contains any of: converter, client, controller, OdsClient, migration code"
+        },
+        {
+          "id": "three-stage-pipeline",
+          "description": "Response demonstrates knowledge of the 3-stage pipeline context",
+          "check": "contains any of: mts-migrate, /mts-migrate, migration, three-stage, pipeline"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "wmid-tdl-mapping-lookup",
+      "prompt": "In a BUK EGS gateway class, I see the WMID parameter WMID-TITL-PRM being set on a request object. What TDL table does this correspond to, and what customer data is typically retrieved via this parameter?",
+      "expected_output": "Should use the WMID-TDL mapping knowledge to identify WMID-TITL-PRM → TDLTITL (title table), explain the WMID naming convention (WMID-XXXX-PRM → TDLXXXX), and describe what data the title table contains.",
+      "assertions": [
+        {
+          "id": "tdl-table-resolved",
+          "description": "Response resolves WMID-TITL-PRM to TDLTITL or equivalent",
+          "check": "contains any of: TDLTITL, TDL title, title table, TITL table"
+        },
+        {
+          "id": "naming-convention-explained",
+          "description": "Response explains the WMID → TDL naming convention",
+          "check": "contains any of: WMID-XXXX-PRM, naming convention, TDLXXXX, pattern"
+        },
+        {
+          "id": "data-content-described",
+          "description": "Response describes what data the title-related table contains",
+          "check": "contains any of: title, salutation, Mr, Mrs, customer title, honorific"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "mca2-callservice-discovery",
+      "prompt": "I'm looking at a BUK application called mca-eps-strategicidentify. It doesn't use doService() at all. Instead I see patterns like: MisClient<EmployeeService> employeeService and then employeeService.callService(svc -> svc.retrieveServiceAccessDetailsByEmployeeId(userContextEdo)). In the config class there's serviceLocator.findService(\"ExecutionContextEmployeeService\", EmployeeService.class). How should the discovery agent handle this?",
+      "expected_output": "Should identify this as an MCA2 MIS framework pattern, explain that callService is the MCA2 equivalent of doService, describe how to resolve the service name from findService(), extract the method name from the lambda body, and note that the EBS service interface and downstream JARs are the same as MCA1.",
+      "assertions": [
+        {
+          "id": "mca2-identified",
+          "description": "Response identifies this as MCA2 or MIS framework pattern",
+          "check": "contains any of: MCA2, MIS, MisClient, callService"
+        },
+        {
+          "id": "service-name-resolution",
+          "description": "Response explains how to resolve the service name from findService",
+          "check": "contains any of: findService, serviceLocator, ExecutionContextEmployeeService"
+        },
+        {
+          "id": "lambda-method-extraction",
+          "description": "Response explains extracting method name from lambda body",
+          "check": "contains any of: lambda, svc ->, method name, retrieveServiceAccessDetailsByEmployeeId"
+        },
+        {
+          "id": "same-backend",
+          "description": "Response notes that MCA2 uses the same EBS services and JARs as MCA1",
+          "check": "contains any of: same EBS, same JAR, same backend, same downstream, same service interface"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "variable-method-tracing-pattern3",
+      "prompt": "In scp-eps-idv, I see a doService call where the method name is a variable: serviceDelegate.doService(SERVICE_NAME, callingMethod, params). The variable callingMethod comes from a method parameter. How do I find all the concrete method names that get passed to this doService call?",
+      "expected_output": "Should describe Pattern 3 (variable method name), explain that the discovery agent must trace back through callers to find all concrete values passed as callingMethod, mention that each unique (service, method) pair becomes a separate entry in the discovery output, and note the multiplexer pattern where one doService call site maps to multiple services.",
+      "assertions": [
+        {
+          "id": "pattern3-identified",
+          "description": "Response identifies this as Pattern 3 or variable method pattern",
+          "check": "contains any of: Pattern 3, variable method, variable-traced, multiplexer"
+        },
+        {
+          "id": "caller-tracing",
+          "description": "Response describes tracing callers to find concrete values",
+          "check": "contains any of: caller, trace back, grep, calling method, concrete value"
+        },
+        {
+          "id": "separate-entries",
+          "description": "Response notes each unique pair becomes a separate discovery entry",
+          "check": "contains any of: unique pair, separate entry, one entry per, distinct"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "gateway-equivalence-scoring",
+      "prompt": "I'm running api-replacement-match for CustomerGateway.findByPrimaryKey. The top candidate from Backstage is sodscustenq. When I search sodscustenq's GitLab repo, I find that its source code contains references to CustomerGateway and the transaction name CUS_ALL_RETRIEVE. How should this affect the match scoring?",
+      "expected_output": "Should describe the gateway-equivalence boost: finding the same gateway class name gives +10% and finding the same transaction name gives +5%. Should explain that this proves the ODS API wraps the same EGS gateway, making it the architecturally correct replacement. Should note that gateway_equivalent=true is set on the candidate.",
+      "assertions": [
+        {
+          "id": "gateway-equiv-boost",
+          "description": "Response describes a scoring boost for gateway equivalence",
+          "check": "contains any of: gateway equivalence, gateway_equivalent, scoring boost, +10%, +15%"
+        },
+        {
+          "id": "same-gateway-significance",
+          "description": "Response explains the significance of the same gateway being used",
+          "check": "contains any of: same gateway, wraps the same, architecturally correct, same EGS"
+        },
+        {
+          "id": "transaction-name-match",
+          "description": "Response mentions the transaction name match as evidence",
+          "check": "contains any of: CUS_ALL_RETRIEVE, transaction name, CICS code"
+        },
+        {
+          "id": "gitlab-search",
+          "description": "Response references searching GitLab source code for evidence",
+          "check": "contains any of: GitLab, source code, blob search, Step A2"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 9,
+      "name": "soap-webservice-transport-classification",
+      "prompt": "I found a doService call in a BUK Spring Boot app that routes through MortgagesGateway.retrieveAccountDetails(). The EGS source JAR (egs_mortgages) contains a ServiceAssembler class and an X61563ProxyServiceWrapper class. There's no getProgramCode() or getVersionCode() method — no CICS transaction pattern at all. The gateway doesn't use WMID parameters or TDL tables. What transport pattern is this and how should I document it?",
+      "expected_output": "Should identify transport as soap-webservice (not mainframe-mq), explain that the ProxyServiceWrapper/ServiceAssembler pattern indicates a SOAP call to a non-CICS backend (ILP/Hogan), note there are no TDL tables or DataGroups, and describe the Section 6 variant as Backend Mappings (SOAP Web Service Mappings).",
+      "assertions": [
+        {
+          "id": "soap-webservice-identified",
+          "description": "Response identifies transport as soap-webservice",
+          "check": "contains any of: soap-webservice, SOAP web service, SOAP Web Service"
+        },
+        {
+          "id": "not-mainframe-mq",
+          "description": "Response distinguishes from mainframe-mq",
+          "check": "contains any of: not mainframe, non-CICS, no CICS, not MQ"
+        },
+        {
+          "id": "ilp-hogan-backend",
+          "description": "Response identifies backend system type",
+          "check": "contains any of: ILP, Hogan, non-CICS backend, external SOAP"
+        },
+        {
+          "id": "no-tdl-tables",
+          "description": "Response notes no TDL tables for this transport",
+          "check": "contains any of: no TDL, N/A, no DataGroup, no WMID"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 10,
+      "name": "write-service-table-extraction",
+      "prompt": "I'm documenting AuditLifecycle.addAuditEvent in a BUK Spring Boot app. The EBS Command (AddAuditCommand) calls AuditGateway.insertAuditEvents(). The EGS gateway class AuditOracleSql.java contains INSERT INTO TSOAD02(...) and INSERT INTO TSOAD03(...) SQL statements — these are Oracle audit tables, not mainframe TDL tables. How should I document the tables in the Quick Reference section?",
+      "expected_output": "Should explain that write services use Write Tables instead of TDL Tables in Quick Reference, list TSOAD02 and TSOAD03 as write targets with their column names, note this is an oracle-db-direct transport (write operation), and mention the S.7e-write extraction step for discovering write table targets.",
+      "assertions": [
+        {
+          "id": "write-tables-concept",
+          "description": "Response mentions Write Tables as distinct from TDL Tables",
+          "check": "contains any of: Write Tables, write table, WRITE_TABLES, write target"
+        },
+        {
+          "id": "tsoad-tables-identified",
+          "description": "Response identifies the specific audit tables",
+          "check": "contains any of: TSOAD02, TSOAD03, audit table"
+        },
+        {
+          "id": "not-tdl-read",
+          "description": "Response distinguishes write from read operations",
+          "check": "contains any of: write service, INSERT, write operation, not TDL read, insert"
+        },
+        {
+          "id": "oracle-transport",
+          "description": "Response identifies Oracle/JDBC transport for write service",
+          "check": "contains any of: Oracle, JDBC, oracle-db-direct, database"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 11,
+      "name": "orchestration-sub-service-tdl-tracing",
+      "prompt": "I'm documenting MembershipProcessEnquiry.retrieveCustomerMembershipDetails. The EBS Command class doesn't call a gateway directly — instead it calls doService to two other services: PersonalCustomerService.retrievePersonalCustomerSaleProgressAndMembershipLinkDetails and MembershipEnquiryService.retrieveMembershipByIdAndChannel. The Quick Reference currently shows 'TDL Tables: none directly; TDL access in sub-services'. How should I properly document the TDL tables for this orchestration service?",
+      "expected_output": "Should explain that orchestration services should enumerate sub-service TDL tables using the TDL Tables (via sub-services) format, list specific tables like TDLSPRO (via PersonalCustomerService) and TCRMBSP (via MembershipEnquiryService), mention the S.7c-orch step for detecting orchestration patterns, and reference ORCHESTRATION_SUB_SERVICES in the VERBATIM_CONTRACT.",
+      "assertions": [
+        {
+          "id": "via-sub-services-format",
+          "description": "Response describes the via sub-services display format",
+          "check": "contains any of: via sub-service, TDL Tables (via, via PersonalCustomerService, via MembershipEnquiryService"
+        },
+        {
+          "id": "enumerate-tables",
+          "description": "Response recommends enumerating specific TDL tables from sub-services",
+          "check": "contains any of: TDLSPRO, TCRMBSP, TDLCUML, enumerate, list each"
+        },
+        {
+          "id": "orchestration-pattern",
+          "description": "Response identifies orchestration service pattern",
+          "check": "contains any of: orchestration, composite, sub-service, delegates to"
+        },
+        {
+          "id": "not-empty-placeholder",
+          "description": "Response advises against leaving TDL section as empty/none",
+          "check": "contains any of: not empty, not none, should not be blank, replace, instead of"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "spec-repo-discovery-from-backstage-slug",
+      "prompt": "I'm running api-replacement-match for a BUK service. The top candidate from Backstage has GitLab slug barclays/cct-collg-servicing-apis/apps/rc-colleague-eligibility-api. When I search for openapi or swagger blobs in that repo, I find nothing — it's just a thin Spring Boot app. But the service doc says this is the correct replacement. How do I find the API specification?",
+      "expected_output": "Should describe the spec repo discovery pattern (Step A0): derive spec repo path by replacing apps/ with spec/ and appending -spec suffix (barclays/cct-collg-servicing-apis/spec/rc-colleague-eligibility-api-spec), check if the repo exists via get_repository_tree, look for openapi.yaml under oas/ directory, then resolve $ref components (parameters.yaml, response model YAML, example JSON). Should mention Pattern 1 (name-spec) is most common, Pattern 2 (no suffix) as fallback, and Pattern 3 (search_repositories) as last resort.",
+      "assertions": [
+        {
+          "id": "spec-repo-pattern",
+          "description": "Response describes the spec repo naming pattern (apps/ → spec/ with -spec suffix)",
+          "check": "contains any of: spec/, -spec, spec repo, sibling repo"
+        },
+        {
+          "id": "derived-path",
+          "description": "Response shows the derived spec repo path",
+          "check": "contains any of: rc-colleague-eligibility-api-spec, replace apps, spec/rc-colleague"
+        },
+        {
+          "id": "openapi-in-oas",
+          "description": "Response mentions looking for openapi.yaml in oas/ directory",
+          "check": "contains any of: oas/openapi.yaml, oas/ directory, openapi.yaml"
+        },
+        {
+          "id": "ref-resolution",
+          "description": "Response mentions resolving $ref components from the spec",
+          "check": "contains any of: $ref, components, parameters.yaml, response model, resolve"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 13,
+      "name": "ods-graphql-schema-field-verification",
+      "prompt": "I'm running api-replacement-match for LoansEnquiryService.retrieveBalanceDetails. The service reads the outstanding principal balance from the ALS backend using DAG field AMWKWI00-WI-TOT-PRIN. The Backstage search returned no strong REST API candidates for ALS loan balance data. Is there any ODS API that exposes ALS loan data I could use for field-level verification?",
+      "expected_output": "Should mention the ODS GraphQL API (sodsgraphql) as a reference source for ALS loan data. Should describe that the GraphQL schema at barclays/ods-apis/app/sodsgraphql contains an AlsAccountHolding type with fields like outstandingPrincipal that have lineage annotations back to ALS source tables (TEJVRT02.RT_TOT_PRIN). Should mention the schema files are at src/main/resources/schema/retail-account-detail.graphql and that the query path is retailCustomer.productHolding.alsAccountHoldings.",
+      "assertions": [
+        {
+          "id": "graphql-api-mentioned",
+          "description": "Response mentions the ODS GraphQL API as a source for ALS data",
+          "check": "contains any of: GraphQL, sodsgraphql, graphql, Enquiry Domain"
+        },
+        {
+          "id": "als-type-identified",
+          "description": "Response identifies the AlsAccountHolding type or ALS schema",
+          "check": "contains any of: AlsAccountHolding, alsAccountHoldings, ALS Account"
+        },
+        {
+          "id": "outstanding-principal-field",
+          "description": "Response mentions the outstandingPrincipal field or RT_TOT_PRIN lineage",
+          "check": "contains any of: outstandingPrincipal, RT_TOT_PRIN, outstanding principal"
+        },
+        {
+          "id": "schema-location",
+          "description": "Response mentions where to find the schema files",
+          "check": "contains any of: retail-account-detail.graphql, src/main/resources/schema, barclays/ods-apis/app/sodsgraphql"
+        }
+      ],
+      "files": []
+    }
+  ]
+}

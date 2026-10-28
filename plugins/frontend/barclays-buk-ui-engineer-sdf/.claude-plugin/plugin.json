@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-ui-engineer-sdf",
+    "description": "Generate SDF screens from Figma designs into Blueprint React Native components (@barclays/chameleon-blueprint)",
+    "version": "1.0.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards", "barclays-buk-ui-engineer"]
+}

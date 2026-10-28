@@ -1,0 +1,20 @@
+{
+  "value": {
+    "fatalError": true,
+    "messages": [
+      {
+        "code": "000000",
+        "text": "Sorry, an error has occured, please contact the helpdesk.",
+        "type": "E",
+        "lineNumber": 0,
+        "exceptionCode": "S-F-175155",
+        "buildVersion": "23.01",
+        "appName": "scp-eps-acc-open",
+        "process": "MAAOP",
+        "workload": "b-scpepsaccopenbr03-2-hhp77",
+        "helpdeskExceptionCode": "S-F@null-FS:1022:5146",
+        "correlationId": "03fa9f92-3304-4439-8736-6af8d7556772"
+      }
+    ]
+  }
+}

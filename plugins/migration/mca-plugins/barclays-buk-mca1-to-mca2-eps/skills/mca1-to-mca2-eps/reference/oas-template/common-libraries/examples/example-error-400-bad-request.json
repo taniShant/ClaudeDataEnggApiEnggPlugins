@@ -1,0 +1,12 @@
+{
+  "value": {
+    "errors": [
+      {
+        "id": "9709-4675-2456-7801",
+        "code": "BAD_REQUEST",
+        "title": "The request is invalid or not properly formed",
+        "severity": "E"
+      }
+    ]
+  }
+}

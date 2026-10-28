@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Profiling",
+  "description": "Schema for a data profiling result. Captures statistical and structural analysis of a source data object including null rates, distinct counts, type conformance, pattern candidates, PII indicators, and anomaly flags. Supports metadata-only, aggregate query, and sample query access modes.",
+  "type": "object",
+  "required": [
+    "profile_id",
+    "source_system",
+    "source_object",
+    "profiled_at",
+    "profiled_by",
+    "row_count_approx",
+    "sample_size",
+    "access_mode",
+    "columns",
+    "redaction_applied"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Unique identifier for this profiling result."
+    },
+    "source_system": {
+      "type": "string",
+      "description": "Identifier of the source system containing the profiled object."
+    },
+    "source_object": {
+      "type": "string",
+      "description": "Fully qualified name of the table, view, or file profiled."
+    },
+    "profiled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when profiling was performed."
+    },
+    "profiled_by": {
+      "type": "string",
+      "description": "Identity of the person or agent that performed the profiling."
+    },
+    "row_count_approx": {
+      "type": "integer",
+      "description": "Approximate row count of the source object at time of profiling.",
+      "minimum": 0
+    },
+    "sample_size": {
+      "type": "integer",
+      "description": "Number of rows included in the profiling sample (0 if metadata_only).",
+      "minimum": 0
+    },
+    "access_mode": {
+      "type": "string",
+      "description": "Mode used to access the data for profiling.",
+      "enum": [
+        "metadata_only",
+        "aggregate_query",
+        "sample_query"
+      ]
+    },
+    "columns": {
+      "type": "array",
+      "description": "Per-column profiling statistics and analysis.",
+      "items": {
+        "type": "object",
+        "required": [
+          "column_name",
+          "physical_type",
+          "null_count",
+          "null_pct",
+          "distinct_count",
+          "distinct_pct",
+          "type_conformance_pct",
+          "uniqueness_candidate",
+          "pii_candidate"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "column_name": {
+            "type": "string",
+            "description": "Name of the column."
+          },
+          "physical_type": {
+            "type": "string",
+            "description": "Physical data type of the column as declared in the source."
+          },
+          "null_count": {
+            "type": "integer",
+            "description": "Number of null values in the sample.",
+            "minimum": 0
+          },
+          "null_pct": {
+            "type": "number",
+            "description": "Percentage of null values in the sample.",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "distinct_count": {
+            "type": "integer",
+            "description": "Number of distinct non-null values in the sample.",
+            "minimum": 0
+          },
+          "distinct_pct": {
+            "type": "number",
+            "description": "Percentage of distinct non-null values relative to total non-null rows.",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "min_length": {
+            "type": "integer",
+            "description": "Minimum string length observed in the sample.",
+            "minimum": 0
+          },
+          "max_length": {
+            "type": "integer",
+            "description": "Maximum string length observed in the sample.",
+            "minimum": 0
+          },
+          "pattern_candidates": {
+            "type": "array",
+            "description": "Regular expression patterns that describe the observed value formats.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "type_conformance_pct": {
+            "type": "number",
+            "description": "Percentage of values that conform to the declared physical type.",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "uniqueness_candidate": {
+            "type": "boolean",
+            "description": "Indicates whether this column is a candidate for a unique key based on profiling."
+          },
+          "referential_candidates": {
+            "type": "array",
+            "description": "Candidate foreign key references identified based on value overlap analysis.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "anomaly_flags": {
+            "type": "array",
+            "description": "Anomalies detected in this column (e.g. outliers, unexpected nulls, format violations).",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pii_candidate": {
+            "type": "object",
+            "description": "PII candidate assessment for this column.",
+            "required": ["value", "confidence"],
+            "additionalProperties": false,
+            "properties": {
+              "value": {
+                "type": "boolean",
+                "description": "Indicates whether this column is considered a PII candidate."
+              },
+              "confidence": {
+                "type": "string",
+                "description": "Confidence level in the PII candidate assessment (e.g. high, medium, low)."
+              }
+            }
+          }
+        }
+      }
+    },
+    "redaction_applied": {
+      "type": "boolean",
+      "description": "Indicates whether redaction was applied to the profiling output to protect sensitive values."
+    },
+    "query_fingerprint": {
+      "type": "string",
+      "description": "Hash or fingerprint of the query used to generate the profiling sample, for reproducibility."
+    }
+  }
+}

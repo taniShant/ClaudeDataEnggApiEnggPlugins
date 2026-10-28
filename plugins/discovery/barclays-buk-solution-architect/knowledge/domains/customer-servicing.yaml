@@ -1,0 +1,87 @@
+schema_version: '1.0'
+domain:
+  id: dom.customer-servicing
+  name: Customer Servicing
+  description: The Customer Servicing domain encompasses a suite of service domains that support all customer-facing interactions, enabling Barclays to engage with customers consistently across both colleague-assisted and digital channels. It ensures the delivery of accurate information, timely support, personalised service, and seamless fulfilment throughout the customer lifecycle. The primary aim of the domain is to ensure interactions are informed, well-governed, and tailored to individual customer needs by leveraging real-time customer data. Contextual indicators - such as high-value customer status or potential fraud alerts - directly inform routing, servicing, and fulfilment decisions during an interaction. The domain supports a wide range of servicing activities, including changes of name and address, appointment scheduling, customer marker management, and comprehensive audit and compliance processes, among others.
+  owner: cc
+  bian_links:
+    - title: Customer Relationship Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=30437"
+    - title: Customer Product And Service Eligibility
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=36792"
+    - title: Customer Access Entitlement
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=30136"
+    - title: Customer Product and Service Directory
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=41591"
+    - title: Servicing Order
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=32295"
+    - title: Branch Location Operations
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=34007"
+    - title: Business Unit Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=30964"
+    - title: Point of Service
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=43170"
+    - title: Servicing Activity Analysis
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=46634"
+    - title: Contact Routing
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=41059"
+    - title: Contact Center Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=40392"
+    - title: Contact Center Operations
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=43894"
+    - title: Contact Handler
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=41839"
+    - title: eBranch Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=34844"
+    - title: eBranch Operations
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=30829"
+    - title: Interactive Help
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=34001"
+    - title: Advanced Voice Services Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=29564"
+    - title: Advanced Voice Services Operations
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=37680"
+  sub_domains:
+  - id: sub.cs.colleague-management
+    name: Colleague Management
+    description: Colleague Management sub-domain within Customer Servicing manages internal colleague information and service-related feedback to enable effective, accountable, and compliant customer servicing. It maintains authoritative colleague profiles - including roles, skills, entitlements, location, and organisational alignment - to support accurate routing, workload management, and context-aware servicing decisions. The sub-domain also captures and analyses Colleague Voice and servicing feedback to generate insights that drive continuous improvement, service quality, operational efficiency, and colleague engagement.
+    capabilities:
+    - id: cap.cs.maintain-colleague-location-information
+      name: Maintain Colleague Location Information
+      description: Maintains accurate colleague location information encompassing physical work location, organisational assignment, and regional alignment, enabling location-aware servicing eligibility, accountability, and regulatory compliance by supporting appropriate allocation of servicing responsibilities across the bank.
+    - id: cap.cs.maintain-colleague-profiles
+      name: Maintain Colleague Profiles
+      description: Maintains authoritative colleague profile information encompassing identity, role, skills, entitlements, organisational alignment, and servicing responsibilities, enabling accurate accountability, access eligibility, and contextual understanding for compliant and effective customer servicing across the bank.
+    - id: cap.cs.provide-colleague-feedback-insights
+      name: Provide Colleague Feedback Insights
+      description: Provides consolidated insights from colleague feedback related to customer servicing, encompassing observations, improvement suggestions, and experience sentiment, enabling identification of trends, issues, and opportunities to support service quality improvement, operational efficiency, and colleague engagement across the bank.
+  - id: sub.cs.manage-customer-profile-and-relationship
+    name: Manage Customer Profile and Relationship
+    description: Manage Customer Profile and Relationship sub-domain within Customer Servicing maintains a single, authoritative view of the customer and the bank's relationship with them. It manages customer identity, demographics, preferences, segmentation, roles, and interaction context across all products and channels, providing a foundational capability that ensures accurate, consistent, and up-to-date information for all customer-facing and servicing processes.
+    capabilities:
+    - id: cap.cs.maintain-customer-profile
+      name: Maintain Customer Profile
+      description: Maintains authoritative customer profile information encompassing identity, demographic, preference, entitlement, and contextual attributes, enabling a trusted and up-to-date customer view that supports informed, personalised, and compliant customer interactions across the servicing lifecycle.
+    - id: cap.cs.manage-customer-relationships
+      name: Manage Customer Relationships
+      description: Maintains customer relationship context encompassing relationship status, servicing agreements, interaction context indicators, and stated preferences, enabling consistent, personalised, and context-aware servicing decisions and engagement throughout the customer lifecycle while supporting compliant treatment and escalation where required.
+  - id: sub.cs.manage-customer-contact
+    name: Manage Customer Contact
+    description: Manage Customer Contact sub-domain within Customer Servicing governs and facilitates customer contact and engagement across channels which includes contact centres, branches, locals, self serving devices (kiosks) and digital. It manages customer interactions from initiation through completion by supporting authentication, intent capture, routing, dialogue management, and interaction outcomes, ensuring consistent, efficient, and compliant servicing experiences regardless of channel.
+    capabilities:
+    - id: cap.cs.manage-contact-centre-operations
+      name: Manage Contact Centre Operations
+      description: Manage Contact Centre Operations governs contact centre-based customer servicing, encompassing the handling and coordination of customer enquiries and servicing requests requiring colleague involvement, enabling consistent service quality, accurate outcomes, and compliant customer interactions.
+    - id: cap.cs.provide-assisted-and-self-service-customer-servicing
+      name: Provide Assisted and Self-Service Customer Servicing
+      description: Provide Customer Servicing delivers customer servicing outcomes across assisted and self-directed servicing models, encompassing servicing interactions delivered through physical, local, and digital servicing contexts, enabling consistent, secure, and compliant fulfilment of standard customer servicing needs.
+  - id: sub.cs.manage-servicing-requests
+    name: Manage Servicing Requests
+    description: Manage Servicing Request sub-domain executes and coordinates customer-initiated service requests across all products and channels. It manages end-to-end servicing activities - such as requests, instructions, inquiries, amendments, and follow-ups - ensuring accurate, timely, and compliant fulfilment while delivering a seamless and efficient servicing experience.
+    capabilities:
+    - id: cap.cs.determine-customer-servicing-eligibility
+      name: Determine Customer Servicing Eligibility
+      description: Determines whether a customer is eligible for specific servicing actions based on applicable entitlements, relationship status, risk markers, mandates, and regulatory constraints, enabling accurate, consistent, and compliant servicing decisions across the customer servicing lifecycle.
+    - id: cap.cs.fulfil-standard-servicing-requests
+      name: Fulfil Standard Servicing Requests
+      description: Fulfils predefined, routine customer servicing requests that require minimal decisioning, enabling timely, accurate, and compliant completion of standard servicing outcomes while supporting consistent customer experience across the servicing lifecycle.

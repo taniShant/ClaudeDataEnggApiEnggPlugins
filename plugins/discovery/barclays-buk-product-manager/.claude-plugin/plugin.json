@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-product-manager",
+    "description": "Turns problem statements into executable requirements, acceptance criteria, increment priorities, and success measures. Facilitates Consumer Duty and programme governance artefacts.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

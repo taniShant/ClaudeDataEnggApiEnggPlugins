@@ -1,0 +1,13 @@
+{
+    "name": "barclays-buk-tracer",
+    "description": "TRACER (Test Requirements And Coverage Evidence Registry) — spec-driven traceability plugin. Supports forward spec (requirements-first), reverse spec (code-first), and legacy change (reverse → delta → forward) flows. Maps test scenarios to layers, maintains a bidirectional traceability matrix, and provides evidence-based test retirement.",
+    "version": "1.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": [
+        "barclays-buk-reverse-spec-generator",
+        "barclays-buk-standards"
+    ]
+}

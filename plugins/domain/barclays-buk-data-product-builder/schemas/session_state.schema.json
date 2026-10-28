@@ -1,0 +1,790 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "session_state.schema.json",
+  "title": "Session State",
+  "description": "Schema for session/session_state.json — persisted state across all plugin commands.",
+  "type": "object",
+  "required": ["session_id", "platform", "gates_resolved", "open_placeholders", "artefact_status", "crypto_flags"],
+  "properties": {
+    "session_id": {"type": ["string", "null"]},
+    "created_at": {"type": ["string", "null"], "format": "date-time"},
+    "platform": {
+      "type": ["string", "null"],
+      "enum": ["glue", "databricks", null],
+      "description": "Set by G1 — absolute first gate"
+    },
+    "data_product_type": {
+      "type": ["string", "null"],
+      "enum": ["FDP", "CDP", "BDP", null],
+      "description": "Set by G1.5"
+    },
+    "target_account": {
+      "type": ["string", "null"],
+      "enum": ["DDA", "BCA", null]
+    },
+    "expected_db_prefix": {
+      "type": ["string", "null"],
+      "enum": ["fdp_", "cdp_", "bdp_", "shared_fdp_", "shared_cdp_", "shared_bdp_", null]
+    },
+    "expected_source_layer": {
+      "type": ["string", "null"],
+      "enum": ["BASE/FDP/CDP", "FDP/CDP", null]
+    },
+    "is_shared_data_product": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if target database uses a shared_ prefix (shared_fdp_, shared_cdp_, shared_bdp_). Set by G1.5 auto-resolution. When true, data_product_type still resolves to the parent type (FDP/CDP/BDP) and all routing remains identical."
+    },
+    "tenancy_name": {
+      "type": ["string", "null"],
+      "description": "Feature Team Name from tenancy skill (Glue: Hive/Iceberg Database columns) or databricks-tenancy skill (Databricks: Target DB column) — resolved by looking up target_database"
+    },
+    "tenancy_resolution_method": {
+      "type": ["string", "null"],
+      "enum": ["registry", "user_provided", null],
+      "description": "How infrastructure values were obtained: 'registry' (from tenancy registry lookup) or 'user_provided' (from interactive questionnaire). Used by assertions to conditionally check questionnaire_turns_completed."
+    },
+    "python_path": {
+      "type": ["string", "null"],
+      "description": "Resolved Python executable path (e.g. 'python', '/c/devhome/tools/python3.12/current/python'). Set during /de-init step 7. Used by /de-gen-tests and validators that invoke Python. Null if Python not found."
+    },
+    "python_version": {
+      "type": ["string", "null"],
+      "description": "Detected Python version string (e.g. '3.12.7'). Set during /de-init step 7. Null if Python not found."
+    },
+    "syntax_check_result": {
+      "type": ["string", "null"],
+      "enum": ["passed", "failed", "skipped_no_python", null],
+      "description": "Result of py_compile syntax check on generated .py artefacts. Set after each generation command completes. Null if not yet run. The /push gate blocks on null or skipped_no_python unless --skip-syntax-check is explicitly provided."
+    },
+    "syntax_check_failures": {
+      "type": ["array", "null"],
+      "items": { "type": "string" },
+      "description": "List of file paths that failed py_compile. Null if syntax check passed or was skipped."
+    },
+    "test_execution_result": {
+      "type": ["string", "null"],
+      "enum": ["passed", "failed", "skipped_no_python", "skipped_no_pytest", "skipped_user_declined", "timeout", null],
+      "description": "Result of optional pytest execution. Set by /de-gen-tests STEP 6 or /de-run-tests. Null if not yet run."
+    },
+    "test_execution_output": {
+      "type": ["string", "null"],
+      "description": "First 50 lines of pytest stdout/stderr when test_execution_result is 'failed'. Null otherwise."
+    },
+    "mapping_excel_path": {"type": ["string", "null"]},
+    "source_volumetrics_path": {
+      "type": ["string", "null"],
+      "description": "Path to session/source_volumetrics.json — parsed volumetric data from 'Source Volumetrics' sheet. Null if sheet not present in mapping Excel. Consumed by transform-generator-agent (broadcast/repartition), glue-dtxog-agent (worker sizing), and databricks-artefact-agent (cluster sizing)."
+    },
+    "domain_knowledge_path": {"type": ["string", "null"]},
+    "domain_knowledge_text": {
+      "type": ["string", "null"],
+      "description": "Full text of Domain Knowledge .md file. Null if not supplied."
+    },
+    "domain_knowledge_validated_tenancy": {
+      "type": ["string", "null"],
+      "description": "Tenancy name extracted from domain knowledge file header marker (**Tenancy**: `{name}`) during STEP 2.5 validation. Null if no domain knowledge loaded or no marker found. Used by downstream agents to verify tenancy alignment before applying domain knowledge signals."
+    },
+    "data_flow_detection": {
+      "type": ["object", "null"],
+      "description": "Multi-source-system detection and artifact mode. Populated by /gen-config STEP 0.5 when multiple data flows are detected. Read by downstream commands (/gen-transform, /gen-wrapper, /gen-dag, etc.) to determine per-source-system artifact generation strategy.",
+      "properties": {
+        "resolved_mode": {
+          "type": "string",
+          "enum": ["single_data_flow", "multiple_data_flow"],
+          "description": "Detected data flow mode from 3-way priority (user override → domain knowledge → mapping structure → default)"
+        },
+        "resolved_by": {
+          "type": "string",
+          "enum": ["user_override", "domain_knowledge", "mapping_structure", "default"],
+          "description": "Which detection priority resolved the data flow mode"
+        },
+        "artifact_mode": {
+          "type": "string",
+          "enum": ["default", "combined"],
+          "description": "Artifact generation strategy: 'default' (single-flow or per-source-system when source_systems is non-empty), 'combined' (single artifact with UNION logic)"
+        },
+        "source_systems": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "List of source_system labels (e.g., ['ilp', 'reference_data']). Populated when resolved_mode is 'multiple_data_flow'. When non-empty, commands loop per source_system to generate independent artifacts."
+        },
+        "source_system_table_mapping": {
+          "type": ["object", "null"],
+          "description": "Maps each source_system label to its source tables (FQN). Built from mapping_parsed.json source_system_hint. Example: {\"ilp\": [\"e_cms_db.cmrcase\"], \"reference_data\": [\"ref_common_db.region_lookup\"]}",
+          "additionalProperties": { "type": "array", "items": {"type": "string"} }
+        },
+        "union_detected": {
+          "type": "boolean",
+          "description": "True when mapping Business Logic contains 'Union Branch N:' structured format or union_metadata is present"
+        }
+      }
+    },
+    "source_catalog": {
+      "type": ["string", "null"],
+      "description": "Databricks-only. Unity Catalog name for source tables (e.g. 'BUK_BASE_GLUE_CATALOG'). Resolved from domain knowledge or user input. Null for Glue platform."
+    },
+    "foundation_library_version": {
+      "type": ["string", "null"],
+      "default": "0.1.5",
+      "description": "Databricks-only. Version of databricks_foundation library to install in job clusters. Default '0.1.5'. Null for Glue platform."
+    },
+    "spark_version": {
+      "type": ["string", "null"],
+      "default": "16.4.x-scala2.12",
+      "description": "Databricks-only. Databricks Runtime version for job clusters. Default '16.4.x-scala2.12'. Null for Glue platform."
+    },
+    "foundation_library_url": {
+      "type": ["string", "null"],
+      "default": "https://nexus-amazon-pdn.barclays.intranet/repository/barclays-read-conda/barclays_sdw/databricks/0.1.5/databricks_foundation-0.1.5-py3-none-any.whl",
+      "description": "Databricks-only. Full Nexus URL for the databricks_foundation wheel package. Default points to version 0.1.5. Null for Glue platform."
+    },
+    "bundle_generated": {
+      "type": ["boolean", "null"],
+      "description": "Databricks-only. True if /de-gen-bundle has completed successfully. Null for Glue platform."
+    },
+    "gates_resolved": {
+      "type": "array",
+      "description": "List of gates that have been resolved. Note: G1.5 is auto-resolved (implicit) during /de-parse-mapping based on target database prefix; it does not require user interaction.",
+      "items": {
+        "type": "string",
+        "enum": ["G1", "G0.5", "G1.5", "G3", "G4", "G5", "G5-grain", "G5-C"]
+      }
+    },
+    "open_placeholders": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "List of placeholder names currently unresolved"
+    },
+    "artefact_status": {
+      "type": "object",
+      "description": "Map of artefact relative path (from project root, e.g. 'generated/glue/mesh/fdp_uk_mortgage_db_account_wm_mesh.json') to status: GENERATED, VALIDATED, DRAFT_UNVALIDATED. All artefacts use {db}_{table} naming under generated/{platform}/{artefact_type}/.",
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["GENERATED", "VALIDATED", "DRAFT_UNVALIDATED"]
+      }
+    },
+    "crypto_flags": {
+      "type": "object",
+      "properties": {
+        "any_column_crypto_flagged": {"type": "boolean"},
+        "columns": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["is_crypto", "operation", "de_name", "extraction_source", "extraction_failed"],
+            "properties": {
+              "is_crypto": {
+                "type": "boolean",
+                "description": "True if transformation logic contains explicit crypto signal"
+              },
+              "operation": {
+                "type": ["string", "null"],
+                "enum": ["tokenize", "detokenize", null],
+                "description": "tokenize (protect), detokenize (unprotect), or null if no crypto"
+              },
+              "de_name": {
+                "type": ["string", "null"],
+                "description": "Protegrity Data Element name. Must match pattern: (UK|US|APAC)_TOK_<func>_L<d>R<d>_<type>_DE"
+              },
+              "extraction_source": {
+                "type": "string",
+                "enum": ["udf_pattern", "protegrity_element", "keyword"],
+                "description": "Which detection method matched"
+              },
+              "extraction_failed": {
+                "type": "boolean",
+                "description": "True if DE name not extractable or validation failed. Triggers refusal."
+              },
+              "extraction_ambiguous": {
+                "type": "boolean",
+                "description": "True when both 'tokenize' and 'detokenize' keywords found"
+              }
+            }
+          }
+        }
+      }
+    },
+    "env_config": {
+      "type": ["object", "null"],
+      "description": "Centralized per-environment infrastructure values. Resolved ONCE during /de-parse-mapping STEP 2.6. All downstream agents consume from here — never independently derive per-env values.",
+      "properties": {
+        "tenancy_name": {
+          "type": ["string", "null"],
+          "description": "Feature team tenancy name from Tenancy Registry (e.g., 'fdpmortgage')"
+        },
+        "catalog_type": {
+          "type": ["string", "null"],
+          "enum": ["iceberg", "hive", null],
+          "description": "Catalog type determines env_prefix pattern: iceberg → dev1/uat1/prd1; hive → dev/uat/prd"
+        },
+        "bucket_shortname": {
+          "type": ["string", "null"],
+          "description": "S3 bucket shortname from Tenancy Registry (e.g., 'fdpmortgage01')"
+        },
+        "account_type": {
+          "type": ["string", "null"],
+          "enum": ["DDA", "BCA", null],
+          "description": "Account type: FDP/CDP → DDA; BDP → BCA"
+        },
+        "dev": {
+          "type": "object",
+          "description": "Dev environment infrastructure values",
+          "properties": {
+            "s3_bucket": {"type": ["string", "null"], "description": "Full S3 bucket name for dev (Pattern 1 or 2)"},
+            "aws_account_id": {"type": ["string", "null"], "description": "AWS account ID for dev"},
+            "itsi": {"type": ["string", "null"], "description": "ITSI code for dev environment"},
+            "compid": {"type": ["string", "null"], "description": "Netcool compid (null for dev/uat, set for prd)"},
+            "crypto_account_id": {"type": ["string", "null"], "description": "AWS account ID for crypto bucket (Pattern 4)"},
+            "crypto_itsi": {"type": ["string", "null"], "description": "ITSI code for crypto operations in dev"},
+            "crypto_api_endpoint_url": {"type": ["string", "null"], "description": "Crypto API endpoint URL for dev"}
+          }
+        },
+        "uat": {
+          "type": "object",
+          "description": "UAT environment infrastructure values",
+          "properties": {
+            "s3_bucket": {"type": ["string", "null"], "description": "Full S3 bucket name for uat (Pattern 1 or 2)"},
+            "aws_account_id": {"type": ["string", "null"], "description": "AWS account ID for uat"},
+            "itsi": {"type": ["string", "null"], "description": "ITSI code for uat environment"},
+            "compid": {"type": ["string", "null"], "description": "Netcool compid (null for dev/uat, set for prd)"},
+            "crypto_account_id": {"type": ["string", "null"], "description": "AWS account ID for crypto bucket (Pattern 4)"},
+            "crypto_itsi": {"type": ["string", "null"], "description": "ITSI code for crypto operations in uat"},
+            "crypto_api_endpoint_url": {"type": ["string", "null"], "description": "Crypto API endpoint URL for uat"}
+          }
+        },
+        "prd": {
+          "type": "object",
+          "description": "Production environment infrastructure values",
+          "properties": {
+            "s3_bucket": {"type": ["string", "null"], "description": "Full S3 bucket name for prd (Pattern 1 or 2)"},
+            "aws_account_id": {"type": ["string", "null"], "description": "AWS account ID for prd"},
+            "itsi": {"type": ["string", "null"], "description": "ITSI code for prd environment"},
+            "compid": {"type": ["string", "null"], "description": "Netcool compid for prd (required for production alerting)"},
+            "crypto_account_id": {"type": ["string", "null"], "description": "AWS account ID for crypto bucket (Pattern 4)"},
+            "crypto_itsi": {"type": ["string", "null"], "description": "ITSI code for crypto operations in prd"},
+            "crypto_api_endpoint_url": {"type": ["string", "null"], "description": "Crypto API endpoint URL for prd"}
+          }
+        },
+        "questionnaire_turns_completed": {
+          "type": ["integer", "null"],
+          "description": "Number of questionnaire questions completed (6 = full Glue questionnaire). Null if tenancy resolved from registry (no questionnaire needed). Used by POST-RESOLUTION ASSERTIONs to detect incomplete questionnaire runs."
+        }
+      }
+    },
+    "dbx_config": {
+      "type": ["object", "null"],
+      "description": "Centralized Databricks infrastructure values. Resolved ONCE during /parse-mapping STEP 2.7 (from databricks-tenancy registry or interactive infrastructure questionnaire). All downstream agents consume from here — never independently derive values.",
+      "properties": {
+        "dev": {
+          "type": "object",
+          "description": "Dev environment Databricks infrastructure values",
+          "properties": {
+            "target_catalog": {"type": ["string", "null"], "description": "Unity Catalog write/target catalog for dev (e.g., dev_buk_pafer_bdp)"},
+            "workspace_folder": {"type": ["string", "null"], "description": "Databricks workspace folder for dev (e.g., DEV_BUK_PAFER_BDP)"},
+            "cicd_sp": {"type": ["string", "null"], "description": "CICD service principal for dev (e.g., buk_pafer_bdp_cicd_dev_sp)"},
+            "exec_sp": {"type": ["string", "null"], "description": "Exec service principal for dev (e.g., buk_pafer_bdp_exec_dev_sp)"},
+            "ad_group": {"type": ["string", "null"], "description": "Azure AD security group(s) for dev"},
+            "app_service_tag": {"type": ["string", "null"], "description": "ITSI code for dev env (e.g., SNSVC0081840). Per-env — may differ from preprd/prd."},
+            "fin_role_tag": {"type": ["string", "null"], "description": "FIN:Role composite tag for dev env (e.g., SNSVC0081840_EDPUC-1597_BUK_BBKYC_BDP). Per-env."}
+          }
+        },
+        "preprd": {
+          "type": "object",
+          "description": "Pre-production environment Databricks infrastructure values",
+          "properties": {
+            "target_catalog": {"type": ["string", "null"], "description": "Unity Catalog write/target catalog for preprd"},
+            "workspace_folder": {"type": ["string", "null"], "description": "Databricks workspace folder for preprd"},
+            "cicd_sp": {"type": ["string", "null"], "description": "CICD service principal for preprd"},
+            "exec_sp": {"type": ["string", "null"], "description": "Exec service principal for preprd"},
+            "ad_group": {"type": ["string", "null"], "description": "Azure AD security group(s) for preprd"},
+            "app_service_tag": {"type": ["string", "null"], "description": "ITSI code for preprd env. Per-env — may differ from dev/prd."},
+            "fin_role_tag": {"type": ["string", "null"], "description": "FIN:Role composite tag for preprd env. Per-env."}
+          }
+        },
+        "prd": {
+          "type": "object",
+          "description": "Production environment Databricks infrastructure values",
+          "properties": {
+            "target_catalog": {"type": ["string", "null"], "description": "Unity Catalog write/target catalog for prd"},
+            "workspace_folder": {"type": ["string", "null"], "description": "Databricks workspace folder for prd"},
+            "cicd_sp": {"type": ["string", "null"], "description": "CICD service principal for prd"},
+            "exec_sp": {"type": ["string", "null"], "description": "Exec service principal for prd"},
+            "ad_group": {"type": ["string", "null"], "description": "Azure AD security group(s) for prd"},
+            "app_service_tag": {"type": ["string", "null"], "description": "ITSI code for prd env. Per-env — may differ from dev/preprd."},
+            "fin_role_tag": {"type": ["string", "null"], "description": "FIN:Role composite tag for prd env. Per-env."}
+          }
+        },
+        "notification_email": {"type": ["string", "null"], "description": "Email for job success/failure notifications. Default: BUKDataPlatformDatabricks@barclays.com"},
+        "tenancy_name": {
+          "type": ["string", "null"],
+          "description": "Feature team tenancy name. Written by infrastructure questionnaire Turn 1 or registry lookup."
+        },
+        "questionnaire_turns_completed": {
+          "type": ["integer", "null"],
+          "description": "Number of questionnaire turns completed (5 = full Databricks questionnaire). Null if tenancy resolved from registry (no questionnaire needed). Used by POST-RESOLUTION ASSERTIONs to detect incomplete questionnaire runs."
+        }
+      }
+    },
+    "mesh_json_s3_locations": {
+      "type": "object",
+      "description": "G3 answers — per-environment S3 locations for Mesh JSON. Auto-populated from env_config during STEP 2.6. Glue only.",
+      "properties": {
+        "dev": {
+          "type": "object",
+          "properties": {
+            "bucket": {"type": ["string", "null"]},
+            "prefix": {"type": ["string", "null"]}
+          }
+        },
+        "uat": {
+          "type": "object",
+          "properties": {
+            "bucket": {"type": ["string", "null"]},
+            "prefix": {"type": ["string", "null"]}
+          }
+        },
+        "prd": {
+          "type": "object",
+          "properties": {
+            "bucket": {"type": ["string", "null"]},
+            "prefix": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+    "target_tables": {
+      "type": "array",
+      "description": "Multi-table support: Array of unique target tables found in mapping. Set during /de-parse-mapping.",
+      "items": {
+        "type": "object",
+        "required": ["target_database", "target_table"],
+        "properties": {
+          "target_database": {
+            "type": "string",
+            "description": "Target database name (e.g., fdp_complaints_db)"
+          },
+          "target_table": {
+            "type": "string",
+            "description": "Target table name (e.g., fdp_complaints)"
+          },
+          "intent_resolved": {
+            "type": "boolean",
+            "description": "True if all 6 intent fields resolved for this table"
+          },
+          "intent_source": {
+            "type": "string",
+            "enum": ["intent_override", "mapping_column", "transformation_logic", "additional_context", "domain_knowledge", "user_prompt", "user_asked", "pending"],
+            "description": "Where intent was resolved from"
+          },
+          "row_count_in_mapping": {
+            "type": "integer",
+            "description": "Number of rows in mapping Excel targeting this table"
+          },
+          "structured_logic_detected": {
+            "type": "boolean",
+            "description": "True if any row for this table uses structured transformation format (Driver Table: ... pattern)"
+          }
+        }
+      }
+    },
+    "optional_mapping_columns": {
+      "type": "array",
+      "items": {"type": "string"},
+      "deprecated": true,
+      "description": "DEPRECATED — columns 13-16 are now required. Retained for backward compatibility with existing session state files. Always contains all 4 columns when populated: ['Transformation Type', 'Key Column', 'Target Table Type', 'Default Value']."
+    },
+    "parse_warnings": {
+      "type": "array",
+      "description": "Accumulated parse-time advisory signals. Set during /de-parse-mapping Phase 3c post-check. Non-blocking — pipeline continues regardless. Consumed by intent-identifier-agent (advisory message) and de-validate (quality reporting).",
+      "items": {
+        "type": "object",
+        "required": ["type", "column", "target_table", "message"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["join_logic_missing", "structured_parse_incomplete", "table_conditions_malformed"],
+            "description": "Advisory category — none of these block generation"
+          },
+          "column": {
+            "type": "string",
+            "description": "Target column name that triggered the warning"
+          },
+          "target_table": {
+            "type": "string",
+            "description": "Target table (format: database.table)"
+          },
+          "source_tables_referenced": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "List of distinct source tables referenced by this column (for join_logic_missing)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable warning message"
+          }
+        }
+      }
+    },
+    "structured_logic_detected": {
+      "type": "boolean",
+      "description": "True if any row in the mapping uses structured transformation format. Set during /de-parse-mapping STEP 2.7."
+    },
+    "total_target_tables": {
+      "type": ["integer", "null"],
+      "description": "Count of unique target tables. Set during /de-parse-mapping."
+    },
+    "pending_intent_tables": {
+      "type": "array",
+      "description": "List of tables awaiting intent clarification via G5-grain gate",
+      "items": {
+        "type": "string",
+        "description": "Format: 'database.table' (e.g., 'fdp_complaints_db.fdp_complaints')"
+      }
+    },
+    "batch_size": {
+      "type": ["integer", "null"],
+      "default": 3,
+      "description": "Number of tables per batch in parallel execution (Phase B2). Default: 3. Can be overridden per session."
+    },
+    "table_status": {
+      "type": "object",
+      "description": "Per-table generation status tracking (Phase B2). Enables resumability for partial batch completion. Maps table_name → status object.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "mesh_generated": {
+            "type": "boolean",
+            "description": "True if mesh JSON generated for this table"
+          },
+          "transform_generated": {
+            "type": "boolean",
+            "description": "True if transform (day0/day1 or single) generated for this table"
+          },
+          "wrapper_generated": {
+            "type": "boolean",
+            "description": "True if wrapper.py generated for this table (Glue only)"
+          },
+          "config_generated": {
+            "type": "boolean",
+            "description": "True if config.json generated for this table (Glue only). Must be paired with wrapper_generated."
+          },
+          "dtxog_generated": {
+            "type": "boolean",
+            "description": "True if dtxog config generated for this table (Glue only)"
+          },
+          "ddl_generated": {
+            "type": "boolean",
+            "description": "True if Iceberg DDL generated for this table (Databricks only)"
+          },
+          "driver_generated": {
+            "type": "boolean",
+            "description": "True if driver.py generated for this table (Databricks only)"
+          },
+          "dag_generated": {
+            "type": "boolean",
+            "description": "True if Airflow DAG file generated for this table"
+          },
+          "last_batch_index": {
+            "type": ["integer", "null"],
+            "description": "Index of batch where this table was last processed (for resumability)"
+          },
+          "generation_time_ms": {
+            "type": ["integer", "null"],
+            "description": "Time taken to generate all artefacts for this table (milliseconds)"
+          },
+          "compute_tier_day0": {
+            "type": ["string", "null"],
+            "enum": ["small", "medium", "large", "xlarge", null],
+            "description": "Assigned compute tier for Day0 job based on source volumetrics (estimated_size_gb). Null if volumetrics unavailable (defaults to medium at generation time). Databricks only."
+          },
+          "compute_tier_day1": {
+            "type": ["string", "null"],
+            "enum": ["small", "medium", "large", "xlarge", null],
+            "description": "Assigned compute tier for Day1 job based on source volumetrics (daily_increment_size_gb). Null if volumetrics unavailable (defaults to medium at generation time). Databricks only."
+          }
+        }
+      }
+    },
+    "phases": {
+      "type": "object",
+      "description": "Resume tracking: status of each command phase. Commands check this before running.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable phase name (e.g., 'Parse Mapping', 'Identify Intent')"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in_progress", "completed", "skipped", "failed"],
+            "description": "Current phase status"
+          },
+          "started_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when phase started"
+          },
+          "completed_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when phase completed"
+          },
+          "error": {
+            "type": ["string", "null"],
+            "description": "Error message if status is 'failed'"
+          },
+          "cached_result": {
+            "type": ["object", "array", "string", "null"],
+            "description": "Cached result from this phase for resume (can be any JSON type)"
+          }
+        }
+      }
+    },
+    "agent_status": {
+      "type": "object",
+      "description": "Tracks completion status of each agent invocation in the pipeline.",
+      "properties": {
+        "code_review": {
+          "type": "string",
+          "enum": ["pending", "in_progress", "completed", "rejected", "skipped"],
+          "description": "Status of code-review-agent. Set by /de-review command."
+        }
+      }
+    },
+    "auto_chain": {
+      "type": ["object", "null"],
+      "description": "Auto-chain execution state. Present only in full-automation mode. Tracks halt state for /de-resume recovery.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "True when --full-automation flag was set"
+        },
+        "halted_at_step": {
+          "type": ["integer", "null"],
+          "description": "Step number where chain halted (1-indexed). Null if not halted."
+        },
+        "halted_at_command": {
+          "type": ["string", "null"],
+          "description": "Command name where chain halted (e.g. '/de-identify-intent'). Null if not halted."
+        },
+        "halt_reason": {
+          "type": ["string", "null"],
+          "description": "Human-readable halt reason (e.g. 'G5-grain: primary_key_columns UNRESOLVED for fdp_uk_mortgage_db.account_wm')"
+        },
+        "halted_at_timestamp": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when halt occurred"
+        },
+        "completed_steps": {
+          "type": "array",
+          "items": {"type": "integer"},
+          "description": "Array of step numbers that completed successfully before halt"
+        },
+        "report_generated": {
+          "type": ["string", "null"],
+          "description": "Path to intent resolution report (e.g. 'session/intent_resolution_report.md'). Null if no report."
+        },
+        "chain_mode": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, commands suppress verbose conversation output (session state echoes, per-file progress) and emit only compact 4-line summaries. Verbose details written to session/audit_log.jsonl instead. Automatically set to true when auto_chain.enabled == true."
+        }
+      }
+    },
+    "chain_checkpoints": {
+      "type": ["object", "null"],
+      "description": "Context checkpoints written at phase boundaries during auto-chain execution. Downstream commands read relevant checkpoints for reliable compact context (~200-500 tokens) that survives conversation compaction.",
+      "properties": {
+        "post_parse": {
+          "type": ["object", "null"],
+          "description": "Written after /de-parse-mapping completes. Contains: tenancy, dp_type, target_tables[], target_database, optional_columns[], source_tables_count, crypto_detected, timestamp.",
+          "properties": {
+            "tenancy": {"type": "string"},
+            "dp_type": {"type": "string", "enum": ["FDP", "CDP", "BDP"]},
+            "target_tables": {"type": "array", "items": {"type": "string"}},
+            "target_database": {"type": "string"},
+            "optional_columns": {"type": "array", "items": {"type": "string"}},
+            "source_tables_count": {"type": "integer"},
+            "crypto_detected": {"type": "boolean"},
+            "source_volumetrics_available": {"type": "boolean", "description": "True if Source Volumetrics sheet was present and parsed successfully"},
+            "timestamp": {"type": "string", "format": "date-time"}
+          }
+        },
+        "post_classification": {
+          "type": ["object", "null"],
+          "description": "Written after /de-classify-sources completes. Contains: source_table_types map, classification counts by source.",
+          "properties": {
+            "source_table_types": {"type": "object", "additionalProperties": {"type": "string", "enum": ["Transactional", "NonTransactional"]}},
+            "classification_status": {"type": "string", "enum": ["success"]},
+            "tables_classified_count": {"type": "integer"},
+            "volumetrics_count": {"type": "integer"},
+            "domain_knowledge_count": {"type": "integer"},
+            "mapping_document_count": {"type": "integer"},
+            "timestamp": {"type": "string", "format": "date-time"}
+          }
+        },
+        "post_intent": {
+          "type": ["object", "null"],
+          "description": "Written after /de-identify-intent completes. Contains: per-table intent summary, all_resolved flag, auto_decisions_count.",
+          "properties": {
+            "per_table_intent": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "table": {"type": "string"},
+                  "load_type": {"type": "string"},
+                  "table_type": {"type": "string"},
+                  "grain": {"type": "string"},
+                  "pk_cols": {"type": "array", "items": {"type": "string"}},
+                  "partition_col": {"type": "string"}
+                }
+              }
+            },
+            "all_resolved": {"type": "boolean"},
+            "auto_decisions_count": {"type": "integer"},
+            "timestamp": {"type": "string", "format": "date-time"}
+          }
+        },
+        "post_config": {
+          "type": ["object", "null"],
+          "description": "Written after /de-gen-config completes. Contains: generated config paths, filter manifest paths, per-table filter counts. Must exist before /de-gen-transform runs.",
+          "properties": {
+            "config_files": {"type": "array", "items": {"type": "string"}, "description": "Paths to generated config.yml (Databricks) or config.json (Glue) files"},
+            "filter_manifests": {"type": "array", "items": {"type": "string"}, "description": "Paths to session/generated_configs/{table}_filters.json manifests"},
+            "per_table_summary": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "table": {"type": "string"},
+                  "alias_count": {"type": "integer"},
+                  "alias_specific_filters": {"type": "integer", "description": "Count of alias-specific (business) filter entries beyond defaults"},
+                  "crypto_flagged": {"type": "boolean"}
+                }
+              }
+            },
+            "timestamp": {"type": "string", "format": "date-time"}
+          }
+        },
+        "post_transform": {
+          "type": ["object", "null"],
+          "description": "Written after /de-gen-transform completes. Contains: per-table transform status, generated file paths, platform. Used by gen-driver, gen-ddl, gen-bundle for table metadata without re-parsing full session files. Enables mid-phase checkpoint loading on resume.",
+          "properties": {
+            "tables": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "table": {"type": "string"},
+                  "load_type": {"type": "string"},
+                  "table_type": {"type": "string"},
+                  "pk_cols": {"type": "array", "items": {"type": "string"}},
+                  "partition_col": {"type": ["string", "null"]},
+                  "status": {"type": "string", "enum": ["generated", "failed", "skipped"]},
+                  "files_generated": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            },
+            "platform": {"type": "string", "enum": ["glue", "databricks"]},
+            "timestamp": {"type": "string", "format": "date-time"}
+          }
+        },
+        "post_dag": {
+          "type": ["object", "null"],
+          "description": "Written after /gen-dag completes. Contains: dag_count, schedule_type, platform, tables_with_dags, timestamp. Used by /validate Batch 7 and Phase C agent for DAG validation context.",
+          "properties": {
+            "dag_count": {"type": "integer", "description": "Number of DAG files generated"},
+            "schedule_type": {"type": "string", "enum": ["cron", "business_calendar", "adhoc"], "description": "Schedule type resolved during /gen-dag STEP 1.2"},
+            "platform": {"type": "string", "enum": ["glue", "databricks"]},
+            "tables_with_dags": {"type": "array", "items": {"type": "string"}, "description": "List of table names that had DAGs generated"},
+            "dag_spec_path": {"type": "string", "description": "Path to session/dag_spec.json"},
+            "timestamp": {"type": "string", "format": "date-time"}
+          }
+        },
+        "post_generation": {
+          "type": ["object", "null"],
+          "description": "Written after all generation commands complete. Contains: generated file paths, crypto columns applied, template versions, artefact count.",
+          "properties": {
+            "generated_files": {"type": "array", "items": {"type": "string"}},
+            "crypto_applied": {"type": "array", "items": {"type": "string"}},
+            "template_versions_used": {"type": "object"},
+            "artefact_count": {"type": "integer"},
+            "timestamp": {"type": "string", "format": "date-time"}
+          }
+        }
+      }
+    },
+    "intent_overrides_applied": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if session/intent_overrides.json was loaded and applied during /de-identify-intent or /de-resume"
+    },
+    "source_table_metadata": {
+      "type": ["object", "null"],
+      "description": "Source table type classification results. Set by /de-classify-sources. Pipeline halts only if classification cannot be determined from any source (volumetrics, domain knowledge, or mapping document).",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["completed", "failed"],
+          "description": "completed = all source tables classified; failed = classification could not be determined for one or more tables (pipeline halts)"
+        },
+        "classified_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "total_sources": {
+          "type": ["integer", "null"],
+          "description": "Total unique source tables processed"
+        },
+        "non_transactional_count": {
+          "type": ["integer", "null"],
+          "description": "Sources classified as NonTransactional"
+        },
+        "transactional_count": {
+          "type": ["integer", "null"],
+          "description": "Sources classified as Transactional"
+        },
+        "unknown_count": {
+          "type": ["integer", "null"],
+          "description": "Sources that triggered HALT for user clarification (0 after successful /de-classify-sources completion)"
+        },
+        "fallback_count": {
+          "type": ["integer", "null"],
+          "description": "Sources classified via domain knowledge or mapping document heuristics (not via source volumetrics)"
+        },
+        "output_file": {
+          "type": ["string", "null"],
+          "description": "Path to session/source_table_metadata.json"
+        }
+      }
+    },
+    "contract_reconciliation_result": {
+      "type": ["string", "null"],
+      "enum": ["passed", "failed", "skipped", null],
+      "description": "Result of contract reconciliation check across wrapper, transform, config, and generic components. Set by /gen-wrapper STEP FINAL.1 or /validate Batch 4. Null if not yet run."
+    },
+    "contract_reconciliation_violations": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "object",
+        "properties": {
+          "check": { "type": "string", "description": "Check ID (C1-C7)" },
+          "severity": { "type": "string", "enum": ["BLOCK", "WARN"] },
+          "file": { "type": "string", "description": "File path with violation" },
+          "line": { "type": ["integer", "null"] },
+          "message": { "type": "string" }
+        }
+      },
+      "description": "Array of contract violation objects if result is 'failed'. Null otherwise."
+    },
+    "contract_reconciliation_retries": {
+      "type": ["integer", "null"],
+      "description": "Number of self-heal retries attempted during /gen-wrapper STEP FINAL.1 (0, 1, or 2). Null if not yet run."
+    }
+  }
+}

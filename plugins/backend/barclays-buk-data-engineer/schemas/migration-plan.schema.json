@@ -1,0 +1,220 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MigrationPlan",
+  "description": "Schema for a data migration plan. Covers the full scope of a database or data platform migration including inventory, compatibility analysis, type mappings, data movement strategy, reconciliation plan, performance baseline, cutover and rollback plans, decommission approach, risk register, and required approvals.",
+  "type": "object",
+  "required": [
+    "plan_id",
+    "migration_type",
+    "source_platform",
+    "source_version",
+    "target_platform",
+    "target_version",
+    "created_by",
+    "created_at",
+    "inventory",
+    "compatibility_matrix",
+    "type_mappings",
+    "data_movement_strategy",
+    "reconciliation_plan",
+    "performance_baseline",
+    "cutover_plan",
+    "rollback_plan",
+    "retention_and_decommission",
+    "risk_register",
+    "approvals_required"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "Unique identifier for this migration plan."
+    },
+    "migration_type": {
+      "type": "string",
+      "description": "Classification of the migration being performed.",
+      "enum": [
+        "same_engine_upgrade",
+        "cross_engine",
+        "schema_change"
+      ]
+    },
+    "source_platform": {
+      "type": "string",
+      "description": "Source data platform name (e.g. Oracle, SQL Server, Teradata)."
+    },
+    "source_version": {
+      "type": "string",
+      "description": "Version of the source platform."
+    },
+    "target_platform": {
+      "type": "string",
+      "description": "Target data platform name (e.g. Snowflake, BigQuery, PostgreSQL)."
+    },
+    "target_version": {
+      "type": "string",
+      "description": "Version of the target platform."
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Identity of the person or agent that created this migration plan."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this migration plan was created."
+    },
+    "inventory": {
+      "type": "array",
+      "description": "Inventory of database objects in scope for migration.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "A database object to be migrated (e.g. table, view, procedure, sequence)."
+      }
+    },
+    "compatibility_matrix": {
+      "type": "array",
+      "description": "Analysis of feature compatibility between source and target platforms.",
+      "items": {
+        "type": "object",
+        "required": ["feature", "source_support", "target_support", "action"],
+        "additionalProperties": false,
+        "properties": {
+          "feature": {
+            "type": "string",
+            "description": "Platform feature or construct being assessed."
+          },
+          "source_support": {
+            "type": "string",
+            "description": "How the source platform supports this feature."
+          },
+          "target_support": {
+            "type": "string",
+            "description": "How the target platform supports this feature."
+          },
+          "action": {
+            "type": "string",
+            "description": "Required action to address the compatibility gap (e.g. rewrite, native equivalent, unsupported)."
+          }
+        }
+      }
+    },
+    "type_mappings": {
+      "type": "array",
+      "description": "Data type mappings from source to target platform types.",
+      "items": {
+        "type": "object",
+        "required": ["source_type", "target_type", "notes", "risk"],
+        "additionalProperties": false,
+        "properties": {
+          "source_type": {
+            "type": "string",
+            "description": "Data type as defined in the source platform."
+          },
+          "target_type": {
+            "type": "string",
+            "description": "Equivalent data type in the target platform."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notes on precision, scale, or semantic differences between the types."
+          },
+          "risk": {
+            "type": "string",
+            "description": "Risk level of this type mapping (e.g. none, low, medium, high)."
+          }
+        }
+      }
+    },
+    "data_movement_strategy": {
+      "type": "string",
+      "description": "Description of the approach to physically moving data (e.g. bulk extract-load, CDC, dual-write, shadow migration)."
+    },
+    "reconciliation_plan": {
+      "type": "object",
+      "description": "Plan for validating data completeness and accuracy post-migration.",
+      "required": ["methods", "acceptance_criteria"],
+      "additionalProperties": false,
+      "properties": {
+        "methods": {
+          "type": "array",
+          "description": "Reconciliation methods to be applied (e.g. row count, checksum, statistical sampling, business rule checks).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "acceptance_criteria": {
+          "type": "string",
+          "description": "Criteria that must be met for the reconciliation to be considered passed."
+        }
+      }
+    },
+    "performance_baseline": {
+      "type": "string",
+      "description": "Description of the performance baseline captured from the source system for comparison post-migration."
+    },
+    "cutover_plan": {
+      "type": "string",
+      "description": "Description of the cutover approach including sequencing, timing, and go/no-go criteria."
+    },
+    "rollback_plan": {
+      "type": "string",
+      "description": "Description of the rollback procedure if the migration fails or is reversed."
+    },
+    "retention_and_decommission": {
+      "type": "string",
+      "description": "Plan for retaining source system data and decommissioning the source once migration is verified."
+    },
+    "risk_register": {
+      "type": "array",
+      "description": "Risks identified for this migration with likelihood, impact, and mitigation.",
+      "items": {
+        "type": "object",
+        "required": ["risk", "likelihood", "impact", "mitigation"],
+        "additionalProperties": false,
+        "properties": {
+          "risk": {
+            "type": "string",
+            "description": "Description of the risk."
+          },
+          "likelihood": {
+            "type": "string",
+            "description": "Likelihood of the risk occurring (e.g. low, medium, high)."
+          },
+          "impact": {
+            "type": "string",
+            "description": "Impact if the risk materialises (e.g. low, medium, high, critical)."
+          },
+          "mitigation": {
+            "type": "string",
+            "description": "Action or control to reduce the likelihood or impact of this risk."
+          }
+        }
+      }
+    },
+    "approvals_required": {
+      "type": "array",
+      "description": "Approvals required before proceeding with migration phases.",
+      "items": {
+        "type": "object",
+        "required": ["role", "scope", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Role or team that must provide approval."
+          },
+          "scope": {
+            "type": "string",
+            "description": "What this approval covers (e.g. cutover, rollback, decommission)."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of this approval (e.g. pending, approved, rejected)."
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+schema_version: '1.0'
+domain:
+  id: dom.cash-management
+  name: Cash Management
+  description: This domain provides all cash related services and functionality to customers and colleagues. This covers withdrawal and deposit, and bulk ordering, as well as cash forecasting, order and remittance functionality. It supports the Banks' ATM estate, branch counters, and Business/Corporate Banking's direct customer base.
+  owner: cc
+  bian_links:
+    - title: Cash Management and Account Services
+      url: https://bian.org/servicelandscape-12-0-0/object_21.html?object=36789
+    - title: Central Cash Handling
+      url: https://bian.org/servicelandscape-12-0-0/object_20.html?object=29997
+  sub_domains:
+    - id: sub.cm.cash-management-sub-domain
+      name: Cash Management Sub-Domain
+      description: This sub-domain provides all cash related services and functionality to customers and colleagues. This covers withdrawal and deposit, and bulk ordering, as well as cash forecasting, order and remittance functionality. It supports the Banks' ATM estate, branch counters, and Business/Corporate Banking's direct customer base.
+      capabilities:
+        - id: cap.cm.analyse-and-report-on-cash
+          name: Analyse and Report on Cash
+          description: This is the ability to analyse and report on physical cash processing and usage within the bank, including forecasting cash requirements.
+        - id: cap.cm.deposit-cash
+          name: Deposit Cash
+          description: The ability  to make a deposit in cash into an account.
+        - id: cap.cm.manage-cash
+          name: Manage Cash
+          description: This is the ability to perform all activities related to physical cash within the bank. This includes ordering, delivering, collection, settlement and routing deliveries. It also includes the ability to audit, reconcile, balance and manage any discrepancies between physical cash held and cash accounts.
+        - id: cap.cm.withdraw-cash
+          name: Withdraw Cash
+          description: The ability to make a withdrawal in physical cash from an account.

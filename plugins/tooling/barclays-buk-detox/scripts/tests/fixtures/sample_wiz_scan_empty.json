@@ -1,0 +1,48 @@
+{
+  "__typename": "CloudEvent",
+  "id": "empty-scan-456",
+  "origin": "WIZ_CLI",
+  "timestamp": "2026-09-23T14:30:00Z",
+  "severity": "NONE",
+  "status": "SUCCESS",
+  "rawAuditLogRecord": {
+    "id": "empty-scan-456",
+    "startedAt": "2026-09-23T14:30:00Z",
+    "createdAt": "2026-09-23T14:31:00Z",
+    "scanDuration": "60000",
+    "analytics": {
+      "numSASTFindings": 0,
+      "numVulnerabilityFindings": 0,
+      "numSecretFindings": 0,
+      "numTotalFindings": 0
+    },
+    "failedPolicies": [],
+    "passedPolicies": [
+      {
+        "id": "39e1d48c-b00e-445a-90d1-3e33b16aab90",
+        "name": "Default sensitive data policy"
+      }
+    ]
+  },
+  "extraDetails": {
+    "__typename": "CloudEventCICDScanDetails",
+    "totalMatches": 0,
+    "criticalMatches": 0,
+    "highMatches": 0,
+    "mediumMatches": 0,
+    "lowMatches": 0,
+    "sastDetails": {
+      "__typename": "CICDSASTScanResult",
+      "analytics": {},
+      "findings": []
+    },
+    "vulnerabilityDetails": {
+      "__typename": "CICDDiskScanResult",
+      "libraries": [],
+      "vulnerableSBOMArtifactsByNameVersion": []
+    },
+    "secretDetails": {
+      "findings": []
+    }
+  }
+}

@@ -1,0 +1,246 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "mesh_json.schema.json",
+  "title": "Mesh JSON",
+  "description": "Schema for target table Mesh JSON file. Used by EDP team to create Iceberg tables via Service First CR or Jenkins pipeline.",
+  "type": "object",
+  "required": ["name", "summary", "description", "datasetType", "datasetTypeSummary", "versionPolicy", "versionManagement", "owner", "labels", "storageMediumLinks", "aspects", "environmentProperties"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Dataset name: target_database_target_table (underscore separator, lowercase)"
+    },
+    "summary": {
+      "type": "string",
+      "description": "One-line title for the table"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of table contents and purpose"
+    },
+    "datasetType": {
+      "type": "string",
+      "description": "Free-text dataset type identifier. Examples: ICEBERG, HIVE, or domain-specific like buk_mortgage_foundational_data_product"
+    },
+    "datasetTypeSummary": {
+      "type": "object",
+      "required": ["name", "summary", "description"],
+      "properties": {
+        "name": {"type": "string"},
+        "summary": {"type": "string"},
+        "description": {"type": "string"}
+      }
+    },
+    "versionPolicy": {
+      "type": "string",
+      "const": "NO_CONSTRAINT",
+      "description": "HARDCODED: Always NO_CONSTRAINT"
+    },
+    "versionManagement": {
+      "type": "string",
+      "const": "CLIENT",
+      "description": "HARDCODED: Always CLIENT"
+    },
+    "owner": {
+      "type": "object",
+      "required": ["itbs", "groups"],
+      "properties": {
+        "itbs": {
+          "type": "string",
+          "const": "BSN0004626",
+          "description": "HARDCODED: Global BUK CDAO IT Business Service identifier"
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {"$ref": "#/definitions/ownerGroup"},
+          "description": "Array of exactly 4 entries: BTB (maintenance, origination) + RTB (maintenance, origination)"
+        }
+      }
+    },
+    "labels": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/label"},
+      "description": "Always includes businessdate; may include active for SCD2 partitions"
+    },
+    "storageMediumLinks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/storageMediumLink"}
+    },
+    "applicationProfileLinks": {
+      "type": "array",
+      "default": []
+    },
+    "aspects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/aspect"}
+    },
+    "dependencies": {
+      "type": "array",
+      "default": [],
+      "description": "Empty array"
+    },
+    "environmentProperties": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/environmentProperty"}
+    },
+    "access_properties": {
+      "type": "array",
+      "default": [],
+      "description": "Empty array"
+    }
+  },
+  "definitions": {
+    "ownerGroup": {
+      "type": "object",
+      "required": ["owner", "ownerGroup", "ownerType"],
+      "properties": {
+        "owner": {"type": "string"},
+        "ownerGroup": {
+          "type": "string",
+          "enum": ["maintenance", "origination"]
+        },
+        "ownerType": {
+          "type": "string",
+          "enum": ["BTB", "RTB"]
+        }
+      }
+    },
+    "label": {
+      "type": "object",
+      "required": ["name", "datasetLabelType", "defaultValue", "optional"],
+      "properties": {
+        "name": {"type": "string"},
+        "datasetLabelType": {
+          "type": "string",
+          "const": "key"
+        },
+        "defaultValue": {
+          "type": "string",
+          "const": "null"
+        },
+        "optional": {"type": "boolean"}
+      }
+    },
+    "storageMediumLink": {
+      "type": "object",
+      "required": ["name", "summary", "storageType", "storageMediumDefinition", "platformDefinition", "dataGroup", "isPublic", "priority"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "consumption"
+        },
+        "summary": {"type": "string"},
+        "storageType": {
+          "type": "string",
+          "const": "HOT"
+        },
+        "storageMediumDefinition": {
+          "type": "string",
+          "const": "aws_data_catalog"
+        },
+        "platformDefinition": {
+          "type": "string",
+          "enum": ["edp_cloud_datalake", "buk_cloud_datalake"],
+          "default": "edp_cloud_datalake",
+          "description": "Platform definition for table catalog. DEFAULT: edp_cloud_datalake (Iceberg table in central catalog). Override to buk_cloud_datalake (Hive table in local catalog) ONLY if domain knowledge or user explicitly clarifies 'Hive'. See glue-mesh-agent.md Phase M.8 for detection logic."
+        },
+        "dataGroup": {"type": "string"},
+        "isPublic": {"type": "boolean"},
+        "priority": {"type": "integer"}
+      }
+    },
+    "aspect": {
+      "type": "object",
+      "required": ["name", "summary", "description", "storageMediumProperties", "schema"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "data"
+        },
+        "summary": {"type": "string"},
+        "description": {"type": "string"},
+        "storageMediumProperties": {
+          "type": "object",
+          "required": ["consumption"],
+          "properties": {
+            "consumption": {
+              "type": "array",
+              "minItems": 6,
+              "items": {
+                "type": "object",
+                "required": ["name", "value", "required"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "value": {"type": "string"},
+                  "required": {"type": "boolean"}
+                }
+              }
+            }
+          }
+        },
+        "schema": {
+          "type": "object",
+          "required": ["schemaType", "fields"],
+          "properties": {
+            "schemaType": {
+              "type": "string",
+              "const": "FLATTENED"
+            },
+            "fields": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/definitions/schemaField"}
+            }
+          }
+        }
+      }
+    },
+    "schemaField": {
+      "type": "object",
+      "required": ["name", "dataType"],
+      "properties": {
+        "name": {"type": "string"},
+        "dataType": {
+          "type": "string",
+          "description": "Iceberg-native types: string, date, timestamp, timestamptz, int, long, float, double, decimal(P,S), boolean, binary, uuid. Rejected: bigint, smallint."
+        },
+        "nullable": {"type": "boolean"},
+        "description": {"type": ["string", "null"]}
+      }
+    },
+    "environmentProperty": {
+      "type": "object",
+      "required": ["name", "properties"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "s3_bucket"
+        },
+        "properties": {
+          "type": "object",
+          "required": ["dev", "uat", "prod"],
+          "properties": {
+            "dev": {
+              "type": "string",
+              "description": "Must be provided via G3 — never invented"
+            },
+            "uat": {
+              "type": "string",
+              "description": "Must be provided via G3 — never invented"
+            },
+            "prod": {
+              "type": "string",
+              "description": "Production environment S3 bucket. Must be provided via G3 — never invented. Note: mesh JSON uses 'prod' (not 'prd') as the production environment key — this is intentional and differs from other schemas that use 'prd'."
+            }
+          }
+        }
+      }
+    }
+  }
+}

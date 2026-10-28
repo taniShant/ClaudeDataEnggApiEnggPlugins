@@ -1,0 +1,28 @@
+# -----------------------------------------------------------------------------
+# Content Models (Primary top level data documents)
+# -----------------------------------------------------------------------------
+# This file contains all the request and response documents 'primary data'
+# models. These models will be 'object' type with only a single required 'data'
+# property. The model for the data property must be defined in the
+# models.yaml file.
+#
+# Naming Convention:
+# Models names must be defined as 'Get<Resource>Response', 'Update<Resource>Response', etc.
+#
+# NOTE: MCA2 uses Response<T> which wraps the actual data in a "data" property.
+#       This maps directly to this content-model structure.
+#
+# All models defined here must be referenced in the openapi.yaml file under
+# components -> schemas
+# -----------------------------------------------------------------------------
+
+# TODO: Create content model wrappers for each response.
+# Example:
+#
+# GetResourceResponse:
+#   type: object
+#   nullable: false
+#   deprecated: false
+#   properties:
+#     data:
+#       $ref: './models.yaml#/ResourceResponse'

@@ -1,0 +1,9 @@
+{
+  "name": "barclays-buk-mca1-ui-mca2-migration",
+  "description": "Autonomously migrate MCA1 UI projects to MCA2 with Blueprint-React and functional component patterns",
+  "version": "2.0.0",
+  "author": {
+    "name": "Pandu Ranga Rao Maddala, Atul Singh",
+    "email": "pandurangarao.maddala2@barclays.com, atul.singh1@barclays.com"
+  }
+}

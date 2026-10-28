@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-quality-engineer",
+    "description": "Understands requirements to produce tests that validate code meets requirements. Generates tests, validates coverage, and identifies edge cases.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

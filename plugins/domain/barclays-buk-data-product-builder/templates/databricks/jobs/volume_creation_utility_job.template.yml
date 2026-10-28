@@ -1,0 +1,61 @@
+resources:
+  jobs:
+    {{target_schema}}_volume_creation_utility:
+      name: "{{target_schema}}_volume_creation_utility"
+      email_notifications:
+        on_success:
+          - ${var.email_address}
+        on_failure:
+          - ${var.email_address}
+      tasks:
+        - task_key: {{target_schema}}_volume_creation_utility
+          notebook_task:
+            notebook_path: /Workspace/${var.ws_root}/files/src/Notebooks/utilities/{{target_schema}}_volume_creation_utility
+            base_parameters:
+              catalog: ${var.target_catalog_name}
+              schema: "{{target_schema}}"
+            source: WORKSPACE
+          job_cluster_key: {{target_schema}}_utility_compute
+          libraries:
+            - pypi:
+                package: {{foundation_library_url}}
+      job_clusters:
+        - job_cluster_key: {{target_schema}}_utility_compute
+          new_cluster:
+            spark_version: "{{spark_version}}"
+            aws_attributes:
+              first_on_demand: 1
+              availability: SPOT_WITH_FALLBACK
+              zone_id: auto
+              spot_bid_price_percent: 100
+            node_type_id: m5d.large
+            custom_tags:
+              FIN:Role: "{{fin_role_tag}}"
+              APP:ApplicationService: "{{app_service_tag}}"
+              ENV:Environment: ${var.environment}
+              TEAM:Owner: "{{tenancy_name}}"
+            spark_env_vars:
+              DATABRICKS_TRUSTED_HOST: nexus-amazon-pdn.barclays.intranet
+              PIP_TRUSTED_HOST: nexus-amazon-pdn.barclays.intranet
+              PYSPARK_PYTHON: /databricks/python3/bin/python3
+              DATABRICKS_PIP_INDEX_URL: https://nexus-amazon-pdn.barclays.intranet/repository/barclays-read-pypi/simple
+              GIT_PROXY_ENABLE_SSL_VERIFICATION: "false"
+              TRUSTED_HOST: nexus-amazon-pdn.barclays.intranet
+            enable_elastic_disk: true
+            policy_id: ${var.policy_id}
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            kind: CLASSIC_PREVIEW
+            is_single_node: false
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+      queue:
+        enabled: true
+      run_as:
+        service_principal_name: ${var.{{tenancy_name}}_{{dp_type_lower}}_exec_sp}
+      permissions:
+        - level: CAN_VIEW
+          group_name: ${var.ad_group}
+        - level: CAN_MANAGE_RUN
+          service_principal_name: ${var.{{tenancy_name}}_{{dp_type_lower}}_exec_sp}

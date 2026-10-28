@@ -1,0 +1,63 @@
+{
+  "plugin_name": "barclays-buk-data-product-builder",
+  "version": "1.1.0",
+  "description": "BUK Data Product Build Assistant Plugin — produces production-ready PySpark pipelines for AWS Glue (DTX/DTXOG) and Databricks",
+  "supported_platforms": ["glue", "databricks"],
+  "supported_data_product_types": ["FDP", "CDP", "BDP"],
+  "supported_shared_prefix": true,
+  "excel_required_columns": [
+    "Target Database",
+    "Target Table",
+    "Target Column Name",
+    "Target Column Definition/Description",
+    "Target Column Datatype",
+    "Target Column Null Flag",
+    "Source database/Source DB",
+    "Source Table Name",
+    "Source Column Name",
+    "Business Logic/Transformation Logic",
+    "Additional Context",
+    "Target Table description"
+  ],
+  "iceberg_type_conversion": {
+    "char": "string",
+    "varchar": "string",
+    "nvarchar": "string",
+    "float": "decimal(19,6)",
+    "double": "decimal(19,6)",
+    "bigint": "long",
+    "smallint": "int",
+    "datetime": "timestamp",
+    "bit": "boolean",
+    "integer": "int"
+  },
+  "scd2_defaults": {
+    "high_end_date": "3499-12-31",
+    "audit_columns": ["eff_start_date", "eff_end_date", "active", "dw_lod_tmp", "dw_upd_lod_tmp"]
+  },
+  "placeholder_format": "{{snake_case_descriptive_name}}",
+  "coverage_threshold": 90,
+  "session_dir": "session/",
+  "artefact_dir": "generated/",
+  "glue_environments": ["dev", "uat", "prd"],
+  "crypto_extraction_regex": "cloud_api_udf_([A-Z0-9_]+)_(un)?protect\\(",
+  "heuristic_transactional_suffixes": ["_event", "_log", "_history", "_audit", "_transaction"],
+  "dag_defaults": {
+    "timezone": "Europe/London",
+    "retries": 0,
+    "max_active_runs": 1,
+    "catchup_default": true,
+    "start_date_default_year": 2024,
+    "dag_id_pattern": {
+      "databricks": "{tenancy}_{table}_dag",
+      "glue": "{db}_{table}_dag"
+    },
+    "sensor_defaults": {
+      "dynamodb_poke_interval": 300,
+      "dynamodb_timeout": 3600,
+      "external_task_poke_interval": 300,
+      "external_task_timeout": 3600,
+      "cross_deployment_timeout": 7200
+    }
+  }
+}

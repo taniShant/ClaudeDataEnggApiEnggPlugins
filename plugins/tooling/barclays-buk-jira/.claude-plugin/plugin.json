@@ -1,0 +1,16 @@
+{
+  "name": "barclays-buk-jira",
+  "description": "JIRA integration for BUK plugins — issue lookup, attachment retrieval and parsing, and comment posting via the internal JIRA REST API (estjira.barcapint.com)",
+  "version": "1.0.0",
+  "author": {
+    "name": "Barclays BUK",
+    "email": "barclaysai@barclays.com"
+  },
+  "owner": "BUK CDAO Platform",
+  "status": "active",
+  "category": "tooling",
+  "dependencies": ["barclays-buk-standards"],
+  "tools": ["Bash"],
+  "review_cadence": "quarterly",
+  "next_review": "2026-12-11"
+}

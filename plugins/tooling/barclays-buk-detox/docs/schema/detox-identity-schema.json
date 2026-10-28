@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://barclays.com/detox/schemas/identity/v1",
+  "title": "Detox Identity",
+  "description": "Identity context resolved at pipeline start. Captures WHO triggered the run and WHAT repository is being targeted. Source: scripts/telemetry/identity.py. Resolution priority: CI env vars (GitLab/Jenkins/GitHub) > git config > $USER env fallback. TRANSPORT: embedded in the exported 'detox.pipeline_run' event as detox.* labels (user.name, user.email, cio, repo_name); the Barclays identity (barclays_user_id/cio/team/user_email) is additionally injected on every Observe record from OTEL_RESOURCE_ATTRIBUTES by plugin_observability.py.",
+  "type": "object",
+  "required": [
+    "user_name",
+    "source",
+    "hostname",
+    "repo_name"
+  ],
+  "properties": {
+    "user_name": {
+      "type": "string",
+      "description": "Developer or CI user who triggered the pipeline. Resolution: GITLAB_USER_LOGIN > CI_COMMIT_AUTHOR > GITHUB_ACTOR > BUILD_USER > git config user.name > $USER > 'unknown'.",
+      "examples": ["Devesh Kumar", "deveshkumar"]
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Developer email. Resolution: GITLAB_USER_EMAIL > BUILD_USER_EMAIL > git config user.email > empty string.",
+      "examples": ["devesh.kumar@barclays.com", ""]
+    },
+    "cio": {
+      "type": ["string", "null"],
+      "description": "Barclays CIO (barclays_cio from ~/.claude/settings.json OTEL_RESOURCE_ATTRIBUTES, set by the mandatory user setup). Null if setup incomplete.",
+      "examples": ["DIGITAL", null]
+    },
+    "ci_job_id": {
+      "type": ["string", "null"],
+      "description": "CI job identifier. GitLab: CI_JOB_ID, Jenkins: BUILD_NUMBER, GitHub: GITHUB_RUN_ID. Null for local runs.",
+      "examples": ["12345", null]
+    },
+    "ci_pipeline_id": {
+      "type": ["string", "null"],
+      "description": "CI pipeline identifier. GitLab: CI_PIPELINE_ID, Jenkins: JOB_NAME, GitHub: GITHUB_RUN_NUMBER. Null for local runs.",
+      "examples": ["67890", null]
+    },
+    "ci_project_name": {
+      "type": ["string", "null"],
+      "description": "CI project name. GitLab: CI_PROJECT_NAME, GitHub: last segment of GITHUB_REPOSITORY. Only populated for CI runs.",
+      "examples": ["payments-gateway", null]
+    },
+    "ci_project_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "CI project URL. GitLab only: CI_PROJECT_URL. Null for non-GitLab CI or local runs.",
+      "examples": ["https://app.gitlab.barcapint.com/group/payments-gateway", null]
+    },
+    "hostname": {
+      "type": "string",
+      "description": "Machine hostname where the pipeline was executed.",
+      "examples": ["dev-workstation-01", "gitlab-runner-k8s-42"]
+    },
+    "source": {
+      "type": "string",
+      "enum": ["gitlab_ci", "jenkins", "github_actions", "git_config", "env"],
+      "description": "How identity was resolved. Indicates whether this was a CI run or local execution.",
+      "examples": ["gitlab_ci", "git_config"]
+    },
+    "repo_name": {
+      "type": "string",
+      "description": "Short repository name. Extracted from git remote URL (last path segment, stripped of .git), or fallback to directory name.",
+      "examples": ["payments-gateway", "my-service"]
+    },
+    "repo_url": {
+      "type": "string",
+      "description": "Full git remote URL. Empty string if not in a git repo.",
+      "examples": ["git@app.gitlab.barcapint.com:group/payments-gateway.git", ""]
+    }
+  },
+  "additionalProperties": false
+}

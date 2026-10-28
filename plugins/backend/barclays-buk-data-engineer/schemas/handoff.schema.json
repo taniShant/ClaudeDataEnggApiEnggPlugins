@@ -1,0 +1,241 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Handoff",
+  "description": "Schema for the agent handoff document. Provides a structured summary for human reviewers covering all artefacts produced, decisions requiring human input, suggested next steps, validation and standards summaries, traceability chains, and evidence pack location.",
+  "type": "object",
+  "required": [
+    "handoff_id",
+    "request_id",
+    "status",
+    "produced_at",
+    "produced_by",
+    "artefact_inventory",
+    "human_decisions_required",
+    "suggested_next_steps",
+    "validation_summary",
+    "standards_summary",
+    "traceability",
+    "unresolved_unknowns_count",
+    "evidence_pack_path"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "handoff_id": {
+      "type": "string",
+      "description": "Unique identifier for this handoff document."
+    },
+    "request_id": {
+      "type": "string",
+      "description": "Identifier of the originating request this handoff relates to."
+    },
+    "status": {
+      "type": "string",
+      "description": "Overall status of the work being handed off.",
+      "enum": [
+        "PASS",
+        "PASS_WITH_WARNINGS",
+        "NEEDS_HUMAN_DECISION",
+        "BLOCKED_SAFETY",
+        "FAILED"
+      ]
+    },
+    "produced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this handoff document was produced."
+    },
+    "produced_by": {
+      "type": "string",
+      "description": "Identity of the agent or person that produced this handoff."
+    },
+    "artefact_inventory": {
+      "type": "array",
+      "description": "Inventory of all artefacts produced and included in this handoff.",
+      "items": {
+        "type": "object",
+        "required": ["path", "type", "description", "schema_valid"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path or URI of the artefact."
+          },
+          "type": {
+            "type": "string",
+            "description": "Artefact type identifier."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the artefact."
+          },
+          "schema_valid": {
+            "type": "boolean",
+            "description": "Indicates whether this artefact was validated against its schema successfully."
+          }
+        }
+      }
+    },
+    "human_decisions_required": {
+      "type": "array",
+      "description": "Decisions that must be made by a human before the work can proceed further.",
+      "items": {
+        "type": "object",
+        "required": ["decision", "owner", "severity", "context"],
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "type": "string",
+            "description": "Description of the decision that must be made."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Role or individual responsible for making this decision."
+          },
+          "severity": {
+            "type": "string",
+            "description": "Severity level if this decision is not made (e.g. informational, material, hand_off_required, unsafe_to_proceed)."
+          },
+          "context": {
+            "type": "string",
+            "description": "Contextual information to help the decision maker."
+          }
+        }
+      }
+    },
+    "suggested_next_steps": {
+      "type": "array",
+      "description": "Recommended follow-on actions for the human reviewer or downstream team.",
+      "items": {
+        "type": "object",
+        "required": ["step", "suggested_recipient", "rationale"],
+        "additionalProperties": false,
+        "properties": {
+          "step": {
+            "type": "string",
+            "description": "Description of the recommended next step."
+          },
+          "suggested_recipient": {
+            "type": "string",
+            "description": "Role or team suggested to perform this step."
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Rationale for recommending this step."
+          }
+        }
+      }
+    },
+    "validation_summary": {
+      "type": "object",
+      "description": "Aggregated summary of validation check outcomes across all artefacts.",
+      "required": ["total", "passed", "warned", "failed", "blocked"],
+      "additionalProperties": false,
+      "properties": {
+        "total": {
+          "type": "integer",
+          "description": "Total number of validation checks performed.",
+          "minimum": 0
+        },
+        "passed": {
+          "type": "integer",
+          "description": "Number of validation checks that passed.",
+          "minimum": 0
+        },
+        "warned": {
+          "type": "integer",
+          "description": "Number of validation checks that passed with warnings.",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "description": "Number of validation checks that failed.",
+          "minimum": 0
+        },
+        "blocked": {
+          "type": "integer",
+          "description": "Number of validation checks that resulted in a blocked status.",
+          "minimum": 0
+        }
+      }
+    },
+    "standards_summary": {
+      "type": "object",
+      "description": "Summary of standards coverage across all artefacts in this handoff.",
+      "required": ["applied", "missing", "stale", "placeholder"],
+      "additionalProperties": false,
+      "properties": {
+        "applied": {
+          "type": "array",
+          "description": "Standards that were successfully applied.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missing": {
+          "type": "array",
+          "description": "Standards that should have been applied but could not be found or accessed.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stale": {
+          "type": "array",
+          "description": "Standards that were applied but are known to be expired or superseded.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "placeholder": {
+          "type": "array",
+          "description": "Standards referenced as placeholders where the authoritative source was not accessible.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "traceability": {
+      "type": "object",
+      "description": "End-to-end traceability chains linking requirements through to evidence.",
+      "required": [
+        "requirement_to_mapping",
+        "mapping_to_model",
+        "model_to_code",
+        "code_to_test",
+        "test_to_evidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "requirement_to_mapping": {
+          "type": "string",
+          "description": "Description or reference path showing traceability from requirements to mapping artefacts."
+        },
+        "mapping_to_model": {
+          "type": "string",
+          "description": "Description or reference path showing traceability from mapping artefacts to data models."
+        },
+        "model_to_code": {
+          "type": "string",
+          "description": "Description or reference path showing traceability from data models to generated code or DDL."
+        },
+        "code_to_test": {
+          "type": "string",
+          "description": "Description or reference path showing traceability from code artefacts to test definitions."
+        },
+        "test_to_evidence": {
+          "type": "string",
+          "description": "Description or reference path showing traceability from test results to evidence records."
+        }
+      }
+    },
+    "unresolved_unknowns_count": {
+      "type": "integer",
+      "description": "Total number of unknowns that remain unresolved at the time of handoff.",
+      "minimum": 0
+    },
+    "evidence_pack_path": {
+      "type": "string",
+      "description": "File path or URI to the bundled evidence pack for this handoff."
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "backstage": {
+      "type": "http",
+      "url": "https://software-catalogue-29950.pr8.apaas4.barclays.intranet/api/mcp-actions/v1",
+      "oauth": {
+        "clientId": "https://pltmgt-oas-biz-rules-papi-28626.pr8.apaas4.barclays.intranet/oauth/claude-metadata.json",
+        "callbackPort": 8080
+      }
+    },
+    "backstage-np": {
+      "type": "http",
+      "url": "https://software-catalogue-gl-29678.np6.apaas4.barclays.intranet/api/mcp-actions/v1",
+      "oauth": {
+        "clientId": "https://pltmgt-oas-biz-rules-papi-28625.np6.apaas4.barclays.intranet/oauth/claude-metadata.json",
+        "callbackPort": 8080
+      }
+    }
+  }
+}

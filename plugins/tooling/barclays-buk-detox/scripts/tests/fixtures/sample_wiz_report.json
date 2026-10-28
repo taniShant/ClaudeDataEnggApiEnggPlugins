@@ -1,0 +1,79 @@
+{
+  "results": [
+    {
+      "id": "abc123",
+      "title": "SQL Injection in User Query",
+      "description": "String interpolation used in SQL query allows SQL injection attacks.",
+      "severity": "HIGH",
+      "cwe": "CWE-89",
+      "filePath": "src/repositories/user_repository.py",
+      "lineNumber": 42,
+      "codeSnippet": "query = f\"SELECT * FROM users WHERE name = '{name}'\"",
+      "ruleId": "python-sqlalchemy-raw-query",
+      "confidence": "high"
+    },
+    {
+      "id": "def456",
+      "title": "Cross-Site Scripting (XSS)",
+      "description": "User input rendered without escaping in HTML template.",
+      "severity": "MEDIUM",
+      "cweId": "79",
+      "filePath": "src/views/profile.js",
+      "lineNumber": 18,
+      "codeSnippet": "element.innerHTML = userInput;",
+      "ruleId": "js-xss-innerHTML",
+      "confidence": 0.85
+    },
+    {
+      "id": "ghi789",
+      "title": "Hardcoded Credentials in Terraform",
+      "description": "Database password hardcoded in infrastructure config.",
+      "severity": "CRITICAL",
+      "cwe": 798,
+      "filePath": "infra/terraform/database.tf",
+      "lineNumber": 23,
+      "snippet": "password = \"SuperSecret123!\"",
+      "ruleId": "terraform-hardcoded-credentials",
+      "tags": ["CWE-798", "secrets"]
+    },
+    {
+      "id": "jkl012",
+      "title": "Outdated Dependency",
+      "description": "Package lodash has known vulnerabilities.",
+      "severity": "LOW",
+      "cwe": "CWE-937",
+      "filePath": "package.json",
+      "lineNumber": 15,
+      "ruleId": "js-vulnerable-dependency",
+      "tags": ["dependency", "CVE-2021-23337"]
+    },
+    {
+      "finding_id": "mno345",
+      "name": "Insecure Deserialization",
+      "details": "Pickle loads used on untrusted input.",
+      "risk": "High",
+      "cwe": "502",
+      "file": "src/api/handlers.py",
+      "location": {"startLine": 87},
+      "code": "data = pickle.loads(request.body)",
+      "rule": {"id": "python-deserialization-pickle", "cwe": "CWE-502"}
+    },
+    {
+      "id": "pqr678",
+      "title": "Vulnerable Dependency: jackson-databind",
+      "description": "jackson-databind before 2.17.0 allows remote code execution via polymorphic type handling.",
+      "severity": "HIGH",
+      "cwe": "CWE-937",
+      "filePath": "build.gradle",
+      "lineNumber": 45,
+      "ruleId": "java-vulnerable-dependency",
+      "tags": ["dependency", "CVE-2022-42003"],
+      "fixedVersion": "2.17.0",
+      "vulnerablePackage": {
+        "name": "com.fasterxml.jackson.core:jackson-databind",
+        "version": "2.15.2"
+      },
+      "confidence": "high"
+    }
+  ]
+}

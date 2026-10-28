@@ -1,0 +1,24 @@
+schema_version: '1.0'
+domain:
+  id: dom.test-domain
+  name: Test Domain
+  description: A minimal test domain for capability impact assessment testing
+  owner: test-team
+  sub_domains:
+  - id: sub.test.subdomain-one
+    name: Subdomain One
+    description: First test sub-domain
+    capabilities:
+    - id: cap.test.capability-alpha
+      name: Capability Alpha
+      description: First test capability
+    - id: cap.test.capability-beta
+      name: Capability Beta
+      description: Second test capability
+  - id: sub.test.subdomain-two
+    name: Subdomain Two
+    description: Second test sub-domain
+    capabilities:
+    - id: cap.test.capability-gamma
+      name: Capability Gamma
+      description: Third test capability

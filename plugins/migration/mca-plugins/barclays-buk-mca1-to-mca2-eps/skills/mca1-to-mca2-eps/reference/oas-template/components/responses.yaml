@@ -1,0 +1,23 @@
+# -----------------------------------------------------------------------------
+# Responses
+# -----------------------------------------------------------------------------
+# This file contains the definition of responses. The underlying schema
+# in case of JSON content must be defined in content-models.yaml
+#
+# Cache-Control header is marked mandatory in BAN tool, but not present for MCA EPS.
+#
+# A valid example must be provided for every response.
+# -----------------------------------------------------------------------------
+
+# TODO: Define success responses for each endpoint.
+# Example:
+#
+# GetResourceResponse:
+#   description: Success response
+#   content:
+#     application/json:
+#       schema:
+#         $ref: './content-models.yaml#/GetResourceResponse'
+#       examples:
+#         successResponse:
+#           $ref: '../examples/GetResourceResponse.json'

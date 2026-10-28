@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-ui-engineer-android-tba",
+    "description": "Generate TBA (The Barclays App) Android screens and journey steps using Jetpack Compose and Blueprint Compose, including TBA-specific patterns: Journey Framework, MVC action layer, Scope-based DI hierarchy, FlavorDetails branching, BarclaysActivity hosting, and TbaIconMapper",
+    "version": "1.0.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards", "barclays-buk-ui-engineer-android"]
+}

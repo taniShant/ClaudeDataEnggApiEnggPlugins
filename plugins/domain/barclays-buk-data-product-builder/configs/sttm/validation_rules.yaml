@@ -1,0 +1,1988 @@
+# =============================================================================
+# STTM Plugin — Validation Rules (Section 6)
+# 102 checks across 7 categories (S1-S7, M1-M54, SC1-SC20, A1-A7, F1-F13, FIO1-FIO4, MF1-MF6)
+# =============================================================================
+
+version: "1.2"
+description: >
+  Complete set of validation rules for the STTM Generator Plugin.
+  Phase C additions: M42-M50 (UNION, source-logic consistency, window/aggregate
+  metadata, multi-step lineage, crypto DE naming, alias coverage), SC20 (SCD2
+  active column guard), A7 (audit column completeness per table type).
+  Each rule fires during the Validator pipeline stage. Blockers prevent
+  output generation; warnings are surfaced but do not halt the pipeline.
+
+# -----------------------------------------------------------------------------
+# Category 1: Schema Validations (S1–S7)
+# -----------------------------------------------------------------------------
+schema:
+  - id: S1
+    category: schema
+    check: "Target column name is valid snake_case (lowercase letters, underscores, no leading digits)"
+    severity: blocker
+    applies_to: all
+    logic: |
+      regex_match(column_name, r'^[a-z][a-z0-9_]*$')
+    error_message: "Column '{{column}}' in row {{row}} is not valid snake_case: '{{value}}'"
+    fix_suggestion: "Rename the target column to lowercase with underscores only, starting with a letter (e.g., 'customer_id')."
+
+  - id: S2
+    category: schema
+    check: "Target datatype is a valid Iceberg/Spark type (string, int, bigint, decimal(p,s), date, timestamp, boolean, float, double)"
+    severity: blocker
+    applies_to: all
+    logic: |
+      value_lower = lower(trim(datatype))
+      valid_types = ['string', 'int', 'bigint', 'date', 'timestamp', 'boolean', 'float', 'double']
+      if value_lower in valid_types:
+        return PASS
+      if regex_match(value_lower, r'^decimal\(\d+,\s*\d+\)$'):
+        return PASS
+      return FAIL
+    error_message: "Column '{{column}}' in row {{row}} has invalid datatype: '{{value}}'"
+    fix_suggestion: "Use one of: string, int, bigint, decimal(p,s), date, timestamp, boolean, float, double."
+
+  - id: S3
+    category: schema
+    check: "Null flag is exactly Y or N"
+    severity: blocker
+    applies_to: all
+    logic: |
+      trim(null_flag) in ['Y', 'N']
+    error_message: "Column '{{column}}' in row {{row}} has invalid Null Flag: '{{value}}'. Must be Y or N."
+    fix_suggestion: "Set the Null Flag to exactly 'Y' (nullable) or 'N' (not nullable)."
+
+  - id: S4
+    category: schema
+    check: "Key Column is Y, N, or blank"
+    severity: warning
+    applies_to: all
+    logic: |
+      trim(key_column) in ['Y', 'N', '']
+    error_message: "Column '{{column}}' in row {{row}} has invalid Key Column value: '{{value}}'. Expected Y, N, or blank."
+    fix_suggestion: "Set Key Column to 'Y' if the column is part of the primary/business key, 'N' if not, or leave blank."
+
+  - id: S5
+    category: schema
+    check: "Transformation Type is one of: Direct, Derived, Lookup, Direct - Type Cast, or blank"
+    severity: warning
+    applies_to: all
+    logic: |
+      trim(transformation_type) in ['Direct', 'Derived', 'Lookup', 'Direct - Type Cast', '']
+    error_message: "Column '{{column}}' in row {{row}} has invalid Transformation Type: '{{value}}'."
+    fix_suggestion: "Use one of: 'Direct', 'Derived', 'Lookup', 'Direct - Type Cast', or leave blank."
+
+  - id: S6
+    category: schema
+    check: "Target Table Type is one of: NonTransactional_SCD2, NonTransactional_SCD1, Transactional, or blank"
+    severity: warning
+    applies_to: all
+    logic: |
+      trim(target_table_type) in ['NonTransactional_SCD2', 'NonTransactional_SCD1', 'Transactional', '']
+    error_message: "Row {{row}} has invalid Target Table Type: '{{value}}'."
+    fix_suggestion: "Set Target Table Type to 'NonTransactional_SCD2', 'NonTransactional_SCD1', 'Transactional', or leave blank."
+
+  - id: S7
+    category: schema
+    check: "Default Value (if present) is compatible with target datatype"
+    severity: warning
+    applies_to: all
+    logic: |
+      if default_value is empty:
+        return PASS
+      if datatype == 'int' and not is_integer(default_value):
+        return FAIL
+      if datatype == 'bigint' and not is_integer(default_value):
+        return FAIL
+      if datatype in ['float', 'double'] and not is_numeric(default_value):
+        return FAIL
+      if datatype startswith 'decimal' and not is_numeric(default_value):
+        return FAIL
+      if datatype == 'boolean' and lower(default_value) not in ['true', 'false']:
+        return FAIL
+      if datatype == 'date' and not is_valid_date(default_value):
+        return FAIL
+      if datatype == 'timestamp' and not is_valid_timestamp(default_value):
+        return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has default value '{{value}}' incompatible with datatype '{{datatype}}'."
+    fix_suggestion: "Ensure the default value matches the declared datatype (e.g., integer for int, ISO date for date)."
+
+# -----------------------------------------------------------------------------
+# Category 2: Mapping-Content Validations (M1–M23)
+# -----------------------------------------------------------------------------
+mapping_content:
+  - id: M1
+    category: mapping_content
+    check: "Every target column has exactly one mapping row"
+    severity: blocker
+    applies_to: all
+    logic: |
+      for each target_table:
+        column_counts = count_rows_per_target_column(rows)
+        for column, count in column_counts:
+          if count != 1:
+            return FAIL(column, count)
+      return PASS
+    error_message: "Target column '{{column}}' in row {{row}} has {{value}} mapping rows (expected exactly 1)."
+    fix_suggestion: "Ensure each target column appears in exactly one mapping row. Remove duplicates or add missing mappings."
+
+  - id: M2
+    category: mapping_content
+    check: "No unmapped target columns remain without explanation"
+    severity: blocker
+    applies_to: all
+    logic: |
+      for each target_column in target_schema:
+        if target_column not in mapped_columns:
+          if target_column not in excluded_with_reason:
+            return FAIL(target_column)
+      return PASS
+    error_message: "Target column '{{column}}' has no mapping row and no documented exclusion reason."
+    fix_suggestion: "Add a mapping row for the column, or document why it is intentionally excluded."
+
+  - id: M3
+    category: mapping_content
+    check: "Source Database populated for non-system/non-derived columns"
+    severity: blocker
+    applies_to: all
+    logic: |
+      if source_marker not in ['(system)', '(derived)']:
+        if is_empty(source_database):
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} is missing Source Database."
+    fix_suggestion: "Populate the Source Database field with the Athena/Glue database name, or mark as (system)/(derived) if applicable."
+
+  - id: M4
+    category: mapping_content
+    check: "Source Table Name populated for non-system/non-derived columns"
+    severity: blocker
+    applies_to: all
+    logic: |
+      if source_marker not in ['(system)', '(derived)']:
+        if is_empty(source_table_name):
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} is missing Source Table Name."
+    fix_suggestion: "Populate the Source Table Name field, or mark the column as (system)/(derived) if it has no physical source."
+
+  - id: M5
+    category: mapping_content
+    check: "Source Column Name populated for non-system/non-derived columns"
+    severity: blocker
+    applies_to: all
+    logic: |
+      if source_marker not in ['(system)', '(derived)']:
+        if is_empty(source_column_name):
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} is missing Source Column Name."
+    fix_suggestion: "Populate the Source Column Name field, or mark the column as (system)/(derived) if it has no physical source."
+
+  - id: M6
+    category: mapping_content
+    check: "Business Logic / Transformation Logic is non-empty for every row"
+    severity: blocker
+    applies_to: all
+    logic: |
+      if is_empty(transformation_logic):
+        return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has empty Business Logic / Transformation Logic."
+    fix_suggestion: "Provide the transformation logic — even for direct mappings, state 'Direct mapping'."
+
+  - id: M7
+    category: mapping_content
+    check: "Additional Context populated on first data row per target table (table-level metadata only)"
+    severity: warning
+    applies_to: first_row_per_table
+    logic: |
+      first_row = get_first_row(target_table)
+      if is_empty(first_row.additional_context):
+        return FAIL(target_table)
+      # All other rows SHOULD be empty
+      for row in get_non_first_rows(target_table):
+        if not is_empty(row.additional_context):
+          return WARN("Row has additional_context but is not the first row — should be empty")
+      return PASS
+    error_message: "First row for target table '{{value}}' has empty Additional Context."
+    fix_suggestion: "Populate Additional Context on the first row only with table-level metadata. Allowed keys: load_type, partition_key, process_frequency, rolling_deletion_predicate, cdc_type, cdc_exclude, validate_unique_keys, duplicates_ts_col, dedup_order. Include only keys with non-empty values. day0_range belongs in Business Logic (J). grain belongs in Target Table Description (L). br_ref belongs in provenance.xlsx."
+
+  - id: M7b
+    category: mapping_content
+    check: "Additional Context key values match allowed enums (where enums are defined)"
+    severity: warning
+    applies_to: first_row_per_table
+    logic: |
+      first_row = get_first_row(target_table)
+      if is_empty(first_row.additional_context):
+        return PASS  # M7 already covers empty check
+      pairs = parse_pipe_delimited(first_row.additional_context)
+      allowed_keys = ['load_type', 'partition_key', 'process_frequency', 'rolling_deletion_predicate', 'cdc_type', 'cdc_exclude', 'validate_unique_keys', 'duplicates_ts_col', 'dedup_order']
+      enum_definitions = {
+        'load_type': ['BAU', 'day1', 'day0', 'full_then_incremental'],
+        'cdc_type': ['snapshot', 'delta'],
+        'validate_unique_keys': ['true', 'false'],
+        'dedup_order': ['desc', 'asc']
+      }
+      # process_frequency uses recommended values but accepts custom ones
+      recommended_values = {
+        'process_frequency': ['DAILY', 'WEEKLY_ONCE', 'ONCE_A_MONTH', 'WORKING_DAYS', 'ALTERNATE_DAYS', 'TUE_TO_SAT']
+      }
+      for key, value in pairs:
+        if key not in allowed_keys:
+          return WARN(f"Unknown key '{key}' in Additional Context — allowed keys: {allowed_keys}")
+        if key in enum_definitions and value not in enum_definitions[key]:
+          return WARN(f"Value '{value}' for key '{key}' not in allowed values: {enum_definitions[key]}")
+        if key in recommended_values and value not in recommended_values[key]:
+          return WARN(f"Value '{value}' for key '{key}' is not a standard DE value ({recommended_values[key]}). Custom values are accepted but may require DE-side configuration.")
+      return PASS
+    error_message: "Additional Context on first row for table '{{value}}' contains invalid key or value."
+    fix_suggestion: "Check key names and values against allowed list. Enum keys: load_type (BAU|day1|day0|full_then_incremental), cdc_type (snapshot|delta), validate_unique_keys (true|false), dedup_order (desc|asc). process_frequency standard values: DAILY|WEEKLY_ONCE|ONCE_A_MONTH|WORKING_DAYS|ALTERNATE_DAYS|TUE_TO_SAT (custom values accepted for non-standard schedules). Free-text keys: partition_key, rolling_deletion_predicate, cdc_exclude, duplicates_ts_col. grain is no longer allowed here — use Target Table Description (L)."
+
+  - id: M8
+    category: mapping_content
+    check: "Target Table Description on first row only per table"
+    severity: blocker
+    applies_to: all
+    logic: |
+      for each target_table:
+        first_row = get_first_row(target_table)
+        if is_empty(first_row.target_table_description):
+          return FAIL(target_table)
+        # All other rows SHOULD be empty (warning for backward compat)
+        for row in get_non_first_rows(target_table):
+          if not is_empty(row.target_table_description):
+            return WARN("Non-first row has target_table_description — should be empty (legacy propagation detected)")
+      return PASS
+    error_message: "Target table '{{value}}' row {{row}}: description must be first row only."
+    fix_suggestion: "Populate Target Table Description on the first row only; clear on all subsequent rows for the same table."
+
+  - id: M8b
+    category: mapping_content
+    check: "Target Table Description contains a Grain statement"
+    severity: warning
+    applies_to: first_row_per_table
+    logic: |
+      first_row = get_first_row(target_table)
+      if is_empty(first_row.target_table_description):
+        return PASS  # M8 already covers empty description check as blocker
+      if not regex_search(r'(?i)\bgrain\s*:', first_row.target_table_description):
+        return WARN(target_table)
+      return PASS
+    error_message: "Target table '{{value}}' description does not contain a Grain statement. Grain is essential for downstream consumers to understand the table's uniqueness level."
+    fix_suggestion: "Append a Grain statement to the Target Table Description. Format: 'Grain: <key_column1> + <key_column2>[ per effective period].' For SCD2 tables, include 'per effective period'. The sttm-row-generator-agent auto-derives grain when possible; this warning indicates derivation was skipped (e.g., confidence below threshold and guided mode was deferred). Run /sttm-resolve to determine grain interactively."
+    notes: >
+      This is a WARNING, not a BLOCKER. Some legacy templates may not include
+      grain statements. The sttm-row-generator-agent auto-derives grain when possible,
+      so this rule primarily catches cases where derivation was skipped.
+
+  - id: M9
+    category: mapping_content
+    check: "Target Column Description populated for every row"
+    severity: blocker
+    applies_to: all
+    logic: |
+      if is_empty(target_column_description):
+        return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} is missing Target Column Description."
+    fix_suggestion: "Add a business-friendly description of what this target column represents."
+
+  - id: M10
+    category: mapping_content
+    check: "PK columns have Null Flag = N"
+    severity: blocker
+    applies_to: all
+    logic: |
+      if key_column == 'Y' and null_flag != 'N':
+        return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} is marked as Key Column but has Null Flag = '{{value}}' (must be N)."
+    fix_suggestion: "Set Null Flag to 'N' for all primary key / business key columns."
+
+  - id: M11
+    category: mapping_content
+    check: "Key Column = Y for at least one column per table"
+    severity: warning
+    applies_to: all
+    logic: |
+      for each target_table:
+        if not any(row.key_column == 'Y' for row in table_rows):
+          return FAIL(target_table)
+      return PASS
+    error_message: "Target table '{{value}}' has no column marked as Key Column = Y."
+    fix_suggestion: "Mark at least one column as Key Column = 'Y' to define the table's primary/business key."
+
+  - id: M12
+    category: mapping_content
+    check: "Source column exists in declared source table (if metadata available)"
+    severity: blocker
+    severity_condition: "blocker when metadata/DDL is available; warning when metadata is unavailable"
+    applies_to: all
+    skip_when: "source_database == '(file:parquet)' — file sources have no DDL to validate against"
+    logic: |
+      # Skip for file sources — no DDL/catalog metadata exists for parquet files
+      if source_database == '(file:parquet)':
+        return PASS
+      if metadata_available(source_table):
+        if source_column not in get_columns(source_table):
+          return FAIL  # BLOCKER — column name is fabricated
+      else:
+        # Metadata unavailable — downgrade to warning and continue
+        return WARN("No metadata available for source_table — cannot verify column existence")
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} references source column '{{value}}' which does not exist in the declared source table. When DDL/metadata is available, this is a BLOCKER — the column name may be fabricated."
+    fix_suggestion: "Verify the source column name against the source table DDL or metadata. Check for typos, renamed columns, or view alias confusion. If the column was resolved through a view, verify the physical column name in the base table DDL."
+
+  - id: M13
+    category: mapping_content
+    check: "Source table exists in declared source database (if metadata available)"
+    severity: blocker
+    severity_condition: "blocker when metadata/DDL is available; warning when metadata is unavailable"
+    applies_to: all
+    skip_when: "source_database == '(file:parquet)' — file sources have no DDL to validate against"
+    logic: |
+      # Skip for file sources — no catalog metadata exists for parquet file paths
+      if source_database == '(file:parquet)':
+        return PASS
+      if metadata_available(source_database):
+        if source_table not in get_tables(source_database):
+          return FAIL  # BLOCKER — table reference is invalid
+      else:
+        # Metadata unavailable — downgrade to warning and continue
+        return WARN("No metadata available for source_database — cannot verify table existence")
+      return PASS
+    error_message: "Row {{row}} references source table '{{value}}' which does not exist in the declared source database. When DDL/metadata is available, this is a BLOCKER — the table reference may be invalid."
+    fix_suggestion: "Verify the source table name against the database catalog or DDL. Check for typos, schema changes, or view-to-base-table resolution errors."
+
+  - id: M14
+    category: mapping_content
+    check: "Default Value present when COALESCE, NVL, or IFNULL detected in logic"
+    severity: warning
+    applies_to: all
+    logic: |
+      logic_lower = lower(transformation_logic)
+      if 'coalesce' in logic_lower or 'nvl' in logic_lower or 'ifnull' in logic_lower:
+        if is_empty(default_value):
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} uses COALESCE/NVL/IFNULL in logic but has no Default Value specified."
+    fix_suggestion: "Populate the Default Value field with the fallback value used in the COALESCE, NVL, or IFNULL expression."
+
+  - id: M15
+    category: mapping_content
+    check: "Multi-table mappings use verbose labeled format with separate Join N Table:, Join N Type:, Join N On:, Join N Filters: lines (not compact single-line format)"
+    severity: blocker
+    applies_to: all
+    logic: |
+      if count_distinct_source_tables(row) > 1:
+        if not has_structured_join_format(transformation_logic):
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} involves multiple source tables but does not use structured compact newline-separated format with aliases."
+    fix_suggestion: "Restructure using verbose labeled format: Driver Table: <database>.<table> (<alias>)\\nDriver Conditions: [<conditions>]\\nJoin N Table: <database>.<table> (<alias>)\\nJoin N Type: <type>\\nJoin N On: <alias>.<col> = <alias>.<col>\\nJoin N Filters: [<filters>]\\nValue: <alias>.<expr>"
+
+  - id: M16
+    category: mapping_content
+    check: "Structured format: Join ON conditions use explicit alias.column {operator} alias.column where operator is =, >, <, >=, <=, BETWEEN, or <>"
+    severity: blocker
+    applies_to: all
+    logic: |
+      allowed_operators = ['=', '>', '<', '>=', '<=', '<>', 'BETWEEN']
+      for each join_condition in structured_joins:
+        # Match alias.column <operator> alias.column (or BETWEEN variant)
+        if not regex_match(join_condition, r'^\w+\.\w+\s*(=|>=|<=|<>|>|<)\s*\w+\.\w+$') and \
+           not regex_match(join_condition, r'^\w+\.\w+\s+BETWEEN\s+\w+\.\w+\s+AND\s+\w+\.\w+$'):
+          return FAIL(join_condition)
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has malformed join condition: '{{value}}'. Must be alias.column {operator} alias.column where operator is =, >, <, >=, <=, BETWEEN, or <>."
+    fix_suggestion: "Write join conditions with alias on BOTH sides using a supported operator: left_alias.column = right_alias.column, left_alias.column >= right_alias.column, left_alias.column BETWEEN right_alias.col1 AND right_alias.col2, etc."
+
+  - id: M17
+    category: mapping_content
+    check: "Structured format: Join N Type is exactly one of LEFT, INNER, RIGHT, FULL, CROSS, CROSS_APPLY, OUTER_APPLY, LATERAL"
+    severity: blocker
+    applies_to: all
+    logic: |
+      for each join in structured_joins:
+        if upper(trim(join.type)) not in ['LEFT', 'INNER', 'RIGHT', 'FULL', 'CROSS', 'CROSS_APPLY', 'OUTER_APPLY', 'LATERAL']:
+          return FAIL(join.type)
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has invalid Join Type: '{{value}}'. Must be LEFT, INNER, RIGHT, FULL, CROSS, CROSS_APPLY, OUTER_APPLY, or LATERAL."
+    fix_suggestion: "Set Join Type to exactly one of: LEFT, INNER, RIGHT, FULL, CROSS, CROSS_APPLY, OUTER_APPLY, LATERAL."
+
+  - id: M18
+    category: mapping_content
+    check: "When source SQL has WHERE/HAVING clauses, multi-table Business Logic reflects those filters in structured format"
+    severity: blocker
+    applies_to: multi_table_only
+    logic: |
+      # Only applies when source SQL genuinely has WHERE/HAVING/QUALIFY clauses
+      # If no filter exists in source SQL (full table load), this rule does NOT fire
+      # Use filters_extracted from lineage cache as the primary signal
+      if not source_sql_has_filters(code_artifacts, filters_extracted):
+        return PASS  # No filter in SQL = legitimate full-table read, not an error
+      if count_distinct_source_tables(row) > 1:
+        has_driver_conditions = 'Driver Conditions:' in transformation_logic
+        has_filter_suffix = '[Filter ' in transformation_logic
+        has_having = 'Having:' in transformation_logic
+        has_qualify = 'Qualify:' in transformation_logic
+        if not (has_driver_conditions or has_filter_suffix or has_having or has_qualify):
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}}: source SQL has WHERE/HAVING filters but Business Logic has no filter documentation (expected Driver Conditions:, [Filter ...], Having:, or Qualify: in structured format)."
+    fix_suggestion: "Add filter conditions to Business Logic: 'Driver Conditions: [Filter alias.col = value]' for driver table filters, or '[Filter alias.col = value]' suffix on Join lines for joined table filters."
+    notes: >
+      This rule only fires when the source SQL actually contains WHERE/HAVING/QUALIFY clauses.
+      If data is loaded from source without any row reduction (full table), empty
+      Driver Conditions: [] is correct and this rule will PASS.
+      Uses filters_extracted from lineage cache as the primary signal.
+    implementation_note: >
+      source_sql_has_filters should use filters_extracted from the lineage cache
+      (output/.intermediate/lineage_cache.json) as the primary signal:
+      - Check filters_extracted.where_clauses is non-empty
+      - Check filters_extracted.having_clauses is non-empty
+      - Check filters_extracted.qualify_clauses is non-empty
+      If filters_extracted is unavailable (backward compat), fall back to
+      scanning code_artifacts for WHERE/HAVING/QUALIFY keywords outside of
+      comments and string literals.
+
+  - id: M18b
+    category: mapping_content
+    check: "When source SQL has WHERE/HAVING/QUALIFY clauses, single-source Business Logic reflects those filters via Conditions suffix"
+    severity: warning
+    applies_to: single_source_with_filters
+    logic: |
+      # Applies to single-source rows when SQL has filters
+      if not source_sql_has_filters(code_artifacts, filters_extracted):
+        return PASS
+      if count_distinct_source_tables(row) == 1:
+        if 'Conditions:' not in transformation_logic:
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}}: source SQL has WHERE/HAVING/QUALIFY filters but single-source Business Logic has no Conditions suffix."
+    fix_suggestion: "Append filter conditions to Business Logic: 'Direct mapping\\nConditions: <exact SQL predicate>' or '<expression>\\nConditions: <exact SQL predicate>'."
+    notes: >
+      New rule for single-source filtered queries. Applies when the source SQL has
+      WHERE/HAVING/QUALIFY clauses but the row only references one source table.
+      Complements M18 which covers multi-table scenarios.
+
+  - id: M19
+    category: mapping_content
+    check: "When source SQL contains JOINs, all joined tables appear in structured Business Logic AND all joins_detected tables appear in at least one row's source_table_name"
+    severity: blocker
+    applies_to: multi_source_only
+    logic: |
+      # Only fires when source SQL actually has JOIN clauses
+      # Single-source-table mappings (no JOIN in SQL) are NOT affected by this rule
+      sql_join_tables = get_join_tables_from_sql(code_artifacts)
+      if len(sql_join_tables) == 0:
+        return PASS  # Single source table — no JOINs expected, not an error
+
+      # Check 1 (original): All joined tables appear in structured Business Logic
+      for row in get_rows_with_multi_source():
+        logic_join_tables = extract_join_tables_from_logic(row.transformation_logic)
+        missing = sql_join_tables - logic_join_tables
+        if len(missing) > 0:
+          return FAIL(f"Business Logic missing tables: {missing}")
+
+      # Check 2 (new — joined-table completeness): All tables from joins_detected
+      # must appear in at least one row's source_table_name across all mapping rows.
+      # This catches cases where a table participates in a JOIN but no column from it
+      # is attributed to any target column (e.g., inline view base tables, filter-only tables).
+      all_source_tables_in_rows = set()
+      for row in mapping_rows:
+        if row.source_table_name not in ['(system)', '(derived)', 'N/A', '']:
+          for table_ref in split_comma(row.source_table_name):
+            all_source_tables_in_rows.add(trim(table_ref))
+      joins_detected_tables = get_all_tables_from_joins_detected()  # driver + all joined tables
+      missing_from_rows = joins_detected_tables - all_source_tables_in_rows
+      if len(missing_from_rows) > 0:
+        return FAIL(f"Tables in joins_detected but not in any row's source_table_name: {missing_from_rows}")
+
+      return PASS
+    error_message: "Business Logic is missing JOIN tables found in source SQL: {{value}}."
+    fix_suggestion: "Add all joined tables from source SQL to the structured format: 'Join N Table: <table>' for each joined table. Ensure every table from joins_detected appears in at least one row's source_table_name (columns G/H) — including tables from inline views resolved to their base tables."
+    notes: >
+      This rule only applies when the source SQL contains explicit JOIN clauses.
+      Single-source-table scenarios (SELECT from one table only) will NOT trigger
+      this rule — JOINs are not expected when data comes from a single source.
+      Check 2 catches incomplete source attribution — e.g., when an inline view
+      (REPLACE VIEW charge_off_v) resolves to t_trmfdb.charge_off but that base
+      table never appears in any row's source_table_name.
+
+  - id: M20
+    category: mapping_content
+    check: "source_database and source_table must reference real tables unless column is purely self-referential or system-generated"
+    severity: blocker
+    applies_to: all
+    logic: |
+      # PASS conditions: source_database is a real database name, or is (system) for audit columns
+      if source_database not in ['(derived)', '(system)']:
+        return PASS  # Real source referenced — correct
+      if source_database == '(system)':
+        # Only valid for dw_lod_tmp, dw_bus_dt, and dw_upd_lod_tmp
+        if target_column_name in ['dw_lod_tmp', 'dw_bus_dt', 'dw_upd_lod_tmp']:
+          return PASS
+        else:
+          return FAIL("(system) only valid for audit timestamp columns")
+      # source_database == '(derived)' — verify it's truly self-referential
+      if source_database == '(derived)' and source_table == '(derived)':
+        logic_lower = lower(transformation_logic)
+        # Check 1: Business logic references source tables or databases
+        if regex_match(logic_lower, r'\b\w+_db\b') or regex_match(logic_lower, r'\bdriver table\b'):
+          return FAIL("logic references source tables but source_database=(derived)")
+        # Check 2: Aggregation/window signals (require source table reads)
+        source_signals = [
+          'lag(', 'lead(', 'row_number(', 'rank(', 'dense_rank(',
+          'sum(', 'count(', 'avg(', 'max(', 'min(',
+          'prior_period', 'prior_month', 'historical', 'baseline',
+          'over (partition', 'over(partition',
+          'join', 'lookup', 'br-'
+        ]
+        for signal in source_signals:
+          if signal in logic_lower:
+            return FAIL(signal)
+        # Check 3: Hardcoded values that exist in context of a data flow
+        if 'hardcoded' in logic_lower or source_column == 'Hardcoded':
+          return FAIL("hardcoded values in a data flow must reference the driving source table")
+        # Check 4: Verify it's genuinely self-referential (references only same-row target columns)
+        # If logic references column names that exist in the target table, likely OK
+        return PASS
+      return PASS
+    error_message: >
+      Column '{{column}}' in row {{row}} has source_database='(derived)' but
+      its Business Logic indicates dependency on source tables (signal: '{{value}}').
+      source_database and source_table must always reference the real driving/contributing
+      tables. Only source_column may be (derived) for calculated outputs.
+    fix_suggestion: >
+      Set source_database to the primary contributing database, source_table to
+      the main driver table that creates/drives the data flow for this row.
+      Set source_column to '(derived)' if the value is calculated, or 'Hardcoded'
+      if constant. Rewrite Business Logic using structured compact newline-separated format
+      with table aliases, listing all contributing tables with their join conditions.
+    notes: >
+      source_database and source_table answer "WHERE does data flow from?" and must
+      always trace to real tables for lineage and impact analysis. (derived)/(derived)
+      is ONLY valid when the column is computed purely from other columns already in
+      the same target row (e.g., active flag from eff_end_date). Hardcoded values
+      still need the driving source table referenced to maintain data flow traceability.
+
+  - id: M21
+    category: mapping_content
+    check: "Additional Context must not contain br_ref key (provenance belongs in provenance.xlsx)"
+    severity: blocker
+    applies_to: all
+    logic: |
+      if 'br_ref' in lower(additional_context):
+        return FAIL
+      return PASS
+    error_message: "Row {{row}} has 'br_ref' in Additional Context. Business rule references are provenance data and must not appear in the mapping output."
+    fix_suggestion: "Remove br_ref from Additional Context. Business rule references belong in output/provenance.xlsx, not in the operational mapping. Allowed keys: load_type, partition_key, process_frequency, rolling_deletion_predicate, cdc_type, cdc_exclude, validate_unique_keys, duplicates_ts_col, dedup_order."
+    notes: >
+      br_ref was previously an allowed key in Additional Context but has been
+      reclassified as provenance/traceability data. It must now be tracked in
+      provenance.json and exported via provenance.xlsx for reviewers.
+
+  - id: M22
+    category: mapping_content
+    check: "Business Logic must not contain standalone provenance annotations (BR-XX labels, evidence markers)"
+    severity: warning
+    applies_to: all
+    logic: |
+      logic_text = business_logic
+      # Provenance label patterns (standalone BR references used as labels)
+      provenance_patterns = [
+        r'^Derived from BR-\d+',      # Starts with "Derived from BR-XX"
+        r'per BR-\d+',                 # "per BR-04"
+        r'from BR-\d+',               # "from BR-04"
+        r'\bconfidence:',              # confidence annotation
+        r'\bevidence:',                # evidence annotation
+        r'\bsource_priority:',         # source_priority annotation
+      ]
+      for pattern in provenance_patterns:
+        if regex_search(pattern, logic_text):
+          return FAIL(pattern)
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has provenance annotation in Business Logic: '{{value}}'. Business Logic must contain only executable transformation logic."
+    fix_suggestion: "Remove provenance labels from Business Logic. Keep only the transformation expression/logic. Move BR references and evidence annotations to provenance.json (they will appear in provenance.xlsx)."
+    notes: >
+      This is a WARNING not a BLOCKER because some existing mappings legitimately
+      reference BR codes as part of semantic explanations (e.g., a metric code
+      DAILY_REVENUE that maps to BR-01 in a controlled vocabulary context). The rule
+      flags standalone provenance labels that can be cleanly separated, not embedded
+      semantic references. Provenance data belongs in output/provenance.xlsx.
+
+  - id: M23
+    category: mapping_content
+    check: "Source Table Name must use {database}.{table} format; Source Column Name must use {database}.{table}.{column} format for all non-special entries"
+    severity: blocker
+    applies_to: all
+    logic: |
+      special_values = ['(system)', '(derived)', 'Hardcoded', 'N/A', '']
+      # Build per-reference file source index from comma-separated source_database.
+      # Hybrid rows have mixed entries like "(file:parquet), e_loans_db" — each
+      # source_database entry corresponds positionally to its source_table/source_column.
+      raw_dbs = [trim(db) for db in split_comma(source_database)]
+      file_db_set = {db.lower() for db in raw_dbs if db.lower() == '(file:parquet)'}
+      has_file_source = len(file_db_set) > 0
+      # Check Source Table Name (H) — table sources must contain a dot (database.table);
+      # file sources use absolute storage paths (skip dot check).
+      if source_table_name not in special_values:
+        raw_tables = [trim(t) for t in split_comma(source_table_name)]
+        if len(raw_tables) != len(raw_dbs):
+          return FAIL("source_table_name", source_table_name, "positional mismatch — {0} tables but {1} databases; each table must have a corresponding database".format(len(raw_tables), len(raw_dbs)))
+        for idx, table_ref in enumerate(raw_tables):
+          if table_ref in special_values:
+            continue
+          ref_db = raw_dbs[idx]
+          if ref_db.lower() == '(file:parquet)':
+            continue  # file sources use storage paths, not {database}.{table}
+          if '.' not in table_ref:
+            return FAIL("source_table_name", table_ref, "missing database prefix — must be {database}.{table}")
+      # Check Source Column Name (I) — per-reference validation:
+      # File source columns accept 2-part FQN ({logical_name}.{column}).
+      # Table source columns require 3-part FQN ({database}.{table}.{column}).
+      # In hybrid rows (mixed file + table), each column ref is validated against
+      # its corresponding source_database entry.
+      if source_column_name not in special_values:
+        raw_cols = [trim(c) for c in split_comma(source_column_name)]
+        for idx, col_ref in enumerate(raw_cols):
+          if col_ref in special_values:
+            continue
+          dot_count = count(col_ref, '.')
+          ref_db = raw_dbs[idx]
+          if ref_db.lower() == '(file:parquet)':
+            if dot_count < 1:
+              return FAIL("source_column_name", col_ref, "must be at least {logical_name}.{column} (2-part qualified) for file sources")
+          else:
+            if dot_count != 2:
+              return FAIL("source_column_name", col_ref, "must be {database}.{table}.{column} (3-part qualified)")
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has unqualified source reference '{{value}}'. Source Table Name must be {database}.{table}; Source Column Name must be {database}.{table}.{column} (or {logical_name}.{column} for file sources)."
+    fix_suggestion: "Use fully qualified naming: Source Table = 'database.table', Source Column = 'database.table.column'. Example: 'e_loans_tallyman_db.TETLTABA.ACCOUNT_BALANCE_AMOUNT'. For file sources (source_database='(file:parquet)'), 2-part FQN is accepted: '{logical_name}.{column}'."
+    notes: >
+      This rule enforces unambiguous lineage traceability across databases.
+      Without the database prefix, tables from different databases sharing the
+      same name become indistinguishable. The 3-part format eliminates all ambiguity.
+      This rule applies to ALL source column references, including infrastructure
+      columns used in joins/filters but not directly mapped to target columns.
+      The 3-part format ({database}.{table}.{column}) eliminates all ambiguity
+      for column-level lineage tracing. Source Column Name references MUST
+      include the database prefix even for single-source tables.
+      Exception: file sources (source_database='(file:parquet)') use a 2-part FQN
+      ({logical_name}.{column}) because there is no database catalog. The
+      source_database marker '(file:parquet)' serves as the namespace qualifier.
+      Hybrid rows: When source_database is comma-separated and contains both
+      '(file:parquet)' and real database names (e.g., "(file:parquet), e_loans_db"),
+      each source column reference is validated against its positionally corresponding
+      source_database entry — file columns accept 2-part, table columns require 3-part.
+      Source Table Name validation also uses positional mapping: file source entries
+      (storage paths) are skipped, while table source entries require {database}.{table}.
+
+  - id: M24
+    category: mapping_content
+    check: "Business Logic using structured format must not have expression duplicated before 'Driver Table:' line"
+    severity: warning
+    applies_to: all
+    logic: |
+      logic_text = business_logic
+      if 'Driver Table:' in logic_text:
+        lines = split_newlines(logic_text)
+        first_line = trim(lines[0])
+        if not starts_with(first_line, 'Driver Table:'):
+          # Content exists before the structured block — likely duplicated expression
+          return FAIL(first_line)
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has content before 'Driver Table:' line in Business Logic: '{{value}}'. When using multi-table structured format, the expression must appear ONLY in the Value: line."
+    fix_suggestion: "Remove the leading expression line. The transformation expression should appear only in the 'Value:' line of the structured block. Business Logic should start with 'Driver Table:' when multi-table format is used."
+    notes: >
+      Catches the common generation bug where the row-generator emits the derivation
+      expression as a leading line AND again inside the Value: field of the structured
+      block, causing the Excel cell to show the logic twice.
+
+  # --- Multi-Step Lineage Completeness Rules (M25, M27-M33) ---
+  # These rules apply only when intermediate_steps is non-empty (multi-statement ETL).
+  # All are warnings — they do not block export.
+
+  - id: M25
+    category: mapping_content
+    check: "Multi-step columns use Step N format in Business Logic (not flat 'Direct mapping')"
+    severity: warning
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        for col, chain in column_lineage_chains.items():
+          if chain.chain_depth > 1:
+            col_row = get_row_for_column(col)
+            if 'Step ' not in col_row.transformation_logic and 'Transformation Lineage:' not in col_row.transformation_logic:
+              return FAIL(col)
+      return PASS
+    error_message: "Column '{{column}}' has chain_depth > 1 in multi-step ETL but Business Logic does not use Step N format."
+    fix_suggestion: "Show the column's multi-step chain in Business Logic using 'Step N: <expression> [New/Transformed]' format, with pass-through steps as one-liners."
+
+  - id: M27
+    category: mapping_content
+    check: "When intermediate_steps is non-empty, the first key column row's Business Logic contains 'Transformation Lineage:'"
+    severity: warning
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        first_key_row = get_first_row_with_key_column_Y()
+        if first_key_row and 'Transformation Lineage:' not in first_key_row.transformation_logic:
+          return FAIL
+      return PASS
+    error_message: "Multi-step ETL detected but the first key column row does not contain 'Transformation Lineage:' divider in Business Logic."
+    fix_suggestion: "Append the full transformation lineage chain to the first key column row's Business Logic after a '---\\nTransformation Lineage:' divider."
+
+  - id: M28
+    category: mapping_content
+    check: "DELETE/TRUNCATE intermediate steps are documented in the Transformation Lineage block"
+    severity: warning
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        first_key_row = get_first_row_with_key_column_Y()
+        if first_key_row is None:
+          return PASS
+        lineage_text = first_key_row.transformation_logic
+        for step in intermediate_steps:
+          if step.row_operation in ['delete', 'truncate']:
+            if f"Step {step.step_number}" not in lineage_text:
+              return FAIL(step.step_number, step.row_operation)
+      return PASS
+    error_message: "Transformation Lineage block is missing Step {{step_number}} ({{operation}}) — DELETE/TRUNCATE operations affect row counts and must be documented."
+    fix_suggestion: "Add the DELETE/TRUNCATE step to the Transformation Lineage block with the WHERE condition and [Partial removal]/[Full removal] tag."
+
+  - id: M29
+    category: mapping_content
+    check: "UPDATE-back steps show SET columns with assignment mode and scope filter in Transformation Lineage"
+    severity: warning
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        first_key_row = get_first_row_with_key_column_Y()
+        if first_key_row is None:
+          return PASS
+        lineage_text = first_key_row.transformation_logic
+        for step in intermediate_steps:
+          if step.statement_type == 'UPDATE_FROM':
+            step_text = extract_step_text(lineage_text, step.step_number)
+            if step_text is None or 'SET ' not in step_text:
+              return FAIL(step.step_number, "missing SET clause")
+      return PASS
+    error_message: "Step {{step_number}} is UPDATE-back but Transformation Lineage does not show SET columns or scope."
+    fix_suggestion: "Show the full SET clause with assignment mode ([Replace]/[Additive]/[Conditional]) and the FROM/ON condition that scopes the update."
+
+  - id: M30
+    category: mapping_content
+    check: "Effective Source Filters present when intermediate_steps has filters"
+    severity: warning
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        has_filters = any(len(step.filters) > 0 for step in intermediate_steps if hasattr(step, 'filters'))
+        if has_filters:
+          first_key_row = get_first_row_with_key_column_Y()
+          if first_key_row and 'Effective Source Filters:' not in first_key_row.transformation_logic:
+            return FAIL
+      return PASS
+    error_message: "Multi-step ETL has per-step filters but the Transformation Lineage block does not include 'Effective Source Filters:' summary."
+    fix_suggestion: "Append an 'Effective Source Filters:' section after the step chain, listing the cumulative filter per base source table."
+
+  - id: M31
+    category: mapping_content
+    check: "Aggregation steps include GROUP BY columns or Grain annotation in Transformation Lineage"
+    severity: warning
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        first_key_row = get_first_row_with_key_column_Y()
+        if first_key_row is None:
+          return PASS
+        lineage_text = first_key_row.transformation_logic
+        for step in intermediate_steps:
+          if step.aggregation_semantics is not None and not step.aggregation_semantics.is_dedup_pattern:
+            step_text = extract_step_text(lineage_text, step.step_number)
+            if step_text is not None and 'GROUP BY' not in step_text and 'Grain:' not in step_text:
+              return FAIL(step.step_number)
+      return PASS
+    error_message: "Step {{step_number}} has aggregation but Transformation Lineage does not show GROUP BY columns or Grain annotation."
+    fix_suggestion: "Add 'Grain: <column_list>' or 'GROUP BY <column_list>' to the aggregation step in the lineage block."
+
+  - id: M32
+    category: mapping_content
+    check: "Column lineage chains have consistent intermediate_expressions count matching chain_depth"
+    severity: warning
+    applies_to: multi_step_only
+    logic: |
+      if column_lineage_chains is non-empty:
+        for col, chain in column_lineage_chains.items():
+          if len(chain.intermediate_expressions) != chain.chain_depth:
+            return FAIL(col, len(chain.intermediate_expressions), chain.chain_depth)
+      return PASS
+    error_message: "Column '{{column}}' has chain_depth={{depth}} but {{actual}} intermediate_expressions — mismatch."
+    fix_suggestion: "Ensure every step in the chain has a corresponding intermediate_expression entry (including pass_through steps)."
+
+  - id: M33
+    category: mapping_content
+    check: "MERGE intermediate steps include match keys and branch actions"
+    severity: warning
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        for step in intermediate_steps:
+          if step.statement_type == 'MERGE':
+            if step.merge_semantics is None or not step.merge_semantics.match_keys:
+              return FAIL(step.step_number)
+      return PASS
+    error_message: "Step {{step_number}} is MERGE but merge_semantics is missing or has no match_keys."
+    fix_suggestion: "Populate merge_semantics with match_keys, matched_action, and not_matched_action for the MERGE step."
+
+  - id: M34
+    category: mapping_content
+    check: "CREATE_VIEW intermediate steps include source_tables and resolves_to_base_tables for nested views"
+    severity: blocker
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        view_steps = [s for s in intermediate_steps if s.statement_type == 'CREATE_VIEW']
+        for step in view_steps:
+          if not step.source_tables or len(step.source_tables) == 0:
+            return FAIL(step.step_number, "CREATE_VIEW step has empty source_tables")
+          # Check if any source_table is itself a view defined earlier in the chain
+          defined_views = [s.temp_table_name for s in intermediate_steps if s.statement_type == 'CREATE_VIEW' and s.step_number < step.step_number]
+          for src in step.source_tables:
+            if src in defined_views:
+              if not step.get('resolves_to_base_tables') or len(step.resolves_to_base_tables) == 0:
+                return FAIL(step.step_number, "nested view without resolves_to_base_tables")
+      return PASS
+    error_message: "Step {{step_number}} is CREATE_VIEW but does not properly resolve to base tables: {{value}}."
+    fix_suggestion: "Populate source_tables with the base tables the view selects from. For nested views, add resolves_to_base_tables listing the ultimate base tables."
+
+  - id: M35
+    category: mapping_content
+    check: "Business Logic does not contain narrative fallback patterns when structured data is available"
+    severity: warning
+    applies_to: multi_step_only
+    logic: |
+      narrative_patterns = [
+        r'Complex CASE expression derived in',
+        r'Uses .+ intermediate tables',
+        r'traces to .+ via .+ view',
+        r'<\w+-specific logic>',
+        r'\d+-way union with',
+        r'Flows through .+ as ',
+        r'Ultimate sources:',
+      ]
+      if intermediate_steps is non-empty:
+        for row in mapping_rows:
+          for pattern in narrative_patterns:
+            if regex_search(pattern, row.business_logic):
+              return FAIL(row.target_column_name, pattern)
+      return PASS
+    error_message: "Column '{{column}}' has narrative fallback text in Business Logic matching pattern '{{value}}'. Use structured format instead."
+    fix_suggestion: "Replace narrative text with the appropriate structured format: Step N chain for multi-step, UNION Structured Format for unions, or CREATE VIEW step with Resolves to: for view resolution."
+
+  - id: M36
+    category: mapping_content
+    check: "When union_metadata is present, Business Logic uses Union Branch structured format"
+    severity: error
+    applies_to: union
+    logic: |
+      if union_metadata and union_metadata.is_union:
+        for row in mapping_rows:
+          # Skip audit/system columns
+          if row.source_database in ['(system)', '(derived)']:
+            continue
+          if 'Union Branch' not in row.business_logic:
+            return FAIL(row.target_column_name)
+      return PASS
+    error_message: "Column '{{column}}' sources from UNION but Business Logic does not use 'Union Branch N:' structured format."
+    fix_suggestion: "Use the UNION Structured Format: 'Union Branch 1: SELECT ... FROM table (alias)\\nUnion Branch 2: ...\\nUnion Type: UNION ALL\\nValue: alias.expression'"
+
+  - id: M37
+    category: mapping_content
+    check: "Business Logic must not contain summarized SQL expressions — placeholder text instead of actual literal values"
+    severity: blocker
+    applies_to: all
+    logic: |
+      summary_patterns = [
+        r'\((?:sales|cash|debit|credit|purchase|payment|fee|interest|charge|transaction)\s+(?:codes?|types?|categories?)\)',
+        r'\((?:range of|various|multiple|several|all)\s+\w+\)',
+        r'\(\w+-specific logic\)',
+        r'<\w+-specific logic>',
+        r'\b\d{4}\s*-\s*\d{4}\b(?!.*(?:BETWEEN|between|FORMAT))',
+        r'\(high\s+\w+\s+threshold\)',
+        r'\(\d+-month\s+(?:history|retention|lookback)\)',
+        r'\(transfer logic applies\)',
+        r'\(sum of \d+ \w+ components\)',
+      ]
+      for row in mapping_rows:
+        for pattern in summary_patterns:
+          if regex_search(pattern, row.business_logic):
+            return FAIL(row.target_column_name, pattern)
+      return PASS
+    error_message: "Column '{{column}}' has summarized SQL expression in Business Logic matching pattern '{{value}}'. Business Logic must contain exact SQL literals, not descriptive summaries."
+    fix_suggestion: "Replace descriptive text with the actual SQL literals from the source code. For example, replace '(sales transaction codes)' with the actual IN-list: IN ('0800','5208','1410','5201','0410','1800'). Replace '0823-0847' with the actual codes: IN ('0823','0824','0825', ...)."
+
+  - id: M38
+    category: mapping_content
+    check: "JSON field names are consistent across all mapping rows — no mixed naming"
+    severity: blocker
+    applies_to: all
+    logic: |
+      canonical_fields = ['target_database', 'target_table', 'target_column_name',
+        'target_column_description', 'target_column_datatype', 'target_column_null_flag',
+        'source_database', 'source_table_name', 'source_column_name', 'business_logic',
+        'additional_context', 'target_table_description', 'transformation_type',
+        'default_value', 'target_table_type', 'key_column']
+      for idx, row in enumerate(mapping_rows):
+        row_keys = set(row.keys())
+        wrong_keys = row_keys - set(canonical_fields)
+        missing_keys = set(canonical_fields) - row_keys
+        if len(wrong_keys) > 0 or len(missing_keys) > 0:
+          return FAIL(f"Row {idx}: wrong_keys={wrong_keys}, missing_keys={missing_keys}")
+      return PASS
+    error_message: "JSON field name inconsistency detected: {{value}}. All rows must use the 16 canonical field names."
+    fix_suggestion: "Use exactly: target_database, target_table, target_column_name, target_column_description, target_column_datatype, target_column_null_flag, source_database, source_table_name, source_column_name, business_logic, additional_context, target_table_description, transformation_type, default_value, target_table_type, key_column."
+
+  - id: M39
+    category: mapping_content
+    check: "Null flag values are normalized to exactly Y or N — no NOT NULL/NULL variants"
+    severity: blocker
+    applies_to: all
+    logic: |
+      for row in mapping_rows:
+        if row.target_column_null_flag not in ['Y', 'N']:
+          return FAIL(row.target_column_name, row.target_column_null_flag)
+      return PASS
+    error_message: "Column '{{column}}' has non-normalized null flag '{{value}}'. Must be exactly 'Y' or 'N'."
+    fix_suggestion: "Convert 'NOT NULL' to 'N', 'NULL' to 'Y'. Never use 'Yes'/'No'/'NOT NULL'/'NULL'."
+
+  - id: M40
+    category: mapping_content
+    check: "No UTF-8 encoding corruption (mojibake) in any text field"
+    severity: blocker
+    applies_to: all
+    logic: |
+      mojibake_patterns = ['â€"', 'â€™', 'â€œ', 'â€\x9d', 'Ã©', 'Ã¤', 'Ã¶', 'Ã¼']
+      for row in mapping_rows:
+        for field_name in row.keys():
+          field_value = str(row[field_name])
+          for pattern in mojibake_patterns:
+            if pattern in field_value:
+              return FAIL(row.target_column_name, field_name, pattern)
+      return PASS
+    error_message: "Column '{{column}}' field '{{field}}' contains encoding corruption: '{{value}}'."
+    fix_suggestion: "Replace corrupted characters with ASCII equivalents. Common: 'â€\"' → '-', 'â€™' → apostrophe."
+
+  - id: M41
+    category: mapping_content
+    check: "Business Logic structured format (Driver Table / Join N) must not reference view names — only base tables"
+    severity: blocker
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        view_names = [s.temp_table_name for s in intermediate_steps if s.get('statement_type') == 'CREATE_VIEW']
+        if len(view_names) == 0:
+          return PASS  # No views in this ETL — nothing to check
+        for row in mapping_rows:
+          logic_text = row.business_logic
+          # Split on Transformation Lineage divider — only check the part BEFORE it
+          if '---' in logic_text and 'Transformation Lineage:' in logic_text:
+            # Only check content before the first '---' divider
+            pre_lineage = logic_text.split('---')[0]
+          else:
+            pre_lineage = logic_text
+          for view_name in view_names:
+            if view_name in pre_lineage:
+              return FAIL(row.target_column_name, view_name)
+      return PASS
+    error_message: "Column '{{column}}' business_logic references view '{{value}}' in structured join format — must use the resolved base table instead."
+    fix_suggestion: "Replace the view name with its resolved base table from the Transformation Lineage 'Resolves to:' line. View names are permitted ONLY within the Transformation Lineage block (after the --- divider), not in Driver Table / Join N lines."
+    notes: >
+      This rule catches view names leaking into the operational Business Logic
+      (Driver Table / Join N / Value lines) instead of being resolved to base tables.
+      View names are expected and correct in the Transformation Lineage block
+      (after the --- divider) where they document the view resolution chain.
+      The fix is upstream: the sttm-sql-lineage-agent should resolve joins_detected
+      table names to base tables, and sttm-generate should apply the view_to_base_table
+      lookup during join chain assembly.
+
+  - id: M42
+    category: mapping_content
+    check: "UNION branches must have matching column count and order"
+    severity: blocker
+    applies_to: union
+    logic: |
+      if union_metadata and union_metadata.is_union:
+        for row in mapping_rows:
+          if 'Union Branch' in row.business_logic:
+            branch_columns = extract_union_branch_columns(row.business_logic)
+            if len(set(len(cols) for cols in branch_columns.values())) > 1:
+              return FAIL(row.target_column_name, branch_columns)
+      return PASS
+    error_message: "Column '{{column}}' UNION branches have mismatched column counts: {{value}}."
+    fix_suggestion: "Ensure all UNION branches list the same number of columns in the same order. Add aliases (AS) where column names differ between branches."
+
+  - id: M43
+    category: mapping_content
+    check: "All tables in Business Logic must appear in Source Table (Column H)"
+    severity: blocker
+    applies_to: all
+    logic: |
+      for row in mapping_rows:
+        if row.source_table_name in ['(system)', '(derived)', 'N/A', '']:
+          continue
+        logic_tables = extract_tables_from_business_logic(row.business_logic)
+        source_tables = set(split_comma(row.source_table_name))
+        missing = logic_tables - source_tables
+        if len(missing) > 0:
+          return FAIL(row.target_column_name, missing)
+      return PASS
+    error_message: "Column '{{column}}' Business Logic references tables not in Source Table (Column H): {{value}}."
+    fix_suggestion: "Add all tables referenced in Business Logic to Source Table (Column H), comma-separated. Driver table first, then joined tables in join order."
+
+  - id: M44
+    category: mapping_content
+    check: "All columns in Value: expression must appear in Source Column (Column I) or be system/derived"
+    severity: blocker
+    applies_to: all
+    logic: |
+      for row in mapping_rows:
+        if row.source_column_name in ['(system)', '(derived)', 'Hardcoded', 'N/A', '']:
+          continue
+        value_columns = extract_columns_from_value_expression(row.business_logic)
+        source_columns = set(split_comma(row.source_column_name))
+        missing = value_columns - source_columns - {'(system)', '(derived)', 'Hardcoded'}
+        if len(missing) > 0:
+          return FAIL(row.target_column_name, missing)
+      return PASS
+    error_message: "Column '{{column}}' Value: expression references columns not in Source Column (Column I): {{value}}."
+    fix_suggestion: "Add all contributing source columns to Source Column (Column I) in 3-part FQN format ({database}.{table}.{column}), comma-separated."
+
+  - id: M45
+    category: mapping_content
+    check: "Window/Dedup metadata labels required when ROW_NUMBER/RANK/LAG/LEAD present in Value"
+    severity: blocker
+    applies_to: all
+    logic: |
+      window_functions = ['ROW_NUMBER', 'RANK', 'DENSE_RANK', 'LAG', 'LEAD', 'NTILE', 'FIRST_VALUE', 'LAST_VALUE']
+      for row in mapping_rows:
+        logic_upper = upper(row.business_logic)
+        for func in window_functions:
+          if func + '(' in logic_upper or func + ' (' in logic_upper:
+            if 'Window Function:' not in row.business_logic and 'Window Partition:' not in row.business_logic and 'Dedup Strategy:' not in row.business_logic:
+              return FAIL(row.target_column_name, func)
+      return PASS
+    error_message: "Column '{{column}}' uses window function '{{value}}' but has no Window Function/Partition/Dedup metadata labels."
+    fix_suggestion: "Add explicit metadata labels: 'Window Function:', 'Window Partition:', 'Window Order:' (or 'Dedup Strategy:', 'Dedup Partition:', 'Dedup Order:' for dedup patterns)."
+
+  - id: M46
+    category: mapping_content
+    check: "Aggregate Group By required when SUM/COUNT/AVG/MIN/MAX present in Value expression"
+    severity: blocker
+    applies_to: all
+    logic: |
+      aggregate_functions = ['SUM(', 'COUNT(', 'AVG(', 'MIN(', 'MAX(', 'COUNT(DISTINCT']
+      for row in mapping_rows:
+        logic_upper = upper(row.business_logic)
+        has_aggregate = any(func in logic_upper for func in aggregate_functions)
+        if has_aggregate:
+          if 'Aggregate Group By:' not in row.business_logic and 'Aggregate Function:' not in row.business_logic:
+            if 'OVER' not in logic_upper and 'Window Function:' not in row.business_logic:
+              return FAIL(row.target_column_name)
+      return PASS
+    error_message: "Column '{{column}}' uses aggregate function but has no 'Aggregate Group By:' or 'Aggregate Function:' label."
+    fix_suggestion: "Add 'Aggregate Function:' and 'Aggregate Group By:' labels after the Value: line. Exception: aggregates inside window OVER() clauses do not need GROUP BY."
+
+  - id: M47
+    category: mapping_content
+    check: "Multi-step Transformation Lineage: every step must have Operation, Grain, Destination"
+    severity: blocker
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        first_key_row = get_first_row_with_key_column_Y()
+        if first_key_row and 'Transformation Lineage:' in first_key_row.transformation_logic:
+          lineage_text = first_key_row.transformation_logic
+          steps = extract_steps_from_lineage(lineage_text)
+          for step in steps:
+            if 'Operation:' not in step:
+              return FAIL(step.number, "missing Operation:")
+            if 'Grain:' not in step:
+              return FAIL(step.number, "missing Grain:")
+            if 'Destination:' not in step:
+              return FAIL(step.number, "missing Destination:")
+      return PASS
+    error_message: "Step {{step_number}} in Transformation Lineage is missing required field: {{value}}."
+    fix_suggestion: "Every step in Transformation Lineage MUST have Operation:, Grain:, and Destination: labels. Operation must be one of: INSERT_SELECT, UPDATE, DELETE, TRUNCATE, MERGE, RENAME, CREATE_VIEW."
+
+  - id: M48
+    category: mapping_content
+    check: "Multi-step Column roles must be valid enum values"
+    severity: blocker
+    applies_to: multi_step_only
+    logic: |
+      valid_roles = ['[New]', '[Transformed]', '[Pass-through]', '[Replace]', '[Additive]', '[Conditional]', '[New, Infrastructure]']
+      if intermediate_steps is non-empty:
+        first_key_row = get_first_row_with_key_column_Y()
+        if first_key_row and 'Transformation Lineage:' in first_key_row.transformation_logic:
+          roles = extract_column_roles(first_key_row.transformation_logic)
+          for role in roles:
+            if role not in valid_roles:
+              return FAIL(role)
+      return PASS
+    error_message: "Transformation Lineage contains invalid column role: '{{value}}'. Valid roles: [New], [Transformed], [Pass-through], [Replace], [Additive], [Conditional], [New, Infrastructure]."
+    fix_suggestion: "Use one of the valid column roles: [New] for new columns, [Transformed] for modified columns, [Pass-through] for unchanged, [Replace] for overwritten, [Additive] for accumulated, [Conditional] for CASE-based, [New, Infrastructure] for dedup/ordering columns."
+
+  - id: M49
+    category: mapping_content
+    check: "Crypto DE name must match standard naming pattern"
+    severity: blocker
+    applies_to: all
+    logic: |
+      crypto_de_pattern = r'(UK|US|APAC)_TOK_.+_L\dR\d_.+_DE'
+      for row in mapping_rows:
+        if 'Crypto DE:' in row.business_logic or 'Crypto Source DE:' in row.business_logic or 'Crypto Target DE:' in row.business_logic:
+          de_names = extract_crypto_de_names(row.business_logic)
+          for de_name in de_names:
+            if not regex_match(de_name, crypto_de_pattern):
+              return FAIL(row.target_column_name, de_name)
+        if 'cloud_api_udf_' in row.business_logic:
+          udf_de_names = extract_de_from_udf(row.business_logic)
+          for de_name in udf_de_names:
+            if not regex_match(de_name, crypto_de_pattern):
+              return FAIL(row.target_column_name, de_name)
+      return PASS
+    error_message: "Column '{{column}}' has non-standard Crypto DE name: '{{value}}'. Must match pattern (UK|US|APAC)_TOK_*_L{n}R{n}_*_DE."
+    fix_suggestion: "Use the standard DE naming pattern: {region}_TOK_{data_element}_{level}_DE, e.g., UK_TOK_SORTCOD_L0R0_NUM_DE."
+
+  - id: M50
+    category: mapping_content
+    check: "All alias references in expressions must be defined in Driver Table / Join N Table lines"
+    severity: blocker
+    applies_to: all
+    logic: |
+      for row in mapping_rows:
+        if 'Driver Table:' not in row.business_logic:
+          continue
+        defined_aliases = extract_defined_aliases(row.business_logic)
+        used_aliases = extract_used_aliases_in_expressions(row.business_logic)
+        undefined = used_aliases - defined_aliases
+        if len(undefined) > 0:
+          return FAIL(row.target_column_name, undefined)
+      return PASS
+    error_message: "Column '{{column}}' uses undefined aliases in expressions: {{value}}. All aliases must be defined in Driver Table / Join N Table lines."
+    fix_suggestion: "Define all table aliases in the structured format lines. Each alias appears in parentheses after the table name: 'Driver Table: database.table (alias)' or 'Join N Table: database.table (alias)'."
+
+  - id: M51
+    category: mapping_content
+    check: "Source Table (Column H) must not contain view names found in intermediate_steps CREATE_VIEW entries"
+    severity: blocker
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        view_names = [s.temp_table_name for s in intermediate_steps if s.statement_type == 'CREATE_VIEW']
+        if len(view_names) == 0:
+          return PASS
+        for row in mapping_rows:
+          if row.source_table_name in ['(system)', '(derived)', 'N/A', '']:
+            continue
+          for table_ref in split_comma(row.source_table_name):
+            table_ref = trim(table_ref)
+            if table_ref in view_names:
+              return FAIL(row.target_column_name, table_ref)
+      return PASS
+    error_message: "Column '{{column}}' Source Table references view '{{value}}' instead of its resolved base table. Views must be resolved to physical base tables in Column H."
+    fix_suggestion: "Replace the view name with its resolved base table from intermediate_steps[].resolves_to_base_tables. For example, replace 'l_bcs_loaddb.prior_cycle_v' with 's_trmfdb.ctcp'."
+
+  - id: M52
+    category: mapping_content
+    check: "Source Column (Column I) must use physical base table column names, not view aliases"
+    severity: blocker
+    applies_to: multi_step_only
+    logic: |
+      if intermediate_steps is non-empty:
+        view_steps = [s for s in intermediate_steps if s.statement_type == 'CREATE_VIEW']
+        if len(view_steps) == 0:
+          return PASS
+        view_alias_map = {}
+        for step in view_steps:
+          for col in step.columns_produced:
+            if col.column_name != col.expression.split('.')[-1]:
+              view_alias_map[col.column_name] = col.expression
+        for row in mapping_rows:
+          if row.source_column_name in ['(system)', '(derived)', 'Hardcoded', 'N/A', '']:
+            continue
+          for col_ref in split_comma(row.source_column_name):
+            col_ref = trim(col_ref)
+            parts = col_ref.split('.')
+            if len(parts) == 3:
+              col_name = parts[2]
+              if col_name in view_alias_map:
+                return FAIL(row.target_column_name, col_name, view_alias_map[col_name])
+      return PASS
+    error_message: "Column '{{column}}' Source Column uses view alias '{{value}}' instead of physical column name '{{physical}}'. Use the base table physical column name."
+    fix_suggestion: "Replace the view alias with the physical column name from the base table DDL. View column aliases are documented in the CREATE_VIEW intermediate step's columns_produced block."
+
+  - id: M53
+    category: mapping_content
+    check: "CDC keys must not appear in Additional Context for non-SCD2 tables"
+    severity: blocker
+    applies_to: all
+    logic: |
+      first_row = get_first_row(target_table)
+      if is_empty(first_row.additional_context):
+        return PASS
+      table_type = get_table_type_classification()
+      if table_type == 'NonTransactional_SCD2':
+        return PASS  # CDC keys are expected for SCD2
+      cdc_keys = ['cdc_type', 'cdc_exclude', 'validate_unique_keys', 'duplicates_ts_col', 'dedup_order']
+      pairs = parse_pipe_delimited(first_row.additional_context)
+      for key, value in pairs:
+        if key in cdc_keys:
+          return FAIL(key, table_type)
+      return PASS
+    error_message: "Additional Context for {{table_type}} table contains CDC key '{{value}}'. CDC keys (cdc_type, cdc_exclude, validate_unique_keys, duplicates_ts_col, dedup_order) are arguments to Databricks run_cdc() and only applicable to NonTransactional_SCD2 tables."
+    fix_suggestion: "Remove CDC-related keys from Additional Context. These keys are run_cdc() function arguments — only NonTransactional_SCD2 tables invoke run_cdc(). Allowed keys for Transactional: load_type, partition_key, process_frequency, rolling_deletion_predicate. Allowed keys for SCD1: load_type, partition_key, process_frequency, rolling_deletion_predicate."
+
+  - id: M54
+    category: mapping-content
+    severity: warning
+    description: "source_system value should be consistent for tables from the same source database"
+    rule: "When source_system is declared in Additional Context, verify that all mapping tables sourced from the same database use the same source_system label. Mismatched labels for the same database may indicate a configuration error."
+    applies_when: "source_system_hint is non-null for any table in the mapping"
+
+# -----------------------------------------------------------------------------
+# Category 3: Scenario-Specific Validations (SC1–SC19)
+# -----------------------------------------------------------------------------
+scenario_specific:
+  - id: SC1
+    category: scenario_specific
+    check: "SCD2 tables have eff_start_date, eff_end_date, active columns"
+    severity: blocker
+    applies_to:
+      axis: table_type
+      value: NonTransactional_SCD2
+    logic: |
+      required_columns = ['eff_start_date', 'eff_end_date', 'active']
+      table_columns = get_target_columns(target_table)
+      for col in required_columns:
+        if col not in table_columns:
+          return FAIL(col)
+      return PASS
+    error_message: "SCD2 table '{{value}}' is missing required column '{{column}}'."
+    fix_suggestion: "Add the missing SCD2 control column (eff_start_date, eff_end_date, or active) to the target table."
+
+  - id: SC2
+    category: scenario_specific
+    check: "eff_end_date logic references configured high-end date"
+    severity: blocker
+    applies_to:
+      axis: table_type
+      value: NonTransactional_SCD2
+    logic: |
+      eff_end_row = get_row_for_column('eff_end_date')
+      if configured_high_end_date not in eff_end_row.transformation_logic:
+        return FAIL
+      return PASS
+    error_message: "Column 'eff_end_date' in row {{row}} does not reference the configured high-end date '{{value}}'."
+    fix_suggestion: "Include the high-end date constant (e.g., '3499-12-31') in the eff_end_date transformation logic."
+
+  - id: SC3
+    category: scenario_specific
+    check: "active flag logic derives from eff_end_date comparison"
+    severity: blocker
+    applies_to:
+      axis: table_type
+      value: NonTransactional_SCD2
+    logic: |
+      active_row = get_row_for_column('active')
+      if 'eff_end_date' not in active_row.transformation_logic:
+        return FAIL
+      return PASS
+    error_message: "Column 'active' in row {{row}} does not derive from eff_end_date comparison. Logic: '{{value}}'."
+    fix_suggestion: "The 'active' flag should be derived by comparing eff_end_date to the high-end date (e.g., CASE WHEN eff_end_date = CAST('3499-12-31' AS DATE) THEN '1' ELSE '0' END)."
+
+  - id: SC4
+    category: scenario_specific
+    check: "eff_start_date has a real source column (not system-generated)"
+    severity: warning
+    applies_to:
+      axis: table_type
+      value: NonTransactional_SCD2
+    logic: |
+      eff_start_row = get_row_for_column('eff_start_date')
+      if eff_start_row.source_marker in ['(system)', '(derived)']:
+        return FAIL
+      if is_empty(eff_start_row.source_column_name):
+        return FAIL
+      return PASS
+    error_message: "Column 'eff_start_date' in row {{row}} appears to be system-generated rather than sourced from data."
+    fix_suggestion: "Map eff_start_date to an actual source timestamp/date column that indicates when the record became effective."
+
+  - id: SC5
+    category: scenario_specific
+    check: "Transactional tables do NOT have eff_start/end/active columns"
+    severity: warning
+    applies_to:
+      axis: table_type
+      value: Transactional
+    logic: |
+      scd2_columns = ['eff_start_date', 'eff_end_date', 'active']
+      table_columns = get_target_columns(target_table)
+      for col in scd2_columns:
+        if col in table_columns:
+          return FAIL(col)
+      return PASS
+    error_message: "Transactional table '{{value}}' contains SCD2 column '{{column}}' which should not be present."
+    fix_suggestion: "Remove SCD2 control columns (eff_start_date, eff_end_date, active) from transactional tables, or reclassify as SCD2."
+
+  - id: SC6
+    category: scenario_specific
+    check: "Crypto columns have valid DE name in expression"
+    severity: blocker
+    applies_to:
+      axis: crypto_aspect
+      value:
+        - Tokenize
+        - Detokenize
+        - Both
+    logic: |
+      if is_crypto_column(row):
+        de_name = extract_de_name(transformation_logic)
+        if de_name is None or de_name not in valid_de_names:
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has crypto logic but no valid Data Element (DE) name found in expression: '{{value}}'."
+    fix_suggestion: "Include a valid DE name in the crypto UDF expression (e.g., cloud_api_udf_CUSTOMER_NAME_protect)."
+
+  - id: SC7
+    category: scenario_specific
+    check: "Crypto UDF naming follows convention: cloud_api_udf_{DE}_{protect|unprotect}"
+    severity: blocker
+    applies_to:
+      axis: crypto_aspect
+      value:
+        - Tokenize
+        - Detokenize
+        - Both
+    logic: |
+      if is_crypto_column(row):
+        udf_call = extract_udf_name(transformation_logic)
+        if not regex_match(udf_call, r'^cloud_api_udf_[A-Z_]+_(protect|unprotect)$'):
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has non-standard crypto UDF name: '{{value}}'. Expected pattern: cloud_api_udf_{DE}_{protect|unprotect}."
+    fix_suggestion: "Rename the UDF to follow the convention: cloud_api_udf_{DATA_ELEMENT}_{protect|unprotect}."
+
+  - id: SC8
+    category: scenario_specific
+    check: "Re-tokenize (both) has source DE != target DE"
+    severity: blocker
+    applies_to:
+      axis: crypto_aspect
+      value: Both
+    logic: |
+      source_de = extract_source_de(transformation_logic)
+      target_de = extract_target_de(transformation_logic)
+      if source_de == target_de:
+        return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} is marked crypto_both but source DE '{{value}}' equals target DE. Re-tokenization requires different DEs."
+    fix_suggestion: "Ensure the unprotect DE (source) differs from the protect DE (target) for re-tokenization scenarios."
+
+  - id: SC9
+    category: scenario_specific
+    check: "Multi-source: all source references fully qualified"
+    severity: blocker
+    applies_to:
+      cross_axis: true
+      condition: "multiple source tables or LEFT JOIN detected in lineage"
+    logic: |
+      for each source_ref in extract_source_references(transformation_logic):
+        if not is_fully_qualified(source_ref):  # database.table.column
+          return FAIL(source_ref)
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has unqualified source reference: '{{value}}'. Multi-source requires full qualification."
+    fix_suggestion: "Use fully qualified references (database.table.column) for all source references in multi-source mappings."
+
+  - id: SC10
+    category: scenario_specific
+    check: "Multi-source: LEFT JOIN columns have Null Flag = Y"
+    severity: warning
+    applies_to:
+      cross_axis: true
+      condition: "multiple source tables or LEFT JOIN detected in lineage"
+    logic: |
+      if source_comes_from_left_join_side(row):
+        if null_flag != 'Y':
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} sources from LEFT JOIN right-side but Null Flag is '{{value}}' (should be Y)."
+    fix_suggestion: "Set Null Flag to 'Y' for columns sourced from the non-preserved side of a LEFT JOIN (they may be null when no match)."
+
+  - id: SC11
+    category: scenario_specific
+    check: "Aggregation: PARTITION BY clause present and valid"
+    severity: warning
+    applies_to:
+      cross_axis: true
+      condition: "aggregate functions present in transformation logic"
+    logic: |
+      if is_window_or_aggregate(transformation_logic):
+        # Exception: GROUP BY used for dedup (all selected columns in GROUP BY,
+        # no aggregate functions) is treated as DISTINCT and does NOT trigger this rule
+        if is_group_by_dedup(transformation_logic):
+          selected_cols = extract_selected_columns(transformation_logic)
+          group_by_cols = extract_group_by_columns(transformation_logic)
+          aggregate_funcs = extract_aggregate_functions(transformation_logic)
+          if set(selected_cols) <= set(group_by_cols) and len(aggregate_funcs) == 0:
+            return PASS  # Dedup via GROUP BY — equivalent to DISTINCT
+        if 'partition by' not in lower(transformation_logic):
+          return FAIL
+        partition_cols = extract_partition_columns(transformation_logic)
+        if len(partition_cols) == 0:
+          return FAIL
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} uses aggregation but has no valid PARTITION BY clause: '{{value}}'."
+    fix_suggestion: "Add a PARTITION BY clause specifying the grouping columns for the window/aggregate function."
+    notes: >
+      Exception: If all selected columns appear in GROUP BY AND no aggregate functions
+      are present, this is dedup (equivalent to DISTINCT), not aggregation — SC11 does
+      not apply in that case.
+
+  - id: SC12
+    category: scenario_specific
+    check: "UNION queries have all branches documented in Business Logic"
+    severity: warning
+    applies_to: union
+    logic: |
+      if union_metadata and union_metadata.branch_count > 0:
+        business_logic_mentions_all_branches = all branches referenced
+        return PASS if all documented else FAIL
+    error_message: "UNION query has {{branch_count}} branches but Business Logic does not document all of them"
+    fix_suggestion: "Use the UNION Structured Format: Union Branch 1: ... Union Branch 2: ... for each UNION branch."
+
+  - id: SC13
+    category: scenario_specific
+    check: "Self-join columns use distinct aliases to disambiguate same-table references"
+    severity: warning
+    applies_to: self_join
+    logic: |
+      if same table appears multiple times in joins_detected:
+        verify aliases are unique and source_column references are unambiguous
+    error_message: "Self-join on table '{{table}}' uses ambiguous aliases in row {{row}}"
+    fix_suggestion: "Use role-reflecting aliases (e.g., account_curr, account_prev) for self-joins."
+
+  - id: SC14
+    category: scenario_specific
+    check: "Non-equi JOIN columns from non-driving side have Null Flag = Y when LEFT/FULL join"
+    severity: warning
+    applies_to: non_equi_join
+    logic: |
+      same as SC10 but extended to non-equi joins
+    error_message: "Column '{{column}}' sourced from non-equi LEFT/FULL JOIN should have Null Flag = Y"
+    fix_suggestion: "Set Null Flag to 'Y' for columns from the non-driving side of a non-equi LEFT or FULL join."
+
+  - id: SC15
+    category: scenario_specific
+    check: "FULL OUTER JOIN columns have Null Flag = 'Y' on both sides"
+    severity: warning
+    applies_to: full_outer_join
+    logic: |
+      if FULL OUTER JOIN detected in joins_detected:
+        for column in lineage where source_table is on either side of the FULL JOIN:
+          if null_flag != 'Y':
+            return FAIL(column)
+    error_message: "Column '{{column}}' in row {{row}} sourced from FULL OUTER JOIN but Null Flag is '{{value}}' — both sides of a FULL JOIN can produce NULLs"
+    fix_suggestion: "Set Null Flag to 'Y' for all columns sourced from either side of a FULL OUTER JOIN."
+
+  - id: SC16
+    category: scenario_specific
+    check: "No nested protect(protect(col)) double-encryption patterns"
+    severity: blocker
+    applies_to:
+      axis: crypto_aspect
+      value: [Tokenize, Both]
+    logic: |
+      for row in mapping_rows:
+        if regex_match(business_logic, r'cloud_api_udf_\w+_protect\s*\(\s*cloud_api_udf_\w+_protect'):
+          return FAIL(row)
+    error_message: "Column '{{column}}' in row {{row}} has double-protect pattern: '{{value}}'. This is almost always accidental — intended re-tokenization uses protect(unprotect(col))."
+    fix_suggestion: "Remove the inner protect() call. For re-tokenization, use protect(unprotect(col)) with source DE ≠ target DE."
+
+  - id: SC17
+    category: scenario_specific
+    check: "No crypto UDF calls inside aggregate function arguments"
+    severity: blocker
+    applies_to:
+      axis: crypto_aspect
+      value: [Tokenize, Detokenize, Both]
+    logic: |
+      for row in mapping_rows:
+        if regex_match(business_logic, r'(SUM|AVG|COUNT|MAX|MIN)\s*\(.*cloud_api_udf_\w+_(protect|unprotect)'):
+          return FAIL(row)
+    error_message: "Column '{{column}}' in row {{row}} has crypto UDF inside aggregate function: '{{value}}'. Aggregation on tokenized data produces meaningless results."
+    fix_suggestion: "Aggregate on clear/source values first, then apply crypto to the result: cloud_api_udf_{DE}_protect(CAST(SUM(amount) AS STRING))."
+
+  - id: SC18
+    category: scenario_specific
+    check: "System function columns use source = (system) or (derived)"
+    severity: warning
+    applies_to: all
+    logic: |
+      system_functions = ['CURRENT_DATE', 'CURRENT_TIMESTAMP', 'NOW()', 'GETDATE()', 'UUID()', 'MONOTONICALLY_INCREASING_ID()', 'CURRENT_USER', 'SESSION_USER']
+      for row in mapping_rows:
+        if business_logic is purely a system function (no source column reference):
+          if source_database not in ['(system)', '(derived)']:
+            return FAIL(row)
+    error_message: "Column '{{column}}' in row {{row}} uses system function '{{value}}' but has a real source database specified instead of (system) or (derived)"
+    fix_suggestion: "Set source_database to '(system)' and source_table to '(system)' for pure system functions (CURRENT_TIMESTAMP, UUID), or '(derived)' for positional functions (ROW_NUMBER with source column references in OVER clause)."
+
+  - id: SC19
+    category: scenario_specific
+    check: "No unresolved NATURAL JOIN columns in output"
+    severity: blocker
+    applies_to: all
+    logic: |
+      for entry in lineage:
+        if entry.evidence contains 'natural_join_unresolved':
+          return FAIL(entry)
+    error_message: "Column '{{column}}' in row {{row}} was matched via NATURAL JOIN but the matched column list is unconfirmed — cannot guarantee correct lineage"
+    fix_suggestion: "Convert NATURAL JOIN to explicit JOIN with ON clause, or confirm the matched columns via guided mode (Q32)."
+
+  - id: SC20
+    category: scenario_specific
+    check: "SCD2 tables: Transformation Lineage steps must not include 'active' column in Set Columns (reserved for SCD2 framework)"
+    severity: warning
+    applies_to:
+      axis: table_type
+      value: NonTransactional_SCD2
+    logic: |
+      if intermediate_steps is non-empty:
+        first_key_row = get_first_row_with_key_column_Y()
+        if first_key_row and 'Transformation Lineage:' in first_key_row.transformation_logic:
+          lineage_text = first_key_row.transformation_logic
+          steps = extract_steps_from_lineage(lineage_text)
+          for step in steps:
+            if 'Set Columns:' in step:
+              set_cols = extract_set_columns(step)
+              if 'active' in set_cols:
+                return FAIL(step.number)
+      return PASS
+    error_message: "Step {{step_number}} includes 'active' in Set Columns — this column is managed by the SCD2 framework and should not be overridden in transformation steps."
+    fix_suggestion: "Remove 'active' from Set Columns. The SCD2 framework automatically derives active = CASE WHEN eff_end_date = '3499-12-31' THEN '1' ELSE '0' END."
+
+# -----------------------------------------------------------------------------
+# Category 4: Artifact-Consistency Validations (A1–A7)
+# Note: A2 merged into A3, M26 merged into M25. Rule IDs are stable — gaps are intentional.
+# -----------------------------------------------------------------------------
+artifact_consistency:
+  - id: A1
+    category: artifact_consistency
+    check: "SQL-derived mappings aligned with declared target columns (no orphan extractions)"
+    severity: warning
+    applies_to: all
+    logic: |
+      sql_extracted_targets = extract_targets_from_sql(sql_artifacts)
+      declared_targets = get_declared_target_columns()
+      orphans = sql_extracted_targets - declared_targets
+      if len(orphans) > 0:
+        return FAIL(orphans)
+      return PASS
+    error_message: "SQL artifacts produce columns not declared in target schema: '{{value}}'."
+    fix_suggestion: "Either add the orphan columns to the target schema or remove them from the SQL. Reconcile extraction with declaration."
+
+  - id: A3
+    category: artifact_consistency
+    check: "Profiling null% does not contradict null flag without explanation"
+    severity: warning
+    applies_to: all
+    logic: |
+      if profiling_available(source_column):
+        null_pct = get_null_percentage(source_column)
+        if null_flag == 'N' and null_pct > 0:
+          if not has_coalesce_or_default(transformation_logic, default_value):
+            return FAIL(null_pct)
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} has Null Flag = N but source profiling shows {{value}}% nulls with no COALESCE/default handling."
+    fix_suggestion: "Either set Null Flag to 'Y', add a COALESCE/default in transformation logic, or document why nulls will not propagate."
+
+  - id: A4
+    category: artifact_consistency
+    check: "User prompt instructions do not silently override authoritative metadata"
+    severity: warning
+    applies_to: all
+    logic: |
+      for each override in detect_prompt_overrides():
+        if override.conflicts_with_metadata:
+          if not override.has_explicit_justification:
+            return FAIL(override)
+      return PASS
+    error_message: "Row {{row}} contains a user-prompt override of authoritative metadata for '{{column}}' without justification: '{{value}}'."
+    fix_suggestion: "Document why the user instruction overrides the metadata, or revert to the metadata-derived value."
+
+  - id: A5
+    category: artifact_consistency
+    check: "Columns renamed between artifacts are detected and mapped (alias reconciliation)"
+    severity: warning
+    applies_to: all
+    logic: |
+      for each artifact_pair in get_artifact_pairs():
+        renames = detect_renames(artifact_pair.source, artifact_pair.target)
+        for rename in renames:
+          if not has_alias_mapping(rename):
+            return FAIL(rename)
+      return PASS
+    error_message: "Column '{{column}}' appears renamed between artifacts ('{{value}}') but no alias mapping exists."
+    fix_suggestion: "Add an explicit alias/rename mapping to reconcile the column name difference between artifacts."
+
+  - id: A6
+    category: artifact_consistency
+    check: "Code-derived source columns exist in declared source schema"
+    severity: warning
+    applies_to: all
+    logic: |
+      code_source_columns = extract_source_columns_from_code(code_artifacts)
+      for col_ref in code_source_columns:
+        if metadata_available(col_ref.table):
+          if col_ref.column not in get_columns(col_ref.table):
+            return FAIL(col_ref)
+      return PASS
+    error_message: "Code references source column '{{value}}' which does not exist in the declared source schema for table '{{column}}'."
+    fix_suggestion: "Verify the column reference in code against the source schema. Check for typos, renames, or schema drift."
+
+  - id: A7
+    category: artifact_consistency
+    check: "All required audit columns present per classified table type"
+    severity: blocker
+    applies_to: all
+    logic: |
+      table_type = trim(target_table_type)
+      if table_type == 'Transactional':
+        required = ['dw_lod_tmp', 'dw_bus_dt']
+      elif table_type == 'NonTransactional_SCD1':
+        required = ['dw_lod_tmp', 'dw_upd_lod_tmp']
+      elif table_type == 'NonTransactional_SCD2':
+        required = ['eff_start_date', 'eff_end_date', 'active', 'dw_lod_tmp', 'dw_upd_lod_tmp']
+      else:
+        return PASS  # Unknown table type — skip
+      table_columns = get_target_columns(target_table)
+      for col in required:
+        if col not in table_columns:
+          return FAIL(target_table, table_type, col)
+      return PASS
+    error_message: "Target table '{{table}}' (type: {{table_type}}) is missing required audit column '{{column}}'."
+    fix_suggestion: "Add the missing audit column. Required per type — Transactional: dw_lod_tmp, dw_bus_dt. NonTransactional_SCD1: dw_lod_tmp, dw_upd_lod_tmp. NonTransactional_SCD2: eff_start_date, eff_end_date, active, dw_lod_tmp, dw_upd_lod_tmp."
+
+# -----------------------------------------------------------------------------
+# Category 5: Output-Format Validations (F1–F13)
+# -----------------------------------------------------------------------------
+output_format:
+  - id: F1
+    category: output_format
+    check: "All 16 template columns present in output"
+    severity: blocker
+    applies_to: all
+    logic: |
+      required_columns = [
+        'Target Database', 'Target Table', 'Target Column Name',
+        'Target Column Definition/Description', 'Target Column Datatype',
+        'Target Column Null Flag', 'Source Database', 'Source Table Name',
+        'Source Column Name', 'Business Logic/Transformation Logic',
+        'Additional Context', 'Target Table description',
+        'Transformation Type', 'Default Value', 'Target Table Type',
+        'Key Column'
+      ]
+      output_columns = get_output_columns()
+      missing = set(required_columns) - set(output_columns)
+      if len(missing) > 0:
+        return FAIL(missing)
+      return PASS
+    error_message: "Output is missing required template columns: {{value}}."
+    fix_suggestion: "Add all 16 template columns to the output. Refer to templates/mapping_spec.md for the complete column list."
+
+  - id: F2
+    category: output_format
+    check: "Column order matches template specification"
+    severity: blocker
+    applies_to: all
+    logic: |
+      expected_order = get_template_column_order()
+      actual_order = get_output_column_order()
+      if expected_order != actual_order:
+        return FAIL(actual_order)
+      return PASS
+    error_message: "Output column order does not match template specification. Found: {{value}}."
+    fix_suggestion: "Reorder output columns to match templates/mapping_spec.md column sequence exactly (A through P)."
+
+  - id: F3
+    category: output_format
+    check: "No extra columns beyond template definition"
+    severity: blocker
+    applies_to: all
+    logic: |
+      template_columns = get_template_columns()
+      output_columns = get_output_columns()
+      extras = set(output_columns) - set(template_columns)
+      if len(extras) > 0:
+        return FAIL(extras)
+      return PASS
+    error_message: "Output contains extra columns not in template definition: {{value}}."
+    fix_suggestion: "Remove extra columns from the output. Only the 16 template-defined columns should be present."
+
+  - id: F4
+    category: output_format
+    check: "System columns use (system)/(derived) markers per template convention"
+    severity: warning
+    applies_to: all
+    logic: |
+      for each row in output_rows:
+        if is_system_generated_column(row):
+          if row.source_database not in ['(system)', '(derived)']:
+            return FAIL(row)
+      return PASS
+    error_message: "Column '{{column}}' in row {{row}} is system-generated but does not use (system)/(derived) marker in Source Database: '{{value}}'."
+    fix_suggestion: "Set Source Database to '(system)' or '(derived)' for columns without a physical source."
+
+  - id: F5
+    category: output_format
+    check: "Audit columns present per table type (Transactional: dw_lod_tmp, dw_bus_dt; NonTransactional_SCD1: dw_lod_tmp, dw_upd_lod_tmp; NonTransactional_SCD2: eff_start_date, eff_end_date, active, dw_lod_tmp, dw_upd_lod_tmp)"
+    severity: warning
+    applies_to: all
+    logic: |
+      table_type = trim(target_table_type)
+      if table_type == 'Transactional':
+        required = ['dw_lod_tmp', 'dw_bus_dt']
+      elif table_type == 'NonTransactional_SCD1':
+        required = ['dw_lod_tmp', 'dw_upd_lod_tmp']
+      elif table_type == 'NonTransactional_SCD2':
+        required = ['eff_start_date', 'eff_end_date', 'active', 'dw_lod_tmp', 'dw_upd_lod_tmp']
+      else:
+        required = ['dw_lod_tmp']  # minimum for unknown table type
+      table_columns = get_target_columns(target_table)
+      for col in required:
+        if col not in table_columns:
+          return FAIL(col)
+      return PASS
+    error_message: "Target table '{{value}}' (type: {{table_type}}) is missing required audit column '{{column}}'."
+    fix_suggestion: "Add the required audit columns per table type. Transactional: dw_lod_tmp + dw_bus_dt. NonTransactional_SCD1: dw_lod_tmp + dw_upd_lod_tmp. NonTransactional_SCD2: eff_start_date + eff_end_date + active + dw_lod_tmp + dw_upd_lod_tmp."
+
+  - id: F6
+    category: output_format
+    check: "Output 'Mapping' sheet contains data matching the classified scenario"
+    severity: blocker
+    applies_to: all
+    logic: |
+      mapping_sheet = get_output_sheet('Mapping')
+      if mapping_sheet is None:
+        return FAIL("No 'Mapping' sheet found in output")
+      scenario_data = get_scenario_data(scenario_classification)
+      if not sheet_contains_scenario_data(mapping_sheet, scenario_data):
+        return FAIL(scenario_classification)
+      return PASS
+    error_message: "Output 'Mapping' sheet does not contain data matching classified scenario '{{value}}'."
+    fix_suggestion: "Ensure the Mapping sheet contains data for the classified scenario. Output should have exactly 2 sheets: Mapping + Source Volumetrics."
+
+  - id: F7
+    category: output_format
+    check: "Source Volumetrics sheet populated for all referenced source tables"
+    severity: warning
+    applies_to: all
+    logic: |
+      referenced_sources = get_all_source_tables(mapping_rows)
+      volumetrics_sources = get_volumetrics_sheet_tables()
+      missing = referenced_sources - volumetrics_sources
+      if len(missing) > 0:
+        return FAIL(missing)
+      return PASS
+    error_message: "Source Volumetrics sheet is missing entries for source tables: {{value}}."
+    fix_suggestion: "Add rows to the Source Volumetrics sheet for all referenced source tables."
+
+  - id: F8
+    category: output_format
+    check: "Source Volumetrics Primary Key column populated for every source table"
+    severity: warning
+    applies_to: all
+    logic: |
+      for each source_entry in volumetrics_sheet:
+        if is_empty(source_entry.primary_key):
+          return FAIL(source_entry.table_name)
+      return PASS
+    error_message: "Source Volumetrics entry for table '{{value}}' is missing the Primary Key column."
+    fix_suggestion: "Populate the Primary Key column in Source Volumetrics for each source table."
+
+  - id: F9
+    category: output_format
+    check: "Tab colors: Blue (#4472C4) for Mapping sheet, Green (#00B050) for Source Volumetrics"
+    severity: warning
+    applies_to: all
+    logic: |
+      mapping_sheet = get_output_sheet('Mapping')
+      vol_sheet = get_output_sheet('Source Volumetrics')
+      if mapping_sheet and mapping_sheet.tab_color != '4472C4':
+        return FAIL('Mapping', mapping_sheet.tab_color)
+      if vol_sheet and vol_sheet.tab_color != '00B050':
+        return FAIL('Source Volumetrics', vol_sheet.tab_color)
+      return PASS
+    error_message: "Sheet '{{column}}' has incorrect tab color '{{value}}'."
+    fix_suggestion: "Set tab color to Blue (#4472C4) for Mapping sheet and Green (#00B050) for Source Volumetrics."
+
+  - id: F10
+    category: output_format
+    check: "Row 1 headers exactly match specification headers (case-sensitive, all 16 columns per templates/mapping_spec.md)"
+    severity: blocker
+    applies_to: all
+    logic: |
+      expected_headers = get_spec_headers()  # case-sensitive, from templates/mapping_spec.md
+      actual_headers = get_output_row1()
+      if expected_headers != actual_headers:
+        mismatches = find_mismatches(expected_headers, actual_headers)
+        return FAIL(mismatches)
+      return PASS
+    error_message: "Row 1 headers do not match specification. Mismatches: {{value}}."
+    fix_suggestion: "Copy headers exactly from templates/mapping_spec.md. Headers are case-sensitive and must match character-for-character."
+
+  - id: F11
+    category: output_format
+    check: "Row 2 contains mapping data (no instructions row in output — data starts at Row 2)"
+    severity: blocker
+    applies_to: all
+    logic: |
+      row2 = get_output_row(2)
+      if contains_instruction_text(row2):
+        return FAIL
+      if is_empty_row(row2):
+        return FAIL
+      return PASS
+    error_message: "Row 2 in sheet '{{value}}' still contains instruction text or is empty — output should have data starting at Row 2."
+    fix_suggestion: "Remove the instructions row from output. Row 1 = headers, Row 2+ = mapping data."
+
+  - id: F12
+    category: output_format
+    check: "Source Volumetrics estimated_rows populated (enables broadcast_hint accuracy)"
+    severity: warning
+    applies_to: all
+    logic: |
+      missing_tables = []
+      for each source_entry in source_volumetrics:
+        if source_entry.estimated_rows is null:
+          missing_tables.append(source_entry.source_table)
+      if len(missing_tables) > 0:
+        return WARN(missing_tables)
+      return PASS
+    error_message: "Source Volumetrics estimated_rows is null for tables: {{value}}. broadcast_hint may be inaccurate for these tables."
+    fix_suggestion: "Run /sttm-resolve to provide row count estimates. Profiling data can be provided as an Excel workbook in input/source_metadata/ or input/profiling/. Alternatively, run the row count query from profiling_queries.sql against your source database. Tables < 10,000 rows should have broadcast_hint = 'Y'."
+
+  - id: F13
+    category: output_format
+    check: "SELECT * not present in Business Logic — all columns must be explicitly expanded"
+    severity: warning
+    applies_to: all
+    logic: |
+      if 'SELECT *' in business_logic or 'select *' in business_logic:
+        return FAIL
+    error_message: "Row {{row}} contains 'SELECT *' in Business Logic — columns must be explicitly listed"
+    fix_suggestion: "Expand SELECT * to individual column references."
+
+# =============================================================================
+# Category 6: File I/O Validations (FIO)
+# =============================================================================
+# Applied when io_mode is 'file' or 'hybrid'. Skipped entirely for io_mode='table'.
+
+file_io_validations:
+  applies_when: "classification.io_mode in ['file', 'hybrid']"
+
+  FIO1:
+    name: "File source path format"
+    description: >
+      File source storage paths must be valid absolute paths for the platform.
+      Glue: s3:// URI (e.g., 's3://raw-bucket/data/customer_events/') or relative path starting with 'data/'.
+      Databricks: /Volumes/ path (e.g., '/Volumes/catalog/schema/volume/customer_events/').
+    severity: blocker
+    check: "Each source_io.sources[].storage_path matches platform-specific path pattern (s3:// or data/ for Glue; /Volumes/ for Databricks)"
+    auto_fix: false
+
+  FIO2:
+    name: "File target partition columns exist"
+    description: "All columns listed in target_io.partition_by must exist in the target column list."
+    severity: blocker
+    check: "Every column in target_io.partition_by appears in target_columns[]"
+    auto_fix: false
+
+  FIO3:
+    name: "SCD2 incompatible with file target"
+    description: >
+      File targets with write_mode 'overwrite' or 'append' cannot use table_type
+      NonTransactional_SCD2. SCD2 requires a MERGE operation (CDC two-phase merge)
+      which is not supported on plain parquet files.
+    severity: blocker
+    check: "NOT (target_io is present AND table_type == 'NonTransactional_SCD2')"
+    auto_fix: false
+
+  FIO4:
+    name: "File source schema inference warning"
+    description: >
+      File sources with schema_mode='inferred' rely on runtime schema inference
+      from parquet file metadata. Column names and types may differ from expectations.
+      Providing an explicit schema in input/source_metadata/{logical_name}_schema.json
+      is recommended for production pipelines.
+    severity: warning
+    check: "source_io.sources[].schema_mode != 'inferred' OR explicit schema file exists"
+    auto_fix: false
+
+# ── Category 7: Multi-Source-System Validations ─────────────────────────────
+# Applied when data_flow_detection.source_systems is non-empty
+
+MF1:
+  id: MF1
+  category: multi-source-system
+  severity: blocker
+  description: "Each source_system config must contain at least one source table"
+  rule: "When source_systems is non-empty, verify that every generated per-source-system config has at least one non-empty table_type section under 'source'."
+  applies_when: "data_flow_detection.source_systems has entries"
+
+MF2:
+  id: MF2
+  category: multi-source-system
+  severity: blocker
+  description: "process_name must include source_system suffix in multi-source mode"
+  rule: "When source_systems is non-empty, verify that pipeline.process_name ends with '_{source_system}' matching the source_system label for this config."
+  applies_when: "data_flow_detection.source_systems has entries"
+
+MF3:
+  id: MF3
+  category: multi-source-system
+  severity: warning
+  description: "SCD2 tables with independent source_system flows require non-overlapping PKs"
+  rule: "When source_systems is non-empty AND table_type == 'NonTransactional_SCD2', warn that each source_system runs independent CDC merge. Rows across flows must have non-overlapping primary keys or include a source_system discriminator column in the PK to prevent cross-flow CDC conflicts."
+  applies_when: "data_flow_detection.source_systems has entries AND table_type in ('NonTransactional_SCD2')"
+
+MF4:
+  id: MF4
+  category: multi-source-system
+  severity: warning
+  description: "Rolling deletion executes independently per source_system job"
+  rule: "When source_systems is non-empty AND rolling_deletion.enabled == true, warn that the deletion predicate executes per source_system job invocation. The predicate is idempotent but user should be aware that multiple jobs may execute the same DELETE statement against the shared target table."
+  applies_when: "data_flow_detection.source_systems has entries AND rolling_deletion.enabled == true"
+
+MF5:
+  id: MF5
+  category: multi-source-system
+  severity: blocker
+  description: "Staging and checkpoint paths must include source_system component"
+  rule: "When source_systems is non-empty, verify that staging and checkpoint paths contain the source_system value to prevent path collision between concurrent source_system jobs."
+  applies_when: "data_flow_detection.source_systems has entries"
+
+MF6:
+  id: MF6
+  category: multi-source-system
+  severity: blocker
+  description: "DAG ID and job name must include source_system component"
+  rule: "When source_systems is non-empty, verify that DAG IDs, Databricks job names, and Glue job names include the source_system value to prevent scheduling and naming collisions."
+  applies_when: "data_flow_detection.source_systems has entries"

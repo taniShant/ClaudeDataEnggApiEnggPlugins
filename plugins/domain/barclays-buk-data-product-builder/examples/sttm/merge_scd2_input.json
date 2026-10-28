@@ -1,0 +1,71 @@
+{
+  "$schema": "sttm-plugin/v1/extended",
+  "target_source": {
+    "format": "excel",
+    "artifact": "input/target_schema.xlsx"
+  },
+  "target": {
+    "database": "fdp_uk_lending_db",
+    "table": "loan_agreement",
+    "table_description": "Foundation Data Product - loan agreement entity-state table with SCD2 history loaded via MERGE",
+    "table_type": "NonTransactional_SCD2",
+    "columns": [
+      {"name": "loan_agreement_id", "description": "Unique identifier for the loan agreement", "datatype": "string", "nullable": "N", "key_column": "Y"},
+      {"name": "loan_amount", "description": "Approved loan amount in GBP", "datatype": "decimal(18,2)", "nullable": "Y", "key_column": "N"},
+      {"name": "interest_rate_type", "description": "Interest rate classification (FIXED/VARIABLE/TRACKER)", "datatype": "string", "nullable": "Y", "key_column": "N"},
+      {"name": "eff_start_date", "description": "SCD2 effective start date", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "eff_end_date", "description": "SCD2 effective end date", "datatype": "date", "nullable": "N", "key_column": "N"},
+      {"name": "active", "description": "Active record flag", "datatype": "string", "nullable": "N", "key_column": "N"},
+      {"name": "dw_lod_tmp", "description": "Load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"},
+      {"name": "dw_upd_lod_tmp", "description": "Update load timestamp", "datatype": "timestamp", "nullable": "N", "key_column": "N"}
+    ]
+  },
+  "sources": [
+    {
+      "database": "e_core_db",
+      "table": "lending_agreement",
+      "columns": [
+        {"name": "agreement_id", "datatype": "string"},
+        {"name": "loan_amt", "datatype": "float"},
+        {"name": "rate_type_cd", "datatype": "string"},
+        {"name": "row_last_modified_dt", "datatype": "int"}
+      ]
+    }
+  ],
+  "code": {
+    "type": "sql",
+    "content": "MERGE INTO fdp_uk_lending_db.loan_agreement AS tgt USING ( SELECT s.agreement_id, CAST(s.loan_amt AS DECIMAL(18,2)) AS loan_amount, CASE WHEN s.rate_type_cd = 'F' THEN 'FIXED' WHEN s.rate_type_cd = 'V' THEN 'VARIABLE' WHEN s.rate_type_cd = 'T' THEN 'TRACKER' ELSE 'UNKNOWN' END AS interest_rate_type, CAST(TO_DATE(CAST(s.row_last_modified_dt AS STRING), 'yyyyMMdd') AS DATE) AS eff_start_date FROM e_core_db.lending_agreement s ) AS src ON tgt.loan_agreement_id = src.agreement_id AND tgt.active = '1' WHEN MATCHED AND ( tgt.loan_amount <> src.loan_amount OR tgt.interest_rate_type <> src.interest_rate_type ) THEN UPDATE SET tgt.eff_end_date = src.eff_start_date, tgt.active = '0', tgt.dw_upd_lod_tmp = current_timestamp() WHEN NOT MATCHED THEN INSERT ( loan_agreement_id, loan_amount, interest_rate_type, eff_start_date, eff_end_date, active, dw_lod_tmp, dw_upd_lod_tmp ) VALUES ( src.agreement_id, src.loan_amount, src.interest_rate_type, src.eff_start_date, CAST('3499-12-31' AS DATE), '1', current_timestamp(), current_timestamp() )"
+  },
+  "merge": {
+    "target_alias": "tgt",
+    "source_alias": "src",
+    "match_keys": ["loan_agreement_id"],
+    "match_condition": "tgt.loan_agreement_id = src.agreement_id AND tgt.active = '1'",
+    "branches": {
+      "when_matched": {
+        "condition": "tgt.loan_amount <> src.loan_amount OR tgt.interest_rate_type <> src.interest_rate_type",
+        "action": "UPDATE",
+        "description": "Close the current active record by end-dating it when source values have changed"
+      },
+      "when_not_matched": {
+        "action": "INSERT",
+        "description": "Insert new record with current effective date and high-end date for SCD2 open record"
+      }
+    }
+  },
+  "configuration": {
+    "load_type": "Day1",
+    "scd": {
+      "type": "scd2",
+      "effective_start": "eff_start_date",
+      "effective_end": "eff_end_date",
+      "active_flag": "active",
+      "high_end_date": "3499-12-31",
+      "source_mod_column": "row_last_modified_dt",
+      "close_date_formula": "new_eff_start_date",
+      "hash_exclusion_columns": ["dw_lod_tmp", "dw_upd_lod_tmp", "eff_start_date", "eff_end_date", "active"]
+    },
+    "audit_columns": {"load_timestamp": "dw_lod_tmp", "update_timestamp": "dw_upd_lod_tmp"},
+    "partition_columns": ["active"]
+  }
+}

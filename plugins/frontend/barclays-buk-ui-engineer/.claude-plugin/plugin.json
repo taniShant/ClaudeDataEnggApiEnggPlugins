@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-ui-engineer",
+    "description": "Cross-platform UI engineer meta-package. Install this to get all platform specialists (sdf, ios, android, web) plus the shared figma extraction skill.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards", "barclays-buk-ui-engineer-sdf", "barclays-buk-ui-engineer-ios", "barclays-buk-ui-engineer-android", "barclays-buk-ui-engineer-android-tba", "barclays-buk-ui-engineer-web"]
+}

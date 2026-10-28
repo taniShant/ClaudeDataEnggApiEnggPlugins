@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-arbiter",
+    "description": "Safe, intelligent dead code removal for Java and iOS (Swift/Objective-C) projects. Builds call graphs, identifies candidates with confidence scoring, and executes removals with pre- and post-removal validation.",
+    "version": "1.7.1",
+    "author": {
+        "name": "Preetha Ramaswamy",
+        "email": "preetha.ramaswamy@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

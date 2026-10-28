@@ -1,0 +1,113 @@
+schema_version: '1.0'
+domain:
+  id: dom.retail-and-business-loan
+  name: Retail and Business Loan
+  description: The Retail and Business Loan domain encompasses the end-to-end management of monetary loans throughout their lifecycle. This includes product configuration and management, account origination and setup, fund disbursement, transaction processing, repayment scheduling, balance and statement management, account servicing, and customer engagement. The sub-domains provide comprehensive capabilities to design, offer, originate, disburse, manage, and service fixed-term loans for retail and business banking customers, ensuring regulatory compliance while delivering value to both customers and the bank.
+  owner: capl
+  bian_links:
+    - title: Consumer Loan
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=42931"
+    - title: Customer Agreement
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=32862"
+    - title: Customer Billing
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=42033"
+    - title: Customer Offer
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=39968"
+    - title: Disbursement
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=41459"
+    - title: Loan
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=47411"
+    - title: Position Keeping
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=30315"
+    - title: Product Matching
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=44814"
+    - title: Sales Product Agreement
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=37916"
+  sub_domains:
+    - id: sub.rbl.balance-repayments-and-statement-management
+      name: Balance, Repayments and Statement Management
+      description: The Balance, Repayment and Statement Management capability group encompasses the generation and delivery of loan statements, calculation of interest, fees and charges, management and administration of repayment schedules.
+      capabilities:
+        - id: cap.rbl.apply-loan-fees-and-charges
+          name: Apply Loan Fees and Charges
+          description: Application of fees and charges to loan accounts encompassing standard lifecycle fees (e.g. early settlement charges), penalty fees, and ad-hoc charges, enabling accurate cost assessment and revenue recognition throughout the loan term.
+        - id: cap.rbl.calculate-loan-interest
+          name: Calculate Loan Interest
+          description: Calculation of loan interest charges throughout the loan lifecycle encompassing initial interest computation, recalculation for account modifications, rate adjustments, and term changes, enabling accurate interest accrual and customer billing transparency.
+        - id: cap.rbl.generate-loan-account-statements
+          name: Generate Loan Account Statements
+          description: Generation of loan account statements and regulatory correspondence encompassing periodic statements, annual summaries, regulatory notices, and ad-hoc statement requests, enabling customer transparency, regulatory compliance, and account activity documentation.
+        - id: cap.rbl.manage-repayment-schedules
+          name: Manage Repayment Schedules
+          description: Management of loan repayment schedules encompassing schedule generation, modification, deferral handling, payment date adjustments, and installment amount recalculation, enabling accurate payment expectation management throughout the loan term.
+    - id: sub.rbl.customer-engagement-and-services
+      name: Customer Engagement and Services
+      description: The Customer Engagement and Services capability group encompasses customer-facing services and engagement tools, including direct debit management, offer administration, additional lending comparison and appeals processing.
+      capabilities:
+        - id: cap.rbl.generate-and-manage-loan-direct-debit-mandate
+          name: Generate and Manage Loan Direct Debit Mandate
+          description: Management of direct debit mandates for loan repayments encompassing mandate creation, Direct Debit payment date modifications, and source account changes, enabling automated repayment collection and customer payment flexibility.
+        - id: cap.rbl.process-application-appeals
+          name: Process Application Appeals
+          description: Processing of customer appeals following application declines or insufficient offer amounts, encompassing supplementary assessments, enhanced review workflows, and appeal outcome notifications, enabling fair reconsideration and improved customer experience.
+        - id: cap.rbl.provide-additional-lending-comparisons
+          name: Provide Additional Lending Comparisons
+          description: Provision of comparative information between existing and proposed additional loan options encompassing amounts, interest rates, monthly payments, and total costs, enabling informed customer decision-making for additional lending and loan consolidation opportunities.
+        - id: cap.rbl.provide-loan-offers
+          name: Provide Loan Offers
+          description: Provision of personalized loan offers and additional lending opportunities to existing customers, encompassing eligibility-based offer generation, provisional pricing, and offer presentation, enabling customer acquisition and portfolio growth through targeted lending opportunities.
+    - id: sub.rbl.loan-account-maintenance-and-servicing
+      name: Loan Account Maintenance and Servicing
+      description: The Account Maintenance and Servicing capability group covers the ongoing maintenance and servicing of loan accounts, including information access, customer communication, all servicing activities and account closure.
+      capabilities:
+        - id: cap.rbl.close-loan-account
+          name: Close Loan Account
+          description: Processing of loan account closure requests, encompassing account termination procedures, final balance settlements, closure validations, and post-closure communications, ensuring compliant and complete account closure execution.
+        - id: cap.rbl.manage-customer-contact
+          name: Manage Customer Contact
+          description: Management of customer correspondence and communications throughout the loan lifecycle, encompassing notifications, alerts, servicing updates, account change confirmations, and lifecycle event communications, enabling consistent customer engagement, transparency, and regulatory compliance.
+        - id: cap.rbl.provide-loan-account-information
+          name: Provide Loan Account Information
+          description: Provision of loan account information including account numbers, loan amounts, outstanding balance and term details.
+        - id: cap.rbl.service-loan-accounts
+          name: Service Loan Accounts
+          description: Execution of loan account servicing operations encompassing account modifications, term adjustments, payment arrangements, account status changes, and customer-initiated servicing requests throughout the loan lifecycle, enabling comprehensive account maintenance and customer support.
+    - id: sub.rbl.loan-account-opening
+      name: Loan Account Opening
+      description: The Account Opening and Configuration capability group covers the end-to-end process of establishing new loan accounts, from application processing and account creation to activation and agreement management.
+      capabilities:
+        - id: cap.rbl.loan-manage-agreement-and-terms
+          name: Manage Loan Agreement and Terms
+          description: Management of loan agreements and contractual terms encompassing agreement creation, presentation, amendments, special terms application, and customer acceptance recordkeeping, enabling compliant contract administration throughout the loan lifecycle.
+        - id: cap.rbl.originate-loan-accounts
+          name: Originate Loan Accounts
+          description: Creation and establishment of new loan accounts encompassing account record creation, product association, initial configuration, and account activation, enabling customers to access loan products and commence their lending relationship.
+        - id: cap.rbl.process-loan-applications
+          name: Process Loan Applications
+          description: Processing of loan applications encompassing data capture, validation, assessment routing, referral management, and welcome communication generation, enabling efficient application handling from submission through approval or decline decision.
+    - id: sub.rbl.loan-product-management
+      name: Loan Product Management
+      description: The Product Management capability group encompasses the design, development, configuration, and lifecycle management of loans products.
+      capabilities:
+        - id: cap.rbl.manage-loan-product-catalogue
+          name: Manage Loan Product Catalogue
+          description: Management of loan product catalog lifecycle encompassing product introduction, status management, product withdrawal, and product-to-account associations, enabling effective product portfolio administration and controlled product offering availability.
+        - id: cap.rbl.provide-loan-product-information
+          name: Provide Loan Product Information
+          description: Provision of comprehensive loan product information encompassing product features, terms and conditions, pricing, benefits, and eligibility criteria, enabling customer education, product comparison, and informed product selection for prospective borrowers.
+        - id: cap.rbl.retail-and-business-loan-manage-product-configurations
+          name: Retail and Business Loan Manage Product Configurations
+          description: Definition and configuration of loan product structures encompassing business rules, terms and conditions, pricing parameters, features, and behavioral rules, enabling consistent product behavior and controlled product offering management across the lending portfolio.
+    - id: sub.rbl.loan-transaction-management
+      name: Loan Transaction Management
+      description: The Transaction Management capability group encompasses the processing of any transaction relating to a loan, ensuring accurate and timely transaction management.
+      capabilities:
+        - id: cap.rbl.disburse-loan-funds
+          name: Disburse Loan Funds
+          description: Disbursement of approved loan funds to customer-designated accounts encompassing disbursement account validation, fund transfer execution, and disbursement confirmation and enabling timely loan proceeds delivery
+        - id: cap.rbl.manage-loan-payment-obligations
+          name: Manage Loan Payment Obligations
+          description: Management of loan payment obligations encompassing required repayment calculations, payment deferral arrangements and regulatory requirements; enabling flexible payment management during the loan term.
+        - id: cap.rbl.process-incoming-payments
+          name: Process Incoming Payments
+          description: Processing of incoming loan payments encompassing regular scheduled payments, ad-hoc payments, overpayments, payment application, balance allocation, and payment reconciliation, enabling accurate loan servicing and balance reduction.

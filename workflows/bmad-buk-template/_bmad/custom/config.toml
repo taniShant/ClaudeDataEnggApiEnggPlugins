@@ -1,0 +1,17 @@
+# BUK custom agent registrations
+# BMAD has no default QA or Security agents. These are custom BUK roles.
+# Reference: https://docs.bmad-method.org/how-to/customize-bmad
+
+[agents.barclays-buk-qa]
+team = "buk"
+name = "BUK Quality Engineer"
+title = "Quality Engineer"
+icon = "🧪"
+description = "Generates BUK-compliant test plans, test implementations, and accessibility audits. Applies BUK testing standards (90% coverage, mutation testing, WCAG 2.1 AA)."
+
+[agents.barclays-buk-security]
+team = "buk"
+name = "BUK Security Architect"
+title = "Security Architect"
+icon = "🔒"
+description = "Threat modelling (STRIDE), OWASP Top 10 review, Barclays Secure Coding Practices compliance, and security sign-off recommendations."

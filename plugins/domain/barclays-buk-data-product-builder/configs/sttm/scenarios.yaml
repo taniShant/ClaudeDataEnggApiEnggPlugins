@@ -1,0 +1,634 @@
+# =============================================================================
+# STTM Generator Plugin — 4-Axis Classification Model
+# =============================================================================
+# Classification is decomposed into 4 independent, orthogonal axes:
+#   Axis 1: Data Product Type (FDP / CDP / BDP)
+#   Axis 2: Table Type (Transactional / NonTransactional_SCD1 / NonTransactional_SCD2)
+#   Axis 3: Crypto Aspect (None / Tokenize / Detokenize / Both)
+#   Axis 4: I/O Mode (Table / File / Hybrid)
+#
+# Any combination is valid: 3 × 3 × 4 × 3 = 108 possible classifications.
+# Each axis is evaluated independently — they do not override each other.
+#
+# Data Product Hierarchy:
+#   BASE (Raw/Source Layer)
+#     → (cleaned to) FDP (Foundational Data Product)
+#       → (consolidated to) CDP (Consolidated Data Product)
+#         → (shaped to) BDP (Business Data Product)
+# =============================================================================
+
+schema_version: "2.0"
+
+# =============================================================================
+# AXIS 1 — Data Product Type
+# =============================================================================
+axis_data_product_type:
+  description: "Which layer in the data product hierarchy the target table belongs to"
+  values:
+
+    - id: FDP
+      name: "Foundational Data Product"
+      description: "Clean and land source data from BASE/raw/source layer"
+      sources_from: "BASE / raw / source systems"
+      detection_rules:
+        - priority: 1
+          signal: database_prefix
+          condition: "target.database starts with 'fdp_' or 'shared_fdp_'"
+          confidence: 0.95
+        - priority: 2
+          signal: explicit_declaration
+          condition: "user declares 'foundational' or 'foundation' or 'landing'"
+          confidence: 0.99
+        - priority: 3
+          signal: source_layer_evidence
+          condition: "all source tables are from raw/source systems (not FDP/CDP/BDP layer)"
+          confidence: 0.85
+        - priority: 4
+          signal: default_fallback
+          condition: "no CDP or BDP signals detected"
+          confidence: 0.70
+      characteristics:
+        structured_format_required: false
+        description: "Direct source-to-target mapping at foundation layer"
+
+    - id: CDP
+      name: "Consolidated Data Product"
+      description: "Consolidate multiple FDPs together — can be granular or aggregated"
+      sources_from: "FDP layer"
+      detection_rules:
+        - priority: 1
+          signal: database_prefix
+          condition: "target.database starts with 'cdp_' or 'shared_cdp_'"
+          confidence: 0.95
+        - priority: 2
+          signal: explicit_declaration
+          condition: "user declares 'consolidated' or 'curated' or 'integrated'"
+          confidence: 0.99
+        - priority: 3
+          signal: source_layer_evidence
+          condition: "source tables are from FDP layer (fdp_ or shared_fdp_ prefix databases)"
+          confidence: 0.85
+        - priority: 4
+          signal: multiple_fdp_sources
+          condition: "multiple source tables from different FDP databases"
+          confidence: 0.80
+      characteristics:
+        structured_format_required: true
+        structured_format: "Driver Table (<alias>) / Join N: <TYPE> JOIN <table> (<alias>) ON ... / Value (newline-separated, with unique aliases)"
+        description: "Consolidated layer — mandatory structured compact newline-separated format with table aliases for multi-source joins"
+
+    - id: BDP
+      name: "Business Data Product"
+      description: "Shape for specific business consumption — can be granular or aggregated"
+      sources_from: "CDP layer"
+      detection_rules:
+        - priority: 1
+          signal: database_prefix
+          condition: "target.database starts with 'bdp_' or 'shared_bdp_'"
+          confidence: 0.95
+        - priority: 2
+          signal: explicit_declaration
+          condition: "user declares 'business' or 'business data product'"
+          confidence: 0.99
+        - priority: 3
+          signal: source_layer_evidence
+          condition: "source tables are from CDP layer (cdp_ or shared_cdp_ prefix databases)"
+          confidence: 0.85
+      characteristics:
+        structured_format_required: true
+        structured_format: "Lookup structured format"
+        description: "Business layer — shaped for consumption with lookup format"
+
+# =============================================================================
+# AXIS 2 — Table Type
+# =============================================================================
+axis_table_type:
+  description: "How the target table stores and versions data"
+  values:
+
+    - id: Transactional
+      name: "Transactional (append-only)"
+      description: "Append-only event/fact records with no history management"
+      detection_rules:
+        - priority: 1
+          signal: explicit_declaration
+          condition: "target.table_type IN ('transactional', 'append', 'event', 'fact')"
+          confidence: 0.99
+        - priority: 2
+          signal: no_scd_columns
+          condition: "target does NOT contain eff_start_date, eff_end_date, active columns"
+          confidence: 0.70
+        - priority: 3
+          signal: default_fallback
+          condition: "no SCD1 or SCD2 signals detected"
+          confidence: 0.65
+      audit_columns:
+        - column: dw_bus_dt
+          type: date
+          logic: "Business date for the transaction/event partition"
+          transformation_type: derived
+        - column: dw_lod_tmp
+          type: timestamp
+          logic: "current_timestamp() at pipeline execution"
+          transformation_type: system
+      target_table_type_value: "Transactional"
+      validation_rules_enabled: [SC5]
+      common_errors:
+        - "Including SCD columns (eff_start_date, eff_end_date, active) in a transactional table"
+        - "Including dw_upd_lod_tmp (transactional tables don't update)"
+        - "Missing dw_bus_dt partition column"
+
+    - id: NonTransactional_SCD1
+      name: "Non-Transactional SCD1 (overwrite)"
+      description: "Current-state table with overwrite semantics — no history preservation"
+      detection_rules:
+        - priority: 1
+          signal: explicit_declaration
+          condition: "target.table_type IN ('scd1', 'overwrite', 'type1')"
+          confidence: 0.99
+        - priority: 2
+          signal: non_transactional_no_history
+          condition: "declared non-transactional but no eff_start/end/active columns present"
+          confidence: 0.80
+      audit_columns:
+        - column: dw_lod_tmp
+          type: timestamp
+          logic: "current_timestamp() at pipeline execution (initial insert)"
+          transformation_type: system
+        - column: dw_upd_lod_tmp
+          type: timestamp
+          logic: "current_timestamp() when record is updated; NULL on initial insert"
+          transformation_type: system
+      target_table_type_value: "NonTransactional_SCD1"
+      validation_rules_enabled: []
+      common_errors:
+        - "Including SCD2 history columns (eff_start_date, eff_end_date, active)"
+        - "Confusing SCD1 with transactional — SCD1 has MERGE/upsert, transactional is append-only"
+
+    - id: NonTransactional_SCD2
+      name: "Non-Transactional SCD2 (history-preserving)"
+      description: "Entity-state table with full history via SCD Type 2 versioning"
+      detection_rules:
+        - priority: 1
+          signal: explicit_declaration
+          condition: "target.table_type IN ('scd2', 'nontransactional', 'type2')"
+          confidence: 0.99
+        - priority: 2
+          signal: scd_indicator_columns
+          condition: >
+            target_columns CONTAINS ALL OF (
+              column matching pattern 'eff_start_dt|eff_start_date|effective_start',
+              column matching pattern 'eff_end_dt|eff_end_date|effective_end',
+              column matching pattern 'active|actv_ind|current_flag|curr_ind'
+            )
+          confidence: 0.95
+        - priority: 3
+          signal: scd_pattern_in_sql
+          condition: "SQL contains MERGE/upsert with eff_end update patterns"
+          confidence: 0.90
+        - priority: 4
+          signal: high_end_date_literal
+          condition: "SQL references sentinel date (9999-12-31, 3499-12-31, 2099-12-31)"
+          confidence: 0.85
+      audit_columns:
+        - column: eff_start_date
+          type: date
+          logic: "Source modification timestamp or batch date when new/changed record detected"
+          transformation_type: derived
+        - column: eff_end_date
+          type: date
+          logic: "High-end date for active record; previous active record gets close_date per configuration.scd.close_date_formula (default: new_eff_start_date)"
+          transformation_type: derived
+        - column: active
+          type: string
+          logic: "'1' for current record; previous active record set to '0' on change detection"
+          transformation_type: derived
+        - column: dw_lod_tmp
+          type: timestamp
+          logic: "current_timestamp() at pipeline execution"
+          transformation_type: system
+        - column: dw_upd_lod_tmp
+          type: timestamp
+          logic: "current_timestamp() when record is updated (end-dated); NULL on initial insert"
+          transformation_type: system
+      target_table_type_value: "NonTransactional_SCD2"
+      validation_rules_enabled: [SC1, SC2, SC3, SC4]
+      required_extra_inputs:
+        - name: scd_config
+          description: "SCD2 configuration parameters"
+          fields:
+            - high_end_date: "Sentinel value for open-ended records (e.g. '3499-12-31')"
+            - source_mod_column: "Source column indicating record modification timestamp"
+            - hash_exclusion_columns: "Columns excluded from CDC hash comparison"
+            - hash_algorithm: "Algorithm for change detection hash (default: SHA256)"
+        - name: partition_columns
+          description: "Physical partitioning columns (usually eff_start_date or dw_bus_dt)"
+        - name: cdc_hash_exclusions
+          description: "List of columns that should NOT participate in change detection"
+      common_errors:
+        - "Forgetting to exclude system columns from CDC hash"
+        - "Using batch_date instead of source_mod_column for eff_start_date"
+        - "Inconsistent high_end_date values within same table"
+        - "Missing dw_upd_lod_tmp population on the end-dated (old) record"
+      do_not_infer:
+        - "Source modification column for SCD2 — must be explicitly provided"
+        - "Hash exclusion column list — must be explicitly provided"
+        - "High-end date value — must come from config or user"
+
+# =============================================================================
+# AXIS 3 — Crypto Aspect
+# =============================================================================
+axis_crypto_aspect:
+  description: "Whether tokenization/detokenization happens in-memory during PySpark job execution"
+  values:
+
+    - id: None
+      name: "No Crypto"
+      description: "No in-memory crypto operations required"
+      detection_rules:
+        - priority: 1
+          signal: no_crypto_patterns
+          condition: "No protect/unprotect UDFs detected in SQL; no crypto config provided"
+          confidence: 1.0
+      validation_rules_enabled: []
+
+    - id: Tokenize
+      name: "Tokenize (clear → encrypted)"
+      description: "Source clear-text is encrypted in-memory during PySpark execution using protect UDF"
+      detection_rules:
+        - priority: 1
+          signal: protect_udf_call
+          condition: "SQL contains protect/encrypt function call (without unprotect)"
+          confidence: 0.95
+        - priority: 2
+          signal: crypto_config_direction
+          condition: "crypto_config.direction = 'tokenize' or 'encrypt'"
+          confidence: 0.99
+        - priority: 3
+          signal: column_encryption_indicator
+          condition: "target column is encrypted, source column is not"
+          confidence: 0.80
+      business_logic_pattern: "cloud_api_udf_{DE}_protect({source_column})"
+      validation_rules_enabled: [SC6, SC7]
+      required_extra_inputs:
+        - name: crypto_config
+          description: "Crypto configuration"
+          fields:
+            - de_names: "Protegrity Data Element names per column (NEVER infer)"
+            - udf_convention: "UDF naming convention (cloud_api_udf_{DE}_protect)"
+            - target_encrypted_columns: "Which target columns require encryption"
+      do_not_infer:
+        - "DE names — NEVER guess a Data Element name"
+        - "Which columns need encryption — must be explicitly declared"
+
+    - id: Detokenize
+      name: "Detokenize (encrypted → clear)"
+      description: "Source encrypted data is decrypted in-memory during PySpark execution using unprotect UDF"
+      detection_rules:
+        - priority: 1
+          signal: unprotect_udf_call
+          condition: "SQL contains unprotect/decrypt function call"
+          confidence: 0.95
+        - priority: 2
+          signal: crypto_config_direction
+          condition: "crypto_config.direction = 'detokenize' or 'decrypt'"
+          confidence: 0.99
+        - priority: 3
+          signal: column_decryption_indicator
+          condition: "source column is encrypted, target column is not"
+          confidence: 0.80
+      business_logic_pattern: "cloud_api_udf_{DE}_unprotect({source_column})"
+      validation_rules_enabled: [SC6, SC7]
+      required_extra_inputs:
+        - name: crypto_config
+          description: "Crypto configuration"
+          fields:
+            - de_names: "Protegrity Data Element names per column (NEVER infer)"
+            - udf_convention: "UDF naming convention (cloud_api_udf_{DE}_unprotect)"
+            - source_encrypted_columns: "Which source columns are encrypted"
+      do_not_infer:
+        - "DE names — NEVER guess a Data Element name"
+        - "Which columns are encrypted — must be explicitly declared"
+
+    - id: Both
+      name: "Both (re-key: encrypted → different encryption)"
+      description: "Source encrypted under one DE is re-keyed to a different DE in-memory during PySpark execution"
+      detection_rules:
+        - priority: 1
+          signal: nested_protect_unprotect
+          condition: "SQL contains protect(unprotect(...)) nesting pattern"
+          confidence: 0.99
+        - priority: 2
+          signal: crypto_config_direction
+          condition: "crypto_config.direction = 'both' AND source_de != target_de"
+          confidence: 0.99
+        - priority: 3
+          signal: different_de_indicators
+          condition: "Both source and target encrypted but under different DE names"
+          confidence: 0.85
+      business_logic_pattern: "cloud_api_udf_{TARGET_DE}_protect(cloud_api_udf_{SOURCE_DE}_unprotect({source_column}))"
+      validation_rules_enabled: [SC6, SC7, SC8]
+      required_extra_inputs:
+        - name: crypto_config
+          description: "Crypto configuration with BOTH source and target DEs"
+          fields:
+            - source_de_names: "Source DE names per column"
+            - target_de_names: "Target DE names per column (must differ from source)"
+            - udf_convention: "UDF naming convention"
+      do_not_infer:
+        - "Either DE name — NEVER guess"
+        - "Nesting order — always unprotect first, then protect"
+
+# =============================================================================
+# Structural Patterns (Recorded Annotations from Code Pre-Scan)
+# =============================================================================
+# These patterns are detected during Step 1.0c (Structural Pattern Pre-Scan)
+# and recorded in classification.json as annotations. They do NOT change the
+# 3-axis classification but DO trigger cross-axis validation rules and
+# conditional extension loading.
+structural_patterns:
+  description: "Structural code patterns detected via pre-scan, recorded in classification output"
+  fields:
+    - id: union_detected
+      type: boolean
+      detection_source: "code_prescan.union > 0"
+      triggers: [SC12]
+      description: "UNION / UNION ALL detected in any code file"
+
+    - id: delete_detected
+      type: boolean
+      detection_source: "code_prescan.delete > 0"
+      triggers: []
+      description: "DELETE FROM detected — triggers mandatory multi-step-etl extension loading"
+
+    - id: update_detected
+      type: boolean
+      detection_source: "code_prescan.update > 0"
+      triggers: []
+      description: "UPDATE...SET detected — triggers mandatory multi-step-etl extension loading"
+
+    - id: merge_detected
+      type: boolean
+      detection_source: "code_prescan.merge > 0"
+      triggers: []
+      description: "MERGE INTO detected — recorded for lineage processing"
+
+    - id: multi_statement
+      type: boolean
+      detection_source: "code_prescan.semicolons >= 2"
+      triggers: []
+      description: "2+ semicolons detected — multi-statement ETL file"
+
+    - id: self_referential
+      type: boolean
+      detection_source: "code_prescan.self_referential == true"
+      triggers: [SC13]
+      description: "Target table also appears in FROM/JOIN clauses as a source"
+
+    - id: implicit_joins
+      type: integer
+      detection_source: "code_prescan.implicit_join"
+      triggers: [SC9]
+      description: "Count of implicit comma-separated joins (FROM a, b WHERE ...)"
+
+    - id: parameter_count
+      type: integer
+      detection_source: "code_prescan.parameter_count"
+      triggers: []
+      description: "Count of :param / @param variables — recorded for context transparency"
+
+    - id: rename_table_detected
+      type: boolean
+      detection_source: "code_prescan.rename > 0"
+      triggers: []
+      description: "RENAME TABLE detected — atomic table swap pattern"
+
+    - id: file_read_detected
+      type: boolean
+      detection_source: "code_prescan regex: spark\\.read\\.(parquet|format\\(.parquet.\\))"
+      triggers: []
+      description: "File-based source read detected in code (spark.read.parquet or spark.read.format('parquet'))"
+
+    - id: file_write_detected
+      type: boolean
+      detection_source: "code_prescan regex: \\.write\\.(parquet|format\\(.parquet.\\))"
+      triggers: []
+      description: "File-based target write detected in code (.write.parquet or .write.format('parquet'))"
+
+  output_location: "classification.json → structural_patterns"
+  example:
+    union_detected: true
+    delete_detected: true
+    update_detected: true
+    merge_detected: false
+    multi_statement: true
+    self_referential: true
+    implicit_joins: 12
+    parameter_count: 15
+    rename_table_detected: true
+    file_read_detected: false
+    file_write_detected: false
+
+# =============================================================================
+# Cross-Axis Rules
+# =============================================================================
+cross_axis_rules:
+  all_combinations_valid: true  # 3 × 3 × 4 × 3 = 108 possible classifications
+  sheet_name: "Mapping"  # Output always uses single "Mapping" sheet
+
+  # Validation rule aggregation: enabled rules = UNION of all 3 axes
+  validation_rule_aggregation: "union"
+
+  # Additional cross-axis validations (not tied to a single axis)
+  cross_validations:
+    - id: SC9
+      name: "Multi-source structured format"
+      triggered_by: "multiple source tables detected in mapping (regardless of data product type)"
+      description: "All multi-table column mappings must use structured compact newline-separated format with table aliases"
+
+    - id: SC10
+      name: "Multi-source LEFT JOIN null handling"
+      triggered_by: "LEFT JOIN detected in join chain"
+      description: "Columns sourced from RIGHT side of LEFT JOIN must have Null Flag = Y"
+
+    - id: SC11
+      name: "Aggregation definition completeness"
+      triggered_by: "aggregate functions (SUM/COUNT/AVG/MAX/MIN/window functions) detected in SQL"
+      description: "Every metric column must have complete aggregation definition (function + source + GROUP BY). Exception: GROUP BY used for dedup (all selected columns in GROUP BY, no aggregate functions) is treated as DISTINCT and does NOT trigger this rule."
+
+    - id: SC12
+      name: "UNION branch documentation"
+      triggered_by: "UNION / UNION ALL detected in SQL"
+      description: "All UNION branches must be documented in Business Logic using UNION Structured Format"
+
+    - id: SC13
+      name: "Self-join alias disambiguation"
+      triggered_by: "same table appears multiple times in join chain"
+      description: "Self-join columns must use distinct, role-reflecting aliases to disambiguate same-table references"
+
+    - id: SC14
+      name: "Non-equi JOIN null handling"
+      triggered_by: "non-equi join operators (>, <, >=, <=, BETWEEN, <>) detected in join conditions"
+      description: "Columns from non-driving side of non-equi LEFT/FULL JOIN must have Null Flag = Y"
+
+# =============================================================================
+# Validation Rule Definitions — Axis-Based Triggers
+# =============================================================================
+validation_rules:
+  SC1:
+    name: "Complete source mapping for SCD2"
+    description: "Every target column must have a source mapping or explicit derivation rule"
+    triggered_by: { axis: table_type, value: NonTransactional_SCD2 }
+    severity: blocker
+
+  SC2:
+    name: "SCD2 logic patterns"
+    description: "SCD columns (eff_start_date, eff_end_date, active) must use approved logic patterns"
+    triggered_by: { axis: table_type, value: NonTransactional_SCD2 }
+    severity: blocker
+
+  SC3:
+    name: "Hash exclusion integrity"
+    description: "Hash exclusion list must not include PK columns"
+    triggered_by: { axis: table_type, value: NonTransactional_SCD2 }
+    severity: error
+
+  SC4:
+    name: "High-end date consistency"
+    description: "High-end date must be consistent across all SCD columns in the table"
+    triggered_by: { axis: table_type, value: NonTransactional_SCD2 }
+    severity: error
+
+  SC5:
+    name: "No SCD columns in transactional"
+    description: "Transactional tables must NOT contain eff_start_date, eff_end_date, or active columns"
+    triggered_by: { axis: table_type, value: Transactional }
+    severity: blocker
+
+  SC6:
+    name: "Valid crypto DE name"
+    description: "Every crypto column must reference a valid Protegrity Data Element name"
+    triggered_by: { axis: crypto_aspect, value: [Tokenize, Detokenize, Both] }
+    severity: blocker
+
+  SC7:
+    name: "Crypto UDF naming convention"
+    description: "UDF names must follow approved convention (cloud_api_udf_{DE}_{direction})"
+    triggered_by: { axis: crypto_aspect, value: [Tokenize, Detokenize, Both] }
+    severity: blocker
+
+  SC8:
+    name: "Source DE ≠ Target DE for re-key"
+    description: "Re-key (Both) requires source_de and target_de to be different"
+    triggered_by: { axis: crypto_aspect, value: Both }
+    severity: blocker
+
+  SC9:
+    name: "Multi-source structured format"
+    description: "Multi-table columns must use structured compact newline-separated format with unique table aliases"
+    triggered_by: { condition: "multiple source tables detected" }
+    severity: blocker
+
+  SC10:
+    name: "LEFT JOIN null handling"
+    description: "Columns from RIGHT side of LEFT JOIN must have Null Flag = Y"
+    triggered_by: { condition: "LEFT JOIN detected in join chain" }
+    severity: error
+
+  SC11:
+    name: "Aggregation definition completeness"
+    description: "Every metric column with aggregate functions must have complete definition. Exception: GROUP BY used for dedup (all selected columns in GROUP BY, no aggregate functions) is treated as DISTINCT and does NOT trigger this rule."
+    triggered_by: { condition: "aggregate functions present in SQL" }
+    severity: error
+
+  SC12:
+    name: "UNION branch documentation"
+    description: "All UNION branches must be documented in Business Logic using UNION Structured Format"
+    triggered_by: { condition: "UNION / UNION ALL detected in SQL" }
+    severity: error
+
+  SC13:
+    name: "Self-join alias disambiguation"
+    description: "Self-join columns must use distinct, role-reflecting aliases to disambiguate same-table references"
+    triggered_by: { condition: "same table appears multiple times in join chain" }
+    severity: warning
+
+  SC14:
+    name: "Non-equi JOIN null handling"
+    description: "Columns from non-driving side of non-equi LEFT/FULL JOIN must have Null Flag = Y"
+    triggered_by: { condition: "non-equi join operators detected in join conditions" }
+    severity: warning
+
+# =============================================================================
+# AXIS 4 — I/O Mode (physical data access pattern)
+# =============================================================================
+# Orthogonal to the 3 semantic axes above. Determines how sources are read
+# and how the target is written — database tables vs parquet files.
+# Default is 'table' (current behaviour). File support is parquet-only.
+# Platform determines path format: S3 URIs for Glue, Volume paths for Databricks.
+
+axis_io_mode:
+  description: "How data is physically read and written"
+  values:
+    - id: table
+      name: "Table I/O"
+      description: "All sources and targets are database tables accessed via spark.table() or glue_read_table(). Default when no file patterns detected."
+      detection_rules:
+        - priority: 1
+          signal: default_fallback
+          condition: "No file read/write patterns detected in code prescan and no source_io/target_io in config_overrides"
+          confidence: 1.0
+
+    - id: file
+      name: "File I/O"
+      description: "One or more sources and/or the target are parquet files at storage locations (S3 for Glue, Volumes for Databricks)."
+      detection_rules:
+        - priority: 1
+          signal: explicit_declaration
+          condition: "User declares io_mode in config_overrides.json or interview answer"
+          confidence: 0.99
+        - priority: 2
+          signal: pyspark_read_pattern
+          condition: "Code contains spark.read.parquet() or spark.read.format('parquet').load() patterns"
+          confidence: 0.90
+        - priority: 3
+          signal: pyspark_write_pattern
+          condition: "Code contains .write.parquet() or .write.format('parquet').save() patterns"
+          confidence: 0.90
+        - priority: 4
+          signal: path_pattern
+          condition: "Source references contain s3:// URIs or /Volumes/ paths"
+          confidence: 0.95
+
+    - id: hybrid
+      name: "Hybrid I/O"
+      description: "Mix of file and table sources (e.g., parquet file source joined with database table source), or file source writing to table target."
+      detection_rules:
+        - priority: 1
+          signal: mixed_sources
+          condition: "Some sources are database tables AND some sources are parquet files"
+          confidence: 0.90
+        - priority: 2
+          signal: mixed_target
+          condition: "Sources are file-based but target is a database table, or vice versa"
+          confidence: 0.90
+
+# Structural patterns detected during pre-scan and recorded as annotations.
+# These contribute to io_mode classification but do not change other axes.
+structural_patterns_file_io:
+  - id: file_read_detected
+    type: boolean
+    detection_source: "code_prescan regex: spark\\.read\\.(parquet|format\\(.parquet.\\))"
+    description: "File-based source read detected in code"
+
+  - id: file_write_detected
+    type: boolean
+    detection_source: "code_prescan regex: \\.write\\.(parquet|format\\(.parquet.\\))"
+    description: "File-based target write detected in code"
+
+# Cross-axis validation (io_mode interactions with other axes)
+cross_axis_rules_io:
+  - id: FIO_SCD2_CONFLICT
+    condition: "io_mode in [file] AND table_type == NonTransactional_SCD2 AND target is file"
+    action: "Route to guided mode — SCD2 requires MERGE which is not supported on parquet files with overwrite/append modes"
+    severity: blocker

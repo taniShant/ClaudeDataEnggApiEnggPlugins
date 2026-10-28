@@ -1,0 +1,483 @@
+# =============================================================================
+# DV Plugin — Validation Check Definitions
+# 37 checks across 6 categories (ER-01–ER-08, SCD2-01–SCD2-18,
+# NC-01–NC-02, DC-01–DC-02, DT-01–DT-03, BR-01–BR-04)
+# =============================================================================
+
+version: "1.0"
+description: >
+  Complete set of data validation checks for the Data Validation stage of the
+  Barclays BUK Data Product Builder plugin. Each check compares source-to-target
+  data after transformation, validating reconciliation, SCD2 temporal integrity,
+  nullability, uniqueness, datatype conformance, and business-rule compliance.
+  Blockers prevent promotion; warnings are surfaced but do not halt the pipeline.
+
+# -----------------------------------------------------------------------------
+# Category 1: Exact Reconciliation (ER-01–ER-08)
+# -----------------------------------------------------------------------------
+exact_reconciliation:
+  - id: ER-01
+    category: exact_reconciliation
+    check: "Row count match between source and target"
+    severity: blocker
+    applies_to: all
+    error_message: "Row count mismatch: source has {{source_count}} rows, target has {{target_count}} rows (delta: {{mismatch_count}})."
+    fix_suggestion: "Investigate missing or extra rows. Check join fan-out, filter predicates, and deduplication logic in the transformation."
+    pass_criteria: "source_count == target_count"
+    diagnostic_output_columns: ["source_count", "target_count", "mismatch_count"]
+
+  - id: ER-02
+    category: exact_reconciliation
+    check: "Column aggregate match (SUM) for numeric columns"
+    severity: blocker
+    applies_to: all
+    error_message: "SUM mismatch for column '{{column}}': source_sum={{source_sum}}, target_sum={{target_sum}}, diff={{diff}}."
+    fix_suggestion: "Check transformation logic for rounding, truncation, or type-cast precision loss. Verify that no rows are silently dropped or duplicated."
+    pass_criteria: "diff == 0"
+    not_evaluated_conditions:
+      - "Column is non-numeric"
+      - "Column has no documented precision"
+    diagnostic_output_columns: ["column", "source_sum", "target_sum", "diff"]
+
+  - id: ER-03
+    category: exact_reconciliation
+    check: "Column aggregate match (MIN/MAX) for non-key business columns"
+    severity: blocker
+    applies_to: all
+    error_message: "MIN/MAX mismatch for column '{{column}}': source_min={{source_min}} vs target_min={{target_min}}, source_max={{source_max}} vs target_max={{target_max}}."
+    fix_suggestion: "Check for outlier rows dropped or created by the transformation. Verify CAST/COALESCE logic does not alter boundary values."
+    pass_criteria: "source_min == target_min AND source_max == target_max"
+    not_evaluated_conditions:
+      - "Column is a primary key"
+    diagnostic_output_columns: ["column", "source_min", "target_min", "source_max", "target_max"]
+
+  - id: ER-04
+    category: exact_reconciliation
+    check: "Column aggregate match (COUNT DISTINCT) for key columns"
+    severity: blocker
+    applies_to: all
+    error_message: "COUNT DISTINCT mismatch for column '{{column}}': source={{source_distinct}}, target={{target_distinct}}."
+    fix_suggestion: "Investigate whether key values are being collapsed, split, or lost during transformation. Check COALESCE defaults and join conditions."
+    pass_criteria: "source_distinct == target_distinct"
+    diagnostic_output_columns: ["column", "source_distinct", "target_distinct"]
+
+  - id: ER-05
+    category: exact_reconciliation
+    check: "PK-based bidirectional row reconciliation via FULL OUTER JOIN"
+    severity: blocker
+    applies_to: all
+    error_message: "Bidirectional reconciliation found {{source_only_count}} source-only rows and {{target_only_count}} target-only rows."
+    fix_suggestion: "Investigate missing or extra rows. Check join fan-out, filter predicates, and deduplication logic in the transformation. Source-only rows indicate data lost during transformation; target-only rows indicate spurious data created."
+    pass_criteria: "source_only_count == 0 AND target_only_count == 0"
+    scd2_note: >
+      For SCD2 tables, both source and target subqueries are filtered
+      using eff_start_date/eff_end_date date-range predicates scoped
+      to control_date. This ensures reconciliation compares the same
+      point-in-time view on both sides, preventing cross-version
+      fan-out. Do NOT use active = '1' — rely on date-range filtering.
+    diagnostic_output_columns: ["pk_values", "reconciliation_status", "row_count"]
+
+  - id: ER-06
+    category: exact_reconciliation
+    check: "PK-based column-level mismatch detection via INNER JOIN on matched rows"
+    severity: blocker
+    applies_to: all
+    error_message: "{{mismatch_count}} rows have column-level mismatches for '{{column}}' when joined on PK."
+    fix_suggestion: "Compare source and target values for the mismatched rows. Check CAST, COALESCE, TRIM, and business-logic derivations."
+    pass_criteria: "mismatch_count == 0"
+    scd2_note: >
+      For SCD2 tables, both source and target subqueries are filtered
+      using eff_start_date/eff_end_date date-range predicates scoped
+      to control_date. This ensures reconciliation compares the same
+      point-in-time view on both sides, preventing cross-version
+      fan-out. Do NOT use active = '1' — rely on date-range filtering.
+    diagnostic_output_columns: ["pk_values", "column", "source_value", "target_value", "mismatch_count"]
+
+  - id: ER-07
+    category: exact_reconciliation
+    check: "Key-based column-level comparison"
+    severity: blocker
+    applies_to: all
+    error_message: "{{mismatch_count}} rows have column-level mismatches for '{{column}}' when joined on PK."
+    fix_suggestion: "Compare source and target values for the mismatched rows. Check CAST, COALESCE, TRIM, and business-logic derivations."
+    pass_criteria: "mismatch_count == 0"
+    diagnostic_output_columns: ["pk_values", "column", "source_value", "target_value", "mismatch_count"]
+
+  - id: ER-08
+    category: exact_reconciliation
+    check: "Multiset comparison (keyless tables)"
+    severity: blocker
+    applies_to: all
+    error_message: "Multiset mismatch detected: {{mismatch_count}} distinct row groups differ in frequency between source and target."
+    fix_suggestion: "Examine frequency differences. Common causes: duplicate rows introduced by fan-out joins, missing rows from overly restrictive filters."
+    pass_criteria: "mismatch_count == 0"
+    not_evaluated_conditions:
+      - "Table has no primary key and columns exceed comparison threshold"
+    dialect_notes:
+      athena: >
+        Athena (Trino/Presto) does not support EXCEPT ALL. Use the GROUP BY
+        frequency pattern: group all columns with COUNT(*), then FULL OUTER
+        JOIN the two frequency CTEs and compare counts. Use IS NOT DISTINCT FROM
+        for null-safe join conditions.
+      databricks: >
+        Databricks (Spark SQL) uses the same GROUP BY + FULL OUTER JOIN
+        frequency pattern as Athena for consistency. Use IS NOT DISTINCT FROM
+        for null-safe join conditions.
+    diagnostic_output_columns: ["row_group", "source_freq", "target_freq", "mismatch_count"]
+
+# -----------------------------------------------------------------------------
+# Category 2: SCD2 Temporal Integrity (SCD2-01–SCD2-18)
+# -----------------------------------------------------------------------------
+scd2_temporal:
+  - id: SCD2-01
+    category: scd2_temporal
+    check: "Overlap detection — no two versions for the same PK have overlapping effective periods"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{overlap_count}} overlapping version pairs detected. PK={{pk_values}}: eff_end_date {{eff_end_date}} > next eff_start_date {{next_eff_start_date}}."
+    fix_suggestion: "Adjust eff_end_date of the earlier version to equal the eff_start_date of the next version, or investigate the SCD2 merge logic."
+    pass_criteria: "overlap_count == 0"
+    diagnostic_output_columns: ["pk_values", "eff_start_date", "eff_end_date", "next_eff_start_date"]
+
+  - id: SCD2-02
+    category: scd2_temporal
+    check: "Gap detection — no temporal gaps between consecutive versions for the same PK"
+    severity: warning
+    applies_to: scd2
+    error_message: "{{gap_count}} temporal gaps detected. PK={{pk_values}}: prev eff_end_date {{prev_eff_end_date}} < next eff_start_date {{next_eff_start_date}}."
+    fix_suggestion: "Verify the gap policy in the mapping. If continuous history is required, close the gap by adjusting eff_end_date. If gaps are explicitly permitted, mark this check as not_evaluated."
+    pass_criteria: "gap_count == 0"
+    not_evaluated_conditions:
+      - "Gap policy not documented in mapping"
+    notes: >
+      Default severity is warning. Severity is mapping-driven: promote to blocker
+      when continuous history is required by the mapping; omit when gaps are
+      explicitly permitted in the mapping documentation.
+    diagnostic_output_columns: ["pk_values", "prev_eff_end_date", "next_eff_start_date", "gap_days"]
+
+  - id: SCD2-03
+    category: scd2_temporal
+    check: "Boundary stitching — consecutive version boundaries are contiguous"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{broken_boundary_count}} broken boundaries detected. PK={{pk_values}}: prev eff_end_date {{prev_eff_end_date}} <> next eff_start_date {{next_eff_start_date}}."
+    fix_suggestion: "Ensure the SCD2 merge logic sets eff_end_date of the predecessor version to exactly match the eff_start_date of the successor version."
+    pass_criteria: "broken_boundary_count == 0"
+    diagnostic_output_columns: ["pk_values", "prev_eff_end_date", "next_eff_start_date"]
+
+  - id: SCD2-04
+    category: scd2_temporal
+    check: "Active record invariant — exactly one active record per PK"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{invalid_current_record_count}} PKs have more than one active record. PK={{pk_values}} has {{active_count}} active records."
+    fix_suggestion: "Ensure the SCD2 merge logic closes the previous active version before inserting a new one. Only the latest version should have active = '1'."
+    pass_criteria: "invalid_current_record_count == 0"
+    diagnostic_output_columns: ["pk_values", "active_count"]
+
+  - id: SCD2-05
+    category: scd2_temporal
+    check: "Current-flag value check — active flag is consistent with eff_end_date sentinel"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{violation_count}} records have inconsistent active flag. active must be '1' when eff_end_date = '3499-12-31' and '0' otherwise."
+    fix_suggestion: "Derive the active flag from eff_end_date: CASE WHEN eff_end_date = DATE '3499-12-31' THEN '1' ELSE '0' END."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "eff_end_date", "active"]
+
+  - id: SCD2-06
+    category: scd2_temporal
+    check: "Open-ended sentinel validation — active record has sentinel eff_end_date"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{violation_count}} active records do not have sentinel eff_end_date '3499-12-31'."
+    fix_suggestion: "Set eff_end_date to DATE '3499-12-31' for the current active version of each PK."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "eff_end_date", "active"]
+
+  - id: SCD2-07
+    category: scd2_temporal
+    check: "Historical-record-not-current — expired records must not have sentinel eff_end_date"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{violation_count}} historical records have sentinel eff_end_date '3499-12-31'. Only the latest version per PK should have the sentinel."
+    fix_suggestion: "Close historical versions by setting eff_end_date to the eff_start_date of the next version."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "eff_start_date", "eff_end_date", "rn"]
+
+  - id: SCD2-08
+    category: scd2_temporal
+    check: "Version uniqueness per PK — each (PK, eff_start_date, eff_end_date) triple is unique"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{violation_count}} duplicate (PK, eff_start_date, eff_end_date) triples found."
+    fix_suggestion: "Deduplicate the target table. Check whether the SCD2 merge logic creates duplicate versions on re-runs."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "eff_start_date", "eff_end_date", "dupe_count"]
+
+  - id: SCD2-09
+    category: scd2_temporal
+    check: "Version sequentiality — version numbers (if present) are sequential per PK"
+    severity: warning
+    applies_to: scd2
+    error_message: "{{violation_count}} version sequentiality breaks detected. PK={{pk_values}}: version {{version_number}} follows {{prev_version}}."
+    fix_suggestion: "Recompute version numbers as a dense sequential series per PK ordered by eff_start_date."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "version_number", "prev_version"]
+
+  - id: SCD2-10
+    category: scd2_temporal
+    check: "Duplicate effective-start per PK — no two versions share the same eff_start_date"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{violation_count}} PKs have duplicate eff_start_date. PK={{pk_values}}, eff_start_date={{eff_start_date}} appears {{dupe_count}} times."
+    fix_suggestion: "Investigate the SCD2 merge or CDC logic. Multiple changes on the same date require sub-day ordering (see SCD2-18)."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "eff_start_date", "dupe_count"]
+
+  - id: SCD2-11
+    category: scd2_temporal
+    check: "Invalid date ordering — eff_start_date must not exceed eff_end_date"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{violation_count}} records have eff_start_date > eff_end_date."
+    fix_suggestion: "Check the SCD2 date assignment logic. eff_start_date must always be <= eff_end_date for every version."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "eff_start_date", "eff_end_date"]
+
+  - id: SCD2-12
+    category: scd2_temporal
+    check: "Day 0 initialization — each PK has exactly one version with correct flags"
+    severity: blocker
+    applies_to: scd2
+    validation_mode: day0
+    error_message: "{{violation_count}} PKs fail Day 0 initialization checks."
+    fix_suggestion: "On Day 0, every PK must have exactly one version with active = '1' and eff_end_date = '3499-12-31'. Check the initial-load logic."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "version_count", "active_flag", "end_date"]
+
+  - id: SCD2-13
+    category: scd2_temporal
+    check: "Day 0 no-unexpected-history — no PK has more than one version on initial load"
+    severity: blocker
+    applies_to: scd2
+    validation_mode: day0
+    error_message: "{{violation_count}} PKs have multiple versions on Day 0 (initial load)."
+    fix_suggestion: "Day 0 must produce exactly one version per PK. Check for duplicate source records or fan-out in the initial-load transformation."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "version_count"]
+
+  - id: SCD2-14
+    category: scd2_temporal
+    check: "Day 1 new-key — new PK appears with a single active version"
+    severity: blocker
+    applies_to: scd2
+    validation_mode: day1
+    error_message: "{{violation_count}} new PKs on Day 1 have incorrect version setup."
+    fix_suggestion: "New PKs on Day 1 must have exactly one version with active = '1' and eff_end_date = '3499-12-31'."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "version_count", "active_flag"]
+
+  - id: SCD2-15
+    category: scd2_temporal
+    check: "Day 1 tracked-change — changed PK has exactly one closed + one new active version"
+    severity: blocker
+    applies_to: scd2
+    validation_mode: day1
+    error_message: "{{violation_count}} changed PKs on Day 1 do not have correct version pairs (one closed + one new active)."
+    fix_suggestion: "For each changed PK, the SCD2 merge must close the prior active version (set active = '0', eff_end_date = control_date) and insert a new version (active = '1', eff_end_date = sentinel)."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "active_count", "newly_closed_count"]
+
+  - id: SCD2-16
+    category: scd2_temporal
+    check: "Day 1 no-change-idempotent — unchanged PK has no new version created"
+    severity: blocker
+    applies_to: scd2
+    validation_mode: day1
+    error_message: "{{violation_count}} unchanged PKs have version count changes on Day 1."
+    fix_suggestion: "Unchanged PKs must retain the same number of versions. Check the SCD2 change-detection logic to ensure it correctly identifies no-change rows."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "current_version_count", "prior_version_count"]
+
+  - id: SCD2-17
+    category: scd2_temporal
+    check: "Day 1 late-arriving — late-arriving data restitches predecessor/successor boundaries"
+    severity: warning
+    applies_to: scd2
+    validation_mode: day1
+    error_message: "{{violation_count}} late-arriving version boundary stitching errors detected."
+    fix_suggestion: "When inserting a late-arriving version, adjust the predecessor eff_end_date to the new version's eff_start_date, and set the new version's eff_end_date to the successor's eff_start_date."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "eff_start_date", "eff_end_date", "prev_end", "next_start"]
+
+  - id: SCD2-18
+    category: scd2_temporal
+    check: "Day 1 multi-change-ordering — multiple changes on same day for same PK are correctly ordered"
+    severity: blocker
+    applies_to: scd2
+    validation_mode: day1
+    error_message: "{{violation_count}} PKs have multiple same-day changes with incorrect ordering."
+    fix_suggestion: "When multiple changes arrive on the same day, apply them in source-timestamp order. Only the final change produces the active version; intermediate changes become closed versions with sub-day boundaries."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "eff_start_date", "same_day_versions"]
+
+# -----------------------------------------------------------------------------
+# Category 3: Null Checks (NC-01–NC-02)
+# -----------------------------------------------------------------------------
+null_check:
+  - id: NC-01
+    category: null_check
+    check: "Mandatory column null count — columns with nullable = 'N' must have zero NULLs"
+    severity: blocker
+    applies_to: all
+    error_message: "Mandatory column '{{column}}' has {{null_count}} NULL values in target."
+    fix_suggestion: "Investigate the source data and transformation logic. Add COALESCE with an appropriate default, or fix the upstream data quality issue."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["column_name", "null_count"]
+
+  - id: NC-02
+    category: null_check
+    check: "PK null count — primary key columns must never contain NULL"
+    severity: blocker
+    applies_to: all
+    error_message: "Primary key column '{{pk_column}}' has {{null_count}} NULL values in target."
+    fix_suggestion: "Primary keys must never be NULL. Check the source data, join conditions, and transformation logic for the PK column."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_column_name", "null_count"]
+
+# -----------------------------------------------------------------------------
+# Category 4: Duplicate Checks (DC-01–DC-02)
+# -----------------------------------------------------------------------------
+duplicate_check:
+  - id: DC-01
+    category: duplicate_check
+    check: "PK uniqueness — no duplicate primary keys in target"
+    severity: blocker
+    applies_to: all
+    error_message: "{{violation_count}} duplicate primary key groups found in target."
+    fix_suggestion: "Deduplicate the target. Check for join fan-out, missing DISTINCT, or incorrect GROUP BY in the transformation."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["pk_values", "dupe_count"]
+
+  - id: DC-01a
+    category: duplicate_check
+    check: "PK + eff_start_date uniqueness for SCD2 tables (whole data)"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{violation_count}} duplicate (PK, eff_start_date) combinations found in SCD2 target."
+    fix_suggestion: "Investigate whether the SCD2 merge creates multiple versions with the same effective start date. Deduplicate or adjust the CDC change detection."
+    pass_criteria: "violation_count == 0"
+    notes: >
+      Applies to SCD2 tables only. For non-SCD2 tables, standard DC-01 (PK-only) is used.
+      If pk_columns == business_key_columns, this check is redundant with DC-02 — the plan
+      agent skips DC-01a in that case.
+    diagnostic_output_columns: ["pk_values", "eff_start_date", "dupe_count"]
+
+  - id: DC-01b
+    category: duplicate_check
+    check: "PK uniqueness for SCD2 tables (active records only)"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{violation_count}} PKs have more than one active record in SCD2 target."
+    fix_suggestion: "Ensure the SCD2 merge logic closes the previous active version before inserting a new one. Only the latest version should have active = '1'."
+    pass_criteria: "violation_count == 0"
+    notes: >
+      Applies to SCD2 tables only. This is the active-record subset of the duplicate check —
+      complementary to DC-01a (whole data) and SCD2-04 (which also checks active record invariant
+      but with different diagnostic output).
+    diagnostic_output_columns: ["pk_values", "dupe_count"]
+
+  - id: DC-02
+    category: duplicate_check
+    check: "Business-key + eff_start uniqueness for SCD2 tables"
+    severity: blocker
+    applies_to: scd2
+    error_message: "{{violation_count}} duplicate (business_key, eff_start_date) combinations found in SCD2 target."
+    fix_suggestion: "Each (business_key, eff_start_date) must be unique in an SCD2 table. Check for duplicate source records or re-run artifacts from the SCD2 merge."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["business_key_values", "eff_start_date", "dupe_count"]
+
+# -----------------------------------------------------------------------------
+# Category 5: Datatype Checks (DT-01–DT-03)
+# -----------------------------------------------------------------------------
+datatype_check:
+  - id: DT-01
+    category: datatype_check
+    check: "CAST validation — column values can be safely cast to the declared datatype"
+    severity: blocker
+    applies_to: all
+    error_message: "{{violation_count}} rows in column '{{column}}' fail CAST to {{datatype}}."
+    fix_suggestion: "Investigate values that cannot be cast. Common causes: non-numeric strings in numeric columns, malformed dates, or values exceeding the target precision."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["column_name", "cast_failure_count", "sample_values"]
+
+  - id: DT-02
+    category: datatype_check
+    check: "Precision/scale verification — DECIMAL(p,s) columns match documented precision"
+    severity: blocker
+    applies_to: all
+    error_message: "{{violation_count}} rows in column '{{column}}' exceed declared DECIMAL({{precision}},{{scale}})."
+    fix_suggestion: "Check the source data and transformation logic. Apply ROUND or TRUNCATE to enforce the declared precision and scale."
+    pass_criteria: "violation_count == 0"
+    not_evaluated_conditions:
+      - "Precision/scale not documented in mapping"
+    diagnostic_output_columns: ["column_name", "precision_violation_count", "max_actual_precision", "max_actual_scale"]
+
+  - id: DT-03
+    category: datatype_check
+    check: "Undocumented precision — flag columns where precision is required but not documented"
+    severity: warning
+    applies_to: all
+    error_message: "Column '{{column}}' has numeric type '{{datatype}}' but no documented precision/scale."
+    fix_suggestion: "Document the precision and scale in the mapping for all numeric columns. This enables DT-02 validation."
+    pass_criteria: "not applicable — always NOT_EVALUATED when triggered"
+    diagnostic_output_columns: ["column_name", "declared_type"]
+
+# -----------------------------------------------------------------------------
+# Category 6: Business Rule Checks (BR-01–BR-04)
+# -----------------------------------------------------------------------------
+business_rule:
+  - id: BR-01
+    category: business_rule
+    check: "Value domain check — column values are within the documented domain or enum set"
+    severity: warning
+    applies_to: all
+    error_message: "{{violation_count}} rows in column '{{column}}' have values outside the documented domain: {{invalid_value}}."
+    fix_suggestion: "Review the domain/enum definition in the mapping. Either update the allowed values list or fix the transformation to constrain output values."
+    pass_criteria: "violation_count == 0"
+    not_evaluated_conditions:
+      - "No domain/enum documented in business_logic"
+    diagnostic_output_columns: ["column_name", "invalid_value", "violation_count"]
+
+  - id: BR-02
+    category: business_rule
+    check: "Referential integrity check — FK references exist in parent table"
+    severity: warning
+    applies_to: all
+    error_message: "{{violation_count}} orphan FK values found in column '{{fk_column}}' — no matching record in parent table '{{parent_table}}'."
+    fix_suggestion: "Verify the parent table is fully loaded before the child table. Check for timing issues in the ETL pipeline or stale reference data."
+    pass_criteria: "violation_count == 0"
+    not_evaluated_conditions:
+      - "Reference table not accessible"
+    diagnostic_output_columns: ["fk_column", "orphan_key", "orphan_count"]
+
+  - id: BR-03
+    category: business_rule
+    check: "Failed type/domain count — count rows failing type or domain constraints"
+    severity: warning
+    applies_to: all
+    error_message: "Column '{{column}}': {{type_fail_count}} type failures, {{domain_fail_count}} domain failures."
+    fix_suggestion: "Review the detailed DT-01 and BR-01 results for this column. Fix the upstream transformation or source data quality."
+    pass_criteria: "violation_count == 0"
+    diagnostic_output_columns: ["column_name", "type_fail_count", "domain_fail_count"]
+
+  - id: BR-04
+    category: business_rule
+    check: "Aggregate reconciliation — business-rule-level SUM/COUNT reconciliation"
+    severity: blocker
+    applies_to: all
+    error_message: "Aggregate reconciliation '{{rule_name}}' failed: source={{source_value}}, target={{target_value}}, diff={{mismatch_count}}."
+    fix_suggestion: "Check the transformation logic for the aggregated column. Verify filters, grouping, and join conditions match between the reconciliation query and the transformation."
+    pass_criteria: "mismatch_count == 0"
+    diagnostic_output_columns: ["rule_name", "agg_func", "source_value", "target_value", "diff"]

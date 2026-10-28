@@ -1,0 +1,9 @@
+{
+    "name": "barclays-buk-plugin-testing-toolkit",
+    "description": "Comprehensive plugin testing, quality assurance, and validation toolkit",
+    "version": "1.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    }
+}

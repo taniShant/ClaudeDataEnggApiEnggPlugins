@@ -1,0 +1,39 @@
+# GitLab CI Pipeline Template for SDK3 Projects
+# This template uses the EMM API Java CI component with Java 21 builder images
+# and enforces quality gates with proper failure handling
+
+# Override to turn CSM off
+.csm_extract_secrets:
+  before_script:
+    echo "CSM is Disabled"
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+include:
+  - component: $CI_SERVER_HOST/barclays/apis-common-utilities/shared-pipeline/emm-api-java-ci-component/gradle-java-pipeline-emm@3.0
+    inputs:
+      comp_test_gradle_opts: &gradle_opts "-PnexusUsername=$nexusUsername -PnexusPassword=$nexusPassword"
+      mut_test_gradle_opts: *gradle_opts
+      sonar_source_directory: "src/main/java"
+      GLOBAL_JAVA_BUILDER_IMAGE: $BUILDER_IMAGE_JAVA_21
+      sonar_builder_image: $BUILDER_IMAGE_JAVA_21
+      sonar_language: java
+      veracode_sca_api_token_variable_name: SCA_API_TOKEN
+      publish_gradle_nexus_system_account_username: syseEmmApibldnp
+      properties_setup_nexus_system_account_username: syseEmmApibldnp
+      compliance_nexus_system_account_username: syseEmmApibldnp
+      properties_setup_nexus_release_url: "https://nexus.barcapint.com/nexus/content/repositories/barclays-restricted-releases/"
+      properties_setup_nexus_snapshot_url: "https://nexus.barcapint.com/nexus/content/repositories/buk-snapshots/"
+      unit_test_gradle_goal_name: "clean gitlab-java-unit-test"
+      comp_test_gradle_goal_name: "clean integrationTest"
+      # csm_safe_id: snsvc0049372  # Optional - only include if CSM safe ID is known
+
+# IMPORTANT: Only gradle-java-checkstyle can have allow_failure: true
+# All other quality gates must pass (mutation test, sonar, component test, etc.)
+gradle-java-checkstyle:
+  allow_failure: true

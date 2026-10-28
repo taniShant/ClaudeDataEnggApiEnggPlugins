@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UnknownsRegister",
+  "description": "Schema for the unknowns register. Tracks all unresolved questions, gaps, or ambiguities identified during agent execution that require human clarification, ownership assignment, or escalation before work can proceed safely.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "unknown_id",
+      "category",
+      "description",
+      "severity",
+      "impact",
+      "owner_needed",
+      "resolution_action",
+      "status"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "unknown_id": {
+        "type": "string",
+        "description": "Unique identifier for this unknown item."
+      },
+      "category": {
+        "type": "string",
+        "description": "Category classifying the nature of the unknown.",
+        "enum": [
+          "requirement",
+          "standard",
+          "evidence",
+          "ownership",
+          "approval",
+          "technology",
+          "data",
+          "security",
+          "operational"
+        ]
+      },
+      "description": {
+        "type": "string",
+        "description": "Clear description of what is unknown or unresolved."
+      },
+      "severity": {
+        "type": "string",
+        "description": "Severity level indicating the impact of this unknown on proceeding with the work.",
+        "enum": [
+          "informational",
+          "material",
+          "hand_off_required",
+          "unsafe_to_proceed"
+        ]
+      },
+      "impact": {
+        "type": "string",
+        "description": "Description of the impact on the deliverable or process if this unknown remains unresolved."
+      },
+      "owner_needed": {
+        "type": "string",
+        "description": "Role or team that needs to resolve or own this unknown."
+      },
+      "resolution_action": {
+        "type": "string",
+        "description": "Recommended action to resolve this unknown."
+      },
+      "status": {
+        "type": "string",
+        "description": "Current status of this unknown item.",
+        "enum": [
+          "open",
+          "resolved",
+          "accepted",
+          "escalated"
+        ]
+      },
+      "resolved_by": {
+        "type": "string",
+        "description": "Identity of the person or process that resolved this unknown."
+      },
+      "resolved_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO 8601 timestamp when this unknown was resolved."
+      }
+    }
+  }
+}

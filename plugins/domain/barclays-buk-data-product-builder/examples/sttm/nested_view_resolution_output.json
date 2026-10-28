@@ -1,0 +1,57 @@
+{
+  "description": "Expected output — nested views recursively resolved to base tables",
+  "intermediate_steps": [
+    {
+      "step_number": 1,
+      "step_label": "Base Accounts View",
+      "temp_table_name": "work_db.base_accounts_v",
+      "statement_type": "CREATE_VIEW",
+      "source_tables": ["s_acctdb.account_master"],
+      "row_operation": "create",
+      "joins": [],
+      "filters": ["acct.status != 'CLOSED'"],
+      "columns_produced": [
+        {"column_name": "account_id", "expression": "acct.account_id", "source_columns": ["s_acctdb.account_master.account_id"], "column_role": "new"},
+        {"column_name": "account_name", "expression": "acct.account_name", "source_columns": ["s_acctdb.account_master.account_name"], "column_role": "new"},
+        {"column_name": "status", "expression": "acct.status", "source_columns": ["s_acctdb.account_master.status"], "column_role": "new"}
+      ],
+      "grain_keys": ["account_id"],
+      "view_definition_summary": "SELECT acct.account_id, acct.account_name, acct.status FROM s_acctdb.account_master acct WHERE acct.status != 'CLOSED'",
+      "resolves_to_base_tables": ["s_acctdb.account_master"]
+    },
+    {
+      "step_number": 2,
+      "step_label": "Active Accounts View",
+      "temp_table_name": "work_db.active_accounts_v",
+      "statement_type": "CREATE_VIEW",
+      "source_tables": ["work_db.base_accounts_v"],
+      "row_operation": "create",
+      "joins": [],
+      "filters": ["bav.status = 'ACTIVE'"],
+      "columns_produced": [
+        {"column_name": "account_id", "expression": "bav.account_id", "source_columns": ["s_acctdb.account_master.account_id"], "column_role": "new"},
+        {"column_name": "account_name", "expression": "bav.account_name", "source_columns": ["s_acctdb.account_master.account_name"], "column_role": "new"}
+      ],
+      "grain_keys": ["account_id"],
+      "view_definition_summary": "SELECT bav.account_id, bav.account_name FROM work_db.base_accounts_v bav WHERE bav.status = 'ACTIVE'",
+      "resolves_to_base_tables": ["s_acctdb.account_master"]
+    }
+  ],
+  "joins_detected": [
+    {
+      "driver_table": "s_acctdb.account_master",
+      "driver_alias": "aav",
+      "joins": [
+        {
+          "table": "e_txndb.transaction_summary",
+          "alias": "tx",
+          "join_type": "INNER",
+          "on_condition": "aav.account_id = tx.account_id",
+          "original_view": "work_db.active_accounts_v",
+          "original_view_chain": ["work_db.active_accounts_v", "work_db.base_accounts_v"]
+        }
+      ]
+    }
+  ],
+  "note": "Nested view chain: active_accounts_v -> base_accounts_v -> s_acctdb.account_master. Final resolution reaches the base table."
+}

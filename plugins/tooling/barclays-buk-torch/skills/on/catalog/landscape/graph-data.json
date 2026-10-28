@@ -1,0 +1,938 @@
+{
+  "schema_version": "1.0",
+  "source_revision": "346ead6eeb5fa088ab46bda1db7b7296eda22c4a",
+  "generated_at": "2026-09-23T08:20:11.035797+00:00",
+  "nodes": {
+    "capabilities": [
+      {
+        "id": "barclays-buk-accessibility-auditor-accessibility-auditor-agent-v1",
+        "plugin": "barclays-buk-accessibility-auditor",
+        "domain": "quality-assurance",
+        "stages": [
+          "verify"
+        ],
+        "scope": "read-only",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-api-engineer-api-engineer-agent-v1",
+        "plugin": "barclays-buk-api-engineer",
+        "domain": "api-service-creation",
+        "stages": [
+          "design",
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-api-engineer-create-v1",
+        "plugin": "barclays-buk-api-engineer",
+        "domain": "api-service-creation",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "user-only",
+        "command": "/barclays-buk-api-engineer:create"
+      },
+      {
+        "id": "barclays-buk-confluence-confluence-comments-v1",
+        "plugin": "barclays-buk-confluence",
+        "domain": "knowledge-documentation",
+        "stages": [
+          "design",
+          "build"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-confluence:confluence-comments"
+      },
+      {
+        "id": "barclays-buk-confluence-confluence-history-v1",
+        "plugin": "barclays-buk-confluence",
+        "domain": "knowledge-documentation",
+        "stages": [
+          "design",
+          "build"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-confluence:confluence-history"
+      },
+      {
+        "id": "barclays-buk-confluence-confluence-rag-ask-v1",
+        "plugin": "barclays-buk-confluence",
+        "domain": "knowledge-documentation",
+        "stages": [
+          "design",
+          "build"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-confluence:confluence-rag-ask"
+      },
+      {
+        "id": "barclays-buk-confluence-confluence-read-v1",
+        "plugin": "barclays-buk-confluence",
+        "domain": "knowledge-documentation",
+        "stages": [
+          "design",
+          "build"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-confluence:confluence-read"
+      },
+      {
+        "id": "barclays-buk-confluence-confluence-search-v1",
+        "plugin": "barclays-buk-confluence",
+        "domain": "knowledge-documentation",
+        "stages": [
+          "design",
+          "build"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-confluence:confluence-search"
+      },
+      {
+        "id": "barclays-buk-confluence-confluence-tree-v1",
+        "plugin": "barclays-buk-confluence",
+        "domain": "knowledge-documentation",
+        "stages": [
+          "design",
+          "build"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-confluence:confluence-tree"
+      },
+      {
+        "id": "barclays-buk-copywriter-copywriter-agent-v1",
+        "plugin": "barclays-buk-copywriter",
+        "domain": "content-creation",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-data-engineer-assess-v1",
+        "plugin": "barclays-buk-data-engineer",
+        "domain": "data-engineering",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-data-engineer:assess"
+      },
+      {
+        "id": "barclays-buk-data-engineer-run-v1",
+        "plugin": "barclays-buk-data-engineer",
+        "domain": "data-engineering",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "user-only",
+        "command": "/barclays-buk-data-engineer:run"
+      },
+      {
+        "id": "barclays-buk-data-product-builder-init-v1",
+        "plugin": "barclays-buk-data-product-builder",
+        "domain": "data-engineering",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-data-product-builder:init"
+      },
+      {
+        "id": "barclays-buk-drawio-drawio-agent-v1",
+        "plugin": "barclays-buk-drawio",
+        "domain": "diagram-tooling",
+        "stages": [
+          "design",
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-incident-manager-incident-manager-agent-v1",
+        "plugin": "barclays-buk-incident-manager",
+        "domain": "incident-management",
+        "stages": [
+          "incident"
+        ],
+        "scope": "read-only",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-jira-jira-agent-v1",
+        "plugin": "barclays-buk-jira",
+        "domain": "knowledge-documentation",
+        "stages": [
+          "build"
+        ],
+        "scope": "read-only",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-mca-jdk-upgrade-mca1-jdk-upgrade-v1",
+        "plugin": "barclays-buk-mca-jdk-upgrade",
+        "domain": "migration",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-mca-jdk-upgrade:mca1-jdk-upgrade"
+      },
+      {
+        "id": "barclays-buk-mca-jdk-upgrade-mca2-jdk-upgrade-v1",
+        "plugin": "barclays-buk-mca-jdk-upgrade",
+        "domain": "migration",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-mca-jdk-upgrade:mca2-jdk-upgrade"
+      },
+      {
+        "id": "barclays-buk-mca1-to-mca2-eps-mca1-to-mca2-eps-v1",
+        "plugin": "barclays-buk-mca1-to-mca2-eps",
+        "domain": "migration",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-mca1-to-mca2-eps:mca1-to-mca2-eps"
+      },
+      {
+        "id": "barclays-buk-mca1-ui-mca2-migration-mca1-migration-v1",
+        "plugin": "barclays-buk-mca1-ui-mca2-migration",
+        "domain": "migration",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-mca1-ui-mca2-migration:mca1-migration"
+      },
+      {
+        "id": "barclays-buk-mts-migrate-toolkit-mts-documentation-v1",
+        "plugin": "barclays-buk-mts-migrate-toolkit",
+        "domain": "migration",
+        "stages": [
+          "design",
+          "build"
+        ],
+        "scope": "read-only",
+        "mode": "user-only",
+        "command": "/barclays-buk-mts-migrate-toolkit:mts-documentation"
+      },
+      {
+        "id": "barclays-buk-mts-migrate-toolkit-mts-migrate-v1",
+        "plugin": "barclays-buk-mts-migrate-toolkit",
+        "domain": "migration",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "user-only",
+        "command": "/barclays-buk-mts-migrate-toolkit:mts-migrate"
+      },
+      {
+        "id": "barclays-buk-nx-angular-migration-toolkit-angular-nx-enterprise-migration-v1",
+        "plugin": "barclays-buk-nx-angular-migration-toolkit",
+        "domain": "migration",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-nx-angular-migration-toolkit:angular-nx-enterprise-migration"
+      },
+      {
+        "id": "barclays-buk-plugin-testing-toolkit-test-plugin-v1",
+        "plugin": "barclays-buk-plugin-testing-toolkit",
+        "domain": "platform-tooling",
+        "stages": [
+          "verify"
+        ],
+        "scope": "externally-consequential",
+        "mode": "user-only",
+        "command": "/barclays-buk-plugin-testing-toolkit:test-plugin"
+      },
+      {
+        "id": "barclays-buk-plugin-testing-toolkit-validate-plugin-v1",
+        "plugin": "barclays-buk-plugin-testing-toolkit",
+        "domain": "platform-tooling",
+        "stages": [
+          "verify"
+        ],
+        "scope": "read-only",
+        "mode": "user-only",
+        "command": "/barclays-buk-plugin-testing-toolkit:validate-plugin"
+      },
+      {
+        "id": "barclays-buk-product-manager-product-manager-agent-v1",
+        "plugin": "barclays-buk-product-manager",
+        "domain": "discovery",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-quality-engineer-quality-engineer-agent-v1",
+        "plugin": "barclays-buk-quality-engineer",
+        "domain": "quality-assurance",
+        "stages": [
+          "verify"
+        ],
+        "scope": "local-modification",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-reliability-engineer-implement-v1",
+        "plugin": "barclays-buk-reliability-engineer",
+        "domain": "reliability-observability",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-reliability-engineer:implement"
+      },
+      {
+        "id": "barclays-buk-reliability-engineer-plan-observability-v1",
+        "plugin": "barclays-buk-reliability-engineer",
+        "domain": "reliability-observability",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-reliability-engineer:plan-observability"
+      },
+      {
+        "id": "barclays-buk-reliability-engineer-plan-performance-v1",
+        "plugin": "barclays-buk-reliability-engineer",
+        "domain": "reliability-observability",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-reliability-engineer:plan-performance"
+      },
+      {
+        "id": "barclays-buk-reliability-engineer-plan-resilience-v1",
+        "plugin": "barclays-buk-reliability-engineer",
+        "domain": "reliability-observability",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-reliability-engineer:plan-resilience"
+      },
+      {
+        "id": "barclays-buk-reliability-engineer-review-observability-v1",
+        "plugin": "barclays-buk-reliability-engineer",
+        "domain": "reliability-observability",
+        "stages": [
+          "build",
+          "verify"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-reliability-engineer:review-observability"
+      },
+      {
+        "id": "barclays-buk-reliability-engineer-review-performance-v1",
+        "plugin": "barclays-buk-reliability-engineer",
+        "domain": "reliability-observability",
+        "stages": [
+          "build",
+          "verify"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-reliability-engineer:review-performance"
+      },
+      {
+        "id": "barclays-buk-reliability-engineer-review-resilience-v1",
+        "plugin": "barclays-buk-reliability-engineer",
+        "domain": "reliability-observability",
+        "stages": [
+          "build",
+          "verify"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-reliability-engineer:review-resilience"
+      },
+      {
+        "id": "barclays-buk-reliability-engineer-status-v1",
+        "plugin": "barclays-buk-reliability-engineer",
+        "domain": "reliability-observability",
+        "stages": [
+          "any"
+        ],
+        "scope": "read-only",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-reliability-engineer:status"
+      },
+      {
+        "id": "barclays-buk-reverse-spec-generator-reverse-spec-generator-agent-v1",
+        "plugin": "barclays-buk-reverse-spec-generator",
+        "domain": "reverse-engineering",
+        "stages": [
+          "verify",
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-scaffold-sdf-v1",
+        "plugin": "barclays-buk-scaffold",
+        "domain": "frontend-sdf",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-scaffold:sdf"
+      },
+      {
+        "id": "barclays-buk-sdk3-migration-sdk3-migrate-v1",
+        "plugin": "barclays-buk-sdk3-migration",
+        "domain": "migration",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "user-only",
+        "command": "/barclays-buk-sdk3-migration:sdk3-migrate"
+      },
+      {
+        "id": "barclays-buk-security-architect-security-architect-agent-v1",
+        "plugin": "barclays-buk-security-architect",
+        "domain": "discovery",
+        "stages": [
+          "design"
+        ],
+        "scope": "externally-consequential",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-solution-architect-solution-architect-agent-v1",
+        "plugin": "barclays-buk-solution-architect",
+        "domain": "discovery",
+        "stages": [
+          "design"
+        ],
+        "scope": "externally-consequential",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-strangler-refactoring-strangler-discover-v1",
+        "plugin": "barclays-buk-strangler-refactoring",
+        "domain": "refactoring",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-strangler-refactoring:strangler-discover"
+      },
+      {
+        "id": "barclays-buk-strangler-refactoring-strangler-extract-v1",
+        "plugin": "barclays-buk-strangler-refactoring",
+        "domain": "refactoring",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-strangler-refactoring:strangler-extract"
+      },
+      {
+        "id": "barclays-buk-strangler-refactoring-strangler-plan-v1",
+        "plugin": "barclays-buk-strangler-refactoring",
+        "domain": "refactoring",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-strangler-refactoring:strangler-plan"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-android-tba-android-tba-v1",
+        "plugin": "barclays-buk-ui-engineer-android-tba",
+        "domain": "frontend-mobile",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "model-invocable",
+        "command": "/barclays-buk-ui-engineer-android-tba:android-tba"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-android-ui-engineer-android-worker-agent-v1",
+        "plugin": "barclays-buk-ui-engineer-android",
+        "domain": "frontend-mobile",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-ios-ui-engineer-ios-worker-agent-v1",
+        "plugin": "barclays-buk-ui-engineer-ios",
+        "domain": "frontend-mobile",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-sdf-ui-engineer-sdf-v1",
+        "plugin": "barclays-buk-ui-engineer-sdf",
+        "domain": "frontend-sdf",
+        "stages": [
+          "build"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/barclays-buk-ui-engineer-sdf:ui-engineer-sdf"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-sdf-ui-engineer-sdf-worker-agent-v1",
+        "plugin": "barclays-buk-ui-engineer-sdf",
+        "domain": "frontend-sdf",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-ui-engineer-agent-v1",
+        "plugin": "barclays-buk-ui-engineer",
+        "domain": "frontend-web",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-web-ui-engineer-web-worker-agent-v1",
+        "plugin": "barclays-buk-ui-engineer-web",
+        "domain": "frontend-web",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "barclays-buk-ux-designer-ux-designer-agent-v1",
+        "plugin": "barclays-buk-ux-designer",
+        "domain": "discovery",
+        "stages": [
+          "design"
+        ],
+        "scope": "local-modification",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "deploy-service-v1",
+        "plugin": "release-workflows",
+        "domain": "platform-tooling",
+        "stages": [
+          "build"
+        ],
+        "scope": "externally-consequential",
+        "mode": "model-invocable",
+        "command": "/release-workflows:deploy-service"
+      },
+      {
+        "id": "detox-remediate-v1",
+        "plugin": "barclays-buk-detox",
+        "domain": "quality-assurance",
+        "stages": [
+          "build",
+          "verify"
+        ],
+        "scope": "externally-consequential",
+        "mode": "user-only",
+        "command": "/barclays-buk-detox:remediate"
+      },
+      {
+        "id": "detox-scan-v1",
+        "plugin": "barclays-buk-detox",
+        "domain": "quality-assurance",
+        "stages": [
+          "build",
+          "verify"
+        ],
+        "scope": "read-only",
+        "mode": "user-only",
+        "command": "/barclays-buk-detox:scan"
+      },
+      {
+        "id": "infra-cost-report-v1",
+        "plugin": "infra-cost-tools",
+        "domain": "platform-tooling",
+        "stages": [
+          "any"
+        ],
+        "scope": "read-only",
+        "mode": "tool-plugin",
+        "command": "N/A (tool or agent plugin)"
+      },
+      {
+        "id": "security-scan-v1",
+        "plugin": "security-tools",
+        "domain": "platform-tooling",
+        "stages": [
+          "verify"
+        ],
+        "scope": "local-modification",
+        "mode": "user-only",
+        "command": "/security-tools:run-security-scan"
+      }
+    ],
+    "plugins": [
+      {
+        "id": "barclays-buk-accessibility-auditor",
+        "install": "/plugin install barclays-buk-accessibility-auditor@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-api-engineer",
+        "install": "/plugin install barclays-buk-api-engineer@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-confluence",
+        "install": "/plugin install barclays-buk-confluence@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-copywriter",
+        "install": "/plugin install barclays-buk-copywriter@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-data-engineer",
+        "install": "/plugin install barclays-buk-data-engineer@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-data-product-builder",
+        "install": "/plugin install barclays-buk-data-product-builder@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-drawio",
+        "install": "/plugin install barclays-buk-drawio@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-incident-manager",
+        "install": "/plugin install barclays-buk-incident-manager@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-jira",
+        "install": "/plugin install barclays-buk-jira@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-mca-jdk-upgrade",
+        "install": "/plugin install barclays-buk-mca-jdk-upgrade@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-mca1-to-mca2-eps",
+        "install": "/plugin install barclays-buk-mca1-to-mca2-eps@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-mca1-ui-mca2-migration",
+        "install": "/plugin install barclays-buk-mca1-ui-mca2-migration@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-mts-migrate-toolkit",
+        "install": "/plugin install barclays-buk-mts-migrate-toolkit@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-nx-angular-migration-toolkit",
+        "install": "/plugin install barclays-buk-nx-angular-migration-toolkit@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-plugin-testing-toolkit",
+        "install": "/plugin install barclays-buk-plugin-testing-toolkit@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-product-manager",
+        "install": "/plugin install barclays-buk-product-manager@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-quality-engineer",
+        "install": "/plugin install barclays-buk-quality-engineer@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-reliability-engineer",
+        "install": "/plugin install barclays-buk-reliability-engineer@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-reverse-spec-generator",
+        "install": "/plugin install barclays-buk-reverse-spec-generator@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-scaffold",
+        "install": "/plugin install barclays-buk-scaffold@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-sdk3-migration",
+        "install": "/plugin install barclays-buk-sdk3-migration@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-security-architect",
+        "install": "/plugin install barclays-buk-security-architect@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-solution-architect",
+        "install": "/plugin install barclays-buk-solution-architect@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-strangler-refactoring",
+        "install": "/plugin install barclays-buk-strangler-refactoring@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-ui-engineer",
+        "install": "/plugin install barclays-buk-ui-engineer@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-android",
+        "install": "/plugin install barclays-buk-ui-engineer-android@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-android-tba",
+        "install": "/plugin install barclays-buk-ui-engineer-android-tba@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-ios",
+        "install": "/plugin install barclays-buk-ui-engineer-ios@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-sdf",
+        "install": "/plugin install barclays-buk-ui-engineer-sdf@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-ui-engineer-web",
+        "install": "/plugin install barclays-buk-ui-engineer-web@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-ux-designer",
+        "install": "/plugin install barclays-buk-ux-designer@barclays-cio-buk"
+      },
+      {
+        "id": "barclays-buk-detox",
+        "install": "/plugin install barclays-buk-detox@barclays-cio-buk"
+      },
+      {
+        "id": "infra-cost-tools",
+        "install": "infra-cost-tools >= 1.4.0; install on request via go/finops-plugin; requires approved cost-explorer IAM role"
+      },
+      {
+        "id": "release-workflows",
+        "install": "release-workflows >= 2.1.0; install via the approved plugin registry at go/plugins"
+      },
+      {
+        "id": "security-tools",
+        "install": "security-tools >= 3.0.0; provisioned to all engineers via the baseline plugin set; see go/appsec-scanner for access troubleshooting"
+      }
+    ],
+    "domains": [
+      "api-service-creation",
+      "frontend-sdf",
+      "frontend-web",
+      "frontend-mobile",
+      "data-engineering",
+      "reliability-observability",
+      "refactoring",
+      "migration",
+      "knowledge-documentation",
+      "platform-tooling",
+      "discovery",
+      "quality-assurance",
+      "incident-management",
+      "content-creation",
+      "diagram-tooling",
+      "reverse-engineering"
+    ],
+    "stages": [
+      "design",
+      "build",
+      "verify",
+      "incident"
+    ]
+  },
+  "edges": {
+    "precedes": [
+      {
+        "from": "barclays-buk-data-engineer-assess-v1",
+        "to": "barclays-buk-data-engineer-run-v1"
+      },
+      {
+        "from": "barclays-buk-data-product-builder-init-v1",
+        "to": "barclays-buk-data-engineer-run-v1"
+      },
+      {
+        "from": "barclays-buk-mts-migrate-toolkit-mts-documentation-v1",
+        "to": "barclays-buk-mts-migrate-toolkit-mts-migrate-v1"
+      },
+      {
+        "from": "barclays-buk-product-manager-product-manager-agent-v1",
+        "to": "barclays-buk-ux-designer-ux-designer-agent-v1"
+      },
+      {
+        "from": "barclays-buk-reliability-engineer-plan-observability-v1",
+        "to": "barclays-buk-reliability-engineer-implement-v1"
+      },
+      {
+        "from": "barclays-buk-reliability-engineer-plan-performance-v1",
+        "to": "barclays-buk-reliability-engineer-implement-v1"
+      },
+      {
+        "from": "barclays-buk-reliability-engineer-plan-resilience-v1",
+        "to": "barclays-buk-reliability-engineer-implement-v1"
+      },
+      {
+        "from": "barclays-buk-reliability-engineer-review-observability-v1",
+        "to": "barclays-buk-reliability-engineer-implement-v1"
+      },
+      {
+        "from": "barclays-buk-scaffold-sdf-v1",
+        "to": "barclays-buk-ui-engineer-sdf-ui-engineer-sdf-v1"
+      },
+      {
+        "from": "barclays-buk-solution-architect-solution-architect-agent-v1",
+        "to": "barclays-buk-security-architect-security-architect-agent-v1"
+      },
+      {
+        "from": "barclays-buk-strangler-refactoring-strangler-discover-v1",
+        "to": "barclays-buk-strangler-refactoring-strangler-plan-v1"
+      },
+      {
+        "from": "barclays-buk-strangler-refactoring-strangler-plan-v1",
+        "to": "barclays-buk-strangler-refactoring-strangler-extract-v1"
+      },
+      {
+        "from": "barclays-buk-ux-designer-ux-designer-agent-v1",
+        "to": "barclays-buk-solution-architect-solution-architect-agent-v1"
+      },
+      {
+        "from": "detox-scan-v1",
+        "to": "detox-remediate-v1"
+      }
+    ],
+    "complements": [
+      {
+        "from": "barclays-buk-accessibility-auditor-accessibility-auditor-agent-v1",
+        "to": "barclays-buk-quality-engineer-quality-engineer-agent-v1"
+      },
+      {
+        "from": "barclays-buk-api-engineer-api-engineer-agent-v1",
+        "to": "barclays-buk-api-engineer-create-v1"
+      },
+      {
+        "from": "barclays-buk-confluence-confluence-comments-v1",
+        "to": "barclays-buk-confluence-confluence-read-v1"
+      },
+      {
+        "from": "barclays-buk-confluence-confluence-history-v1",
+        "to": "barclays-buk-confluence-confluence-read-v1"
+      },
+      {
+        "from": "barclays-buk-confluence-confluence-rag-ask-v1",
+        "to": "barclays-buk-confluence-confluence-search-v1"
+      },
+      {
+        "from": "barclays-buk-confluence-confluence-search-v1",
+        "to": "barclays-buk-confluence-confluence-tree-v1"
+      },
+      {
+        "from": "barclays-buk-incident-manager-incident-manager-agent-v1",
+        "to": "barclays-buk-jira-jira-agent-v1"
+      },
+      {
+        "from": "barclays-buk-mca1-to-mca2-eps-mca1-to-mca2-eps-v1",
+        "to": "barclays-buk-mca1-ui-mca2-migration-mca1-migration-v1"
+      },
+      {
+        "from": "barclays-buk-plugin-testing-toolkit-test-plugin-v1",
+        "to": "barclays-buk-plugin-testing-toolkit-validate-plugin-v1"
+      },
+      {
+        "from": "barclays-buk-reliability-engineer-plan-observability-v1",
+        "to": "barclays-buk-reliability-engineer-plan-performance-v1"
+      },
+      {
+        "from": "barclays-buk-ui-engineer-android-tba-android-tba-v1",
+        "to": "barclays-buk-ui-engineer-android-ui-engineer-android-worker-agent-v1"
+      },
+      {
+        "from": "barclays-buk-ui-engineer-sdf-ui-engineer-sdf-v1",
+        "to": "barclays-buk-ui-engineer-sdf-ui-engineer-sdf-worker-agent-v1"
+      }
+    ],
+    "overlaps_with": [
+      {
+        "from": "barclays-buk-mca-jdk-upgrade-mca1-jdk-upgrade-v1",
+        "to": "barclays-buk-mca-jdk-upgrade-mca2-jdk-upgrade-v1"
+      },
+      {
+        "from": "barclays-buk-mca1-to-mca2-eps-mca1-to-mca2-eps-v1",
+        "to": "barclays-buk-sdk3-migration-sdk3-migrate-v1"
+      },
+      {
+        "from": "barclays-buk-ui-engineer-android-ui-engineer-android-worker-agent-v1",
+        "to": "barclays-buk-ui-engineer-ios-ui-engineer-ios-worker-agent-v1"
+      },
+      {
+        "from": "barclays-buk-ui-engineer-ui-engineer-agent-v1",
+        "to": "barclays-buk-ui-engineer-web-ui-engineer-web-worker-agent-v1"
+      }
+    ]
+  },
+  "provenance": {
+    "compiler_version": "1.0",
+    "graph_compiler_version": "1.0"
+  }
+}

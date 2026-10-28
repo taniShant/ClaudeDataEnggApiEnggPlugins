@@ -1,0 +1,70 @@
+schema_version: '1.0'
+domain:
+  id: dom.open-market-products
+  name: Open Market Products
+  description: "The Open Market Products Domain is Barclays UK's strategic platform for partner ecosystem integration, enabling customers to access external financial products and services through secure, seamless Barclays channels. The domain orchestrates the complete partner and customer lifecycle—from partner onboarding, product configuration, and customer registration through consent management, authenticated handoffs, data exchange, billing, and service cancellation—delivering a market-leading, curated marketplace experience while maintaining rigorous data governance, security, and customer control."
+  owner: bb
+  bian_links:
+    -
+      title: Brokered Product
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=42491"
+  sub_domains:
+    -
+      id: sub.omp.manage-open-market-product-partner
+      name: Manage Open Market Product Partner
+      description: "Management of partner lifecycle within the open market ecosystem, encompassing partner onboarding, partner-specific terms and conditions, capability readiness validation, and partner status governance, enabling secure and scalable partner offerings to customers and maintaining compliant partner relationship controls."
+      capabilities:
+        -
+          id: cap.omp.manage-partner-terms-and-conditions
+          name: Manage Partner Terms and Conditions
+          description: "Management of partner-specific terms and conditions for open market products, encompassing creation, maintenance, and version control of contractual terms, enabling compliant partner relationship governance, customer protection, and consistent partner obligation management across the product lifecycle."
+        -
+          id: cap.omp.open-market-products-manage-product-configurations
+          name: Open Market Products Manage Product Configurations
+          description: "Management of open market product configurations and reference data, encompassing product definitions, consent model setup, validation rules, and partner readiness approval, enabling compliant product offerings to customers, consistent product governance, and scalable partner onboarding across the open market ecosystem."
+        -
+          id: cap.omp.withdraw-partner-from-sale
+          name: Withdraw Partner From Sale
+          description: "Withdrawal of partners from active customer sale while retaining reference materials and historical configurations, enabling continued service delivery for existing customer relationships, maintaining regulatory compliance for legacy arrangements, and supporting graceful partner offboarding without service disruption."
+    -
+      id: sub.omp.manage-open-market-products
+      name: Manage Open Market Products
+      description: "Delivery of open market product discovery, registration, and partner fulfilment, encompassing product information provision, eligibility assessment, terms and consent management, and customer data transmission, enabling customer onboarding, seamless access to partner services, improved customer experience, and scalable partner adoption."
+      capabilities:
+        -
+          id: cap.omp.generate-welcome-communications
+          name: Generate Welcome Communications
+          description: "Generation of welcome communications for registered customers encompassing onboarding details, key product information, and next steps, supporting timely customer engagement, reduced early-life queries, and consistent start to the partner product relationship across all open market offerings."
+        -
+          id: cap.omp.manage-consent
+          name: Manage Consent
+          description: "Management of customer consent for partner data sharing encompassing consent capture, status tracking, and partner-specific pseudonymised identifiers, enabling compliant data exchange, reduced customer friction, reliable linkage between customers and partner services, and auditable consent lifecycle management."
+        -
+          id: cap.omp.manage-customer-deregistration
+          name: Manage Customer Deregistration
+          description: "Management of customer deregistration encompassing withdrawal of users and associated businesses from partner products and registration status updates, enabling customers to end participation, reduce unwanted engagements, maintain accurate downstream data sources, and support partner relationship termination reporting."
+        -
+          id: cap.omp.manage-product-registration
+          name: Manage Product Registration
+          description: "Management of customer product registration encompassing eligibility assessment, terms and conditions provision and acceptance recording, supporting customer understanding of suitability and commitments, enabling confident application decisions, reduced registration drop-off, and compliance with consent and disclosure requirements."
+        -
+          id: cap.omp.open-market-products-provide-product-information
+          name: Open Market Products Provide Product Information
+          description: "Provision of comprehensive open market product information encompassing features, pricing, eligibility requirements, and key disclosures, supporting informed customer decisions, improved product discovery, and consistent understanding of available partner offerings across discovery channels."
+        -
+          id: cap.omp.provide-customer-information
+          name: Provide Customer Information
+          description: "Provision of customer information for partner servicing encompassing validated customer details and registration context required for partner onboarding and ongoing service delivery, while maintaining only service registrations and consent records, enabling appropriate data sharing, reduced duplication, and consistent customer access to partner services."
+        -
+          id: cap.omp.provide-partner-access
+          name: Provide Partner Access
+          description: "Provision of partner access entry points encompassing authenticated and referral handoffs with contextual continuation for new and returning customers, enabling seamless transition to partner services, consistent customer journeys across access patterns, and reduced friction in partner ecosystem navigation."
+    -
+      id: sub.omp.support-open-market-products
+      name: Support Open Market Products
+      description: "Delivery of open market product support and oversight, encompassing partner performance reporting, customer deregistration management, billing support, and service quality monitoring, enabling customers to update or end participation, supporting operational oversight, and improving visibility of product performance and partner outcomes."
+      capabilities:
+        -
+          id: cap.omp.report-product-performance
+          name: Report Product Performance
+          description: "Reporting of partner-provided open market product data encompassing usage patterns, performance indicators, and operational metrics, supporting service oversight, billing and reconciliation processes, and informed decisions on product effectiveness, partner relationship management, and portfolio optimization."

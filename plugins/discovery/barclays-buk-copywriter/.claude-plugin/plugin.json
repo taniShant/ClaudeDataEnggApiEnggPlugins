@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-copywriter",
+    "description": "Generates customer-facing and UI copy for BUK journeys and communications. Works from PM requirements and UX journey definitions to produce accessible, Consumer Duty compliant copy.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

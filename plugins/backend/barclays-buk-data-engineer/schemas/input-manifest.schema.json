@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InputManifest",
+  "description": "Schema for the base worker input manifest. Defines the contract for requests submitted to the barclays-buk-data-engineer agent, covering task type, problem context, supplied artefacts, and all optional domain-specific parameters.",
+  "type": "object",
+  "required": [
+    "request_id",
+    "task_type",
+    "problem_statement",
+    "desired_outputs",
+    "supplied_artifacts",
+    "authorised_context_sources",
+    "constraints",
+    "requester"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "Unique identifier for this request."
+    },
+    "task_type": {
+      "type": "string",
+      "description": "The type of task the agent is being asked to perform.",
+      "enum": [
+        "assess",
+        "profile",
+        "map",
+        "model-logical",
+        "model-physical",
+        "tech-choice",
+        "generate-pipeline",
+        "generate-dq",
+        "db-change",
+        "plan-migration",
+        "lineage-impact",
+        "metadata",
+        "performance",
+        "streaming-design",
+        "pii-discovery",
+        "review-mr",
+        "validate",
+        "handoff",
+        "run",
+        "status"
+      ]
+    },
+    "problem_statement": {
+      "type": "string",
+      "description": "A clear description of the problem or goal this request is addressing."
+    },
+    "desired_outputs": {
+      "type": "array",
+      "description": "List of artefact types or deliverables expected from the agent.",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "target_environment": {
+      "type": "string",
+      "description": "The target environment for the work (e.g. dev, test, prod).",
+      "default": "unknown"
+    },
+    "supplied_artifacts": {
+      "type": "array",
+      "description": "Artefacts provided as input to the agent for context or processing.",
+      "items": {
+        "type": "object",
+        "required": ["path", "type", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path or URI to the artefact."
+          },
+          "type": {
+            "type": "string",
+            "description": "Artefact type identifier (e.g. ddl, mapping, sample_data)."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the artefact and its relevance."
+          }
+        }
+      }
+    },
+    "authorised_context_sources": {
+      "type": "array",
+      "description": "List of context source identifiers the agent is permitted to consult.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "description": "Explicit constraints the agent must respect when producing outputs.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requester": {
+      "type": "string",
+      "description": "Identity of the person or system submitting this request."
+    },
+    "business_outcome": {
+      "type": "string",
+      "description": "The business outcome or value proposition this request is intended to achieve."
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "description": "Conditions that must be met for the outputs to be considered acceptable.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "functional_requirements": {
+      "type": "array",
+      "description": "Functional requirements relevant to this request.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "non_functional_requirements": {
+      "type": "array",
+      "description": "Non-functional requirements relevant to this request (e.g. performance, security).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_systems": {
+      "type": "array",
+      "description": "Identifiers of source systems involved in this request.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target_systems": {
+      "type": "array",
+      "description": "Identifiers of target systems involved in this request.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_to_target_mapping": {
+      "type": "string",
+      "description": "File path or URI to an existing source-to-target mapping document."
+    },
+    "sample_data_reference": {
+      "type": "string",
+      "description": "Reference to sample data relevant to this request."
+    },
+    "data_classification": {
+      "type": "string",
+      "description": "Data classification level applicable to the data in scope (e.g. public, internal, confidential, restricted)."
+    },
+    "data_product_type": {
+      "type": "string",
+      "description": "Type of data product being engineered (e.g. source-aligned, aggregate, consumer-aligned)."
+    },
+    "expected_volume": {
+      "type": "string",
+      "description": "Expected data volume description (e.g. '100GB/day', '500M rows')."
+    },
+    "expected_velocity": {
+      "type": "string",
+      "description": "Expected data velocity or ingestion frequency (e.g. 'batch daily', 'streaming 10k/s')."
+    },
+    "expected_latency": {
+      "type": "string",
+      "description": "Expected end-to-end latency requirement (e.g. '<5 minutes', 'T+1')."
+    },
+    "retention_objective": {
+      "type": "string",
+      "description": "Data retention objective (e.g. '7 years', '90 days hot + 5 years cold')."
+    },
+    "recovery_objective": {
+      "type": "string",
+      "description": "Recovery time or point objective (e.g. 'RPO 1 hour, RTO 4 hours')."
+    },
+    "approved_technology_candidates": {
+      "type": "array",
+      "description": "List of pre-approved technology candidates eligible for selection.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "platform_constraints": {
+      "type": "string",
+      "description": "Platform-level constraints or mandates that must be observed."
+    },
+    "lineage_references": {
+      "type": "array",
+      "description": "References to existing lineage documents or lineage system records.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "existing_models": {
+      "type": "array",
+      "description": "References to existing logical or physical data models relevant to this request.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "security_references": {
+      "type": "array",
+      "description": "References to security standards, policies, or controls applicable to this request.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cost_constraints": {
+      "type": "string",
+      "description": "Cost constraints or budget considerations relevant to technology or design decisions."
+    },
+    "migration_strategy": {
+      "type": "string",
+      "description": "High-level migration strategy if this request involves data migration."
+    },
+    "repository_reference": {
+      "type": "string",
+      "description": "URI or identifier of the source code repository associated with this request."
+    },
+    "branch_reference": {
+      "type": "string",
+      "description": "Branch name within the repository relevant to this request."
+    },
+    "named_approvers": {
+      "type": "object",
+      "description": "Map of approval role to named individual required for sign-off.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,824 @@
+<mxfile host="app.diagrams.net" modified="2026-09-28T00:00:00.000Z" agent="Claude" version="24.7.17">
+  <diagram id="diagram-1" name="SDK3 to SDK4 Uplift Flow">
+    <mxGraphModel dx="1434" dy="759" grid="1" gridSize="10" guides="1"
+                  tooltips="1" connect="1" arrows="1" fold="1" page="1"
+                  pageScale="1" pageWidth="1200" pageHeight="5000"
+                  math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ============================================================ -->
+        <!-- BACKGROUND: SDK Version Detection area                        -->
+        <!-- ============================================================ -->
+        <mxCell id="2" value="SDK Version Detection"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4FB;strokeColor=#AED6F1;fontStyle=1;fontSize=13;verticalAlign=top;arcSize=3;opacity=50;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="1100" height="760" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- BACKGROUND: Migration Phases area                             -->
+        <!-- ============================================================ -->
+        <mxCell id="3" value="Migration Phases (U1 – U7)"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F7EF;strokeColor=#A9DFBF;fontStyle=1;fontSize=13;verticalAlign=top;arcSize=3;opacity=50;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="840" width="1100" height="3780" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- START node                                                     -->
+        <!-- ============================================================ -->
+        <mxCell id="4" value="Developer runs&#xa;/sdk3-migrate PROJECT_PATH --jira JIRA_ID --uplift-sdk3"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1B3A5C;strokeColor=#1B3A5C;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="310" y="80" width="560" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- Parse & validate arguments                                    -->
+        <!-- ============================================================ -->
+        <mxCell id="5" value="Parse &amp; validate arguments&#xa;(project path, JIRA ID format)"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="200" width="460" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- Detect current SDK version                                    -->
+        <!-- ============================================================ -->
+        <mxCell id="6" value="&lt;b&gt;DETECT CURRENT SDK VERSION&lt;/b&gt;&#xa;Check 1: grep sourceCompatibility in build.gradle / buildSrc&#xa;Check 2: grep SDK4_VERSION in gradle.properties OR sdk4 BOM in build.gradle&#xa;Check 3: grep SDK3_VERSION in gradle.properties"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="310" y="320" width="560" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- Decision: What SDK version?                                   -->
+        <!-- ============================================================ -->
+        <mxCell id="7" value="What SDK version&#xa;is this API on?"
+                style="rhombus;whiteSpace=wrap;html=1;fillColor=#F5A623;strokeColor=#E59400;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="440" y="480" width="300" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- LEFT BRANCH: SDK2 detected                                    -->
+        <!-- ============================================================ -->
+        <mxCell id="8" value="SDK2 detected&#xa;(sourceCompatibility = VERSION_1_8)"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#7F8C8D;strokeColor=#6D7B7C;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="60" y="510" width="260" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="9" value="ERROR — STOP&#xa;API is on Java 8. Must migrate to SDK3 first.&#xa;Run: /sdk3-migrate PROJECT_PATH --jira JIRA_ID"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C0392B;strokeColor=#A93226;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="60" y="620" width="260" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- CENTRE BRANCH: SDK3 detected                                  -->
+        <!-- ============================================================ -->
+        <mxCell id="10" value="SDK3 detected&#xa;(SDK3_VERSION present, no SDK4 indicators)"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#7F8C8D;strokeColor=#6D7B7C;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="640" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="11" value="Set openrewrite_run = FALSE&#xa;OpenRewrite recipe WILL execute in Phase U1"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="720" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- RIGHT BRANCH: SDK4 detected                                   -->
+        <!-- ============================================================ -->
+        <mxCell id="12" value="SDK4 detected&#xa;(SDK4_VERSION or sdk4 BOM found)"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#7F8C8D;strokeColor=#6D7B7C;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="860" y="510" width="260" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="13" value="Set openrewrite_run = TRUE&#xa;OpenRewrite already applied — recipe will be SKIPPED"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="860" y="620" width="260" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- MERGE POINT / Create branch                                   -->
+        <!-- ============================================================ -->
+        <mxCell id="14" value="Create branch: feature/sdk4-uplift-{jira_id}&#xa;Create task list: U1 through U7"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="880" width="460" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PHASE U1                                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="15" value="&lt;b&gt;PHASE U1: OpenRewrite + Build Config&lt;/b&gt;"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A7A6E;strokeColor=#155F55;fontColor=#FFFFFF;fontSize=12;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="330" y="1000" width="520" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="16" value="openrewrite_run = true?"
+                style="rhombus;whiteSpace=wrap;html=1;fillColor=#F5A623;strokeColor=#E59400;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="465" y="1100" width="250" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- U1 YES branch: skip recipe -->
+        <mxCell id="17" value="SKIP recipe&#xa;Log: OpenRewrite already applied"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#7F8C8D;strokeColor=#6D7B7C;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="840" y="1120" width="220" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- U1 NO branch: run recipe -->
+        <mxCell id="18" value="Run: gradlew --init-script init.gradle rewriteRun&#xa;Set openrewrite_run = true, delete init.gradle"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="120" y="1120" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- U1 Build config changes -->
+        <mxCell id="19" value="Apply build config changes (check each — skip if already applied):&#xa;• Gradle wrapper: 8.13 → 8.14&#xa;• SDK3_VERSION → SDK4_VERSION = 4.0.0&#xa;• BOM: sdk3 → sdk4&#xa;• Jackson: com.fasterxml.jackson → tools.jackson 3.2.1&#xa;• Spring Framework: 6.2.19 → 7.0.9&#xa;• Tomcat: 10.1.55 → 11.0.22"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;align=left;spacingLeft=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="330" y="1260" width="520" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- U1 compileJava gate -->
+        <mxCell id="20" value="compileJava gate (non-blocking — log errors for U2)"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="1450" width="460" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- U1 commit -->
+        <mxCell id="21" value="Commit Phase U1"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#27AE60;strokeColor=#1E8449;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="430" y="1560" width="320" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PHASE U2                                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="22" value="&lt;b&gt;PHASE U2: Manual Source Fixes&lt;/b&gt;"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A7A6E;strokeColor=#155F55;fontColor=#FFFFFF;fontSize=12;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="330" y="1670" width="520" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="23" value="Apply changes NOT handled by OpenRewrite:&#xa;• JsonProcessingException → JacksonException&#xa;• ObjectMapper → JsonMapper.builder() (immutability fix)&#xa;• ObjectMapperUtil return type → JsonMapper&#xa;• InternalApiInitializerConfig bean → JsonMapper + @Qualifier&#xa;• RestClientHttpMethod → HttpMethod&#xa;• Remove configurePathMatch from WebConfig&#xa;• Fix @JsonInclude(NON_EMPTY) null/empty in DTOs&#xa;• Sweep com.fasterxml.jackson imports → tools.jackson"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;align=left;spacingLeft=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="330" y="1780" width="520" height="170" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="24" value="compileJava MUST pass — fix errors, retry until clean"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="2010" width="460" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="25" value="Commit Phase U2"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#27AE60;strokeColor=#1E8449;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="430" y="2120" width="320" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PHASE U3                                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="26" value="&lt;b&gt;PHASE U3: Unit Test Fixes&lt;/b&gt;"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A7A6E;strokeColor=#155F55;fontColor=#FFFFFF;fontSize=12;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="330" y="2230" width="520" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="27" value="compileTestJava → run test&#xa;Spawn test-fix-agent per failing class (parallel, max 3 retries)"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="2340" width="460" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="28" value="All unit tests pass?"
+                style="rhombus;whiteSpace=wrap;html=1;fillColor=#F5A623;strokeColor=#E59400;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="465" y="2460" width="250" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="29" value="STOP — report failures&#xa;to developer"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C0392B;strokeColor=#A93226;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="840" y="2490" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="30" value="Commit Phase U3"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#27AE60;strokeColor=#1E8449;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="430" y="2620" width="320" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PHASE U4                                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="31" value="&lt;b&gt;PHASE U4: Integration Test Fixes&lt;/b&gt;"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A7A6E;strokeColor=#155F55;fontColor=#FFFFFF;fontSize=12;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="330" y="2730" width="520" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="32" value="Integration tests exist?"
+                style="rhombus;whiteSpace=wrap;html=1;fillColor=#F5A623;strokeColor=#E59400;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="465" y="2840" width="250" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="33" value="SKIP — mark U4 skipped"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#7F8C8D;strokeColor=#6D7B7C;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="840" y="2870" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="34" value="Run integrationTest&#xa;• Fix WireMock timestamps: +00:00 → 000Z&#xa;• Fix Karate JSON case sensitivity&#xa;• Spawn integration-test-agent for remaining failures"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;align=left;spacingLeft=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="2990" width="460" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="35" value="Commit Phase U4"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#27AE60;strokeColor=#1E8449;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="430" y="3130" width="320" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PHASE U5                                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="36" value="&lt;b&gt;PHASE U5: Checkstyle Fixes&lt;/b&gt;"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A7A6E;strokeColor=#155F55;fontColor=#FFFFFF;fontSize=12;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="330" y="3240" width="520" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="37" value="Checkstyle config present?"
+                style="rhombus;whiteSpace=wrap;html=1;fillColor=#F5A623;strokeColor=#E59400;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="465" y="3350" width="250" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="38" value="SKIP — mark U5 skipped"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#7F8C8D;strokeColor=#6D7B7C;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="840" y="3380" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="39" value="Spawn checkstyle-agent&#xa;Fix severity=error violations only"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="400" y="3500" width="380" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="40" value="Commit Phase U5"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#27AE60;strokeColor=#1E8449;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="430" y="3620" width="320" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PHASE U6                                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="41" value="&lt;b&gt;PHASE U6: Quality Gate — MANDATORY, cannot skip&lt;/b&gt;"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A7A6E;strokeColor=#155F55;fontColor=#FFFFFF;fontSize=12;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="300" y="3730" width="580" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="42" value="Verify U1–U5 all COMPLETED or SKIPPED"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="3840" width="460" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="43" value="Run: gradlew clean test"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="400" y="3950" width="380" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="44" value="Run: gradlew integrationTest"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="400" y="4060" width="380" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="45" value="All tests GREEN?"
+                style="rhombus;whiteSpace=wrap;html=1;fillColor=#F5A623;strokeColor=#E59400;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="465" y="4170" width="250" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="46" value="Spawn fix agents (max retries)&#xa;STOP — BLOCK push, report to developer"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C0392B;strokeColor=#A93226;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="840" y="4190" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="47" value="PASS"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#27AE60;strokeColor=#1E8449;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="530" y="4330" width="120" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PHASE U7                                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="48" value="&lt;b&gt;PHASE U7: Push &amp; Final Report&lt;/b&gt;"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A7A6E;strokeColor=#155F55;fontColor=#FFFFFF;fontSize=12;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="330" y="4440" width="520" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="49" value="Spawn push-agent:&#xa;• Push branch to remote&#xa;• Create Merge Request&#xa;• Post JIRA comment"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;align=left;spacingLeft=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="4550" width="460" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="50" value="Generate Final Report:&#xa;• Phase summary U1–U7 with status + notes&#xa;• Changes applied with counts&#xa;• Test results (unit + integration)&#xa;• MR URL"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=11;align=left;spacingLeft=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="4690" width="460" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- END node                                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="51" value="END: API is now on Spring Boot 4.1.x (SDK4) ✓"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1B3A5C;strokeColor=#1B3A5C;fontColor=#FFFFFF;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="4850" width="460" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- LEGEND BOX                                                     -->
+        <!-- ============================================================ -->
+        <mxCell id="52" value="&lt;b&gt;Legend&lt;/b&gt;"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#BDC3C7;fontSize=12;fontStyle=1;verticalAlign=top;"
+                vertex="1" parent="1">
+          <mxGeometry x="930" y="4600" width="220" height="310" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="53" value="Start / End"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1B3A5C;strokeColor=#1B3A5C;fontColor=#FFFFFF;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="950" y="4640" width="180" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="54" value="Process step"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#2E6DA4;strokeColor=#2E6DA4;fontColor=#FFFFFF;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="950" y="4685" width="180" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="55" value="Decision"
+                style="rhombus;whiteSpace=wrap;html=1;fillColor=#F5A623;strokeColor=#E59400;fontColor=#FFFFFF;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="985" y="4720" width="110" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="56" value="Phase header (U1–U7)"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A7A6E;strokeColor=#155F55;fontColor=#FFFFFF;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="950" y="4780" width="180" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="57" value="Success / Gate pass"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#27AE60;strokeColor=#1E8449;fontColor=#FFFFFF;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="950" y="4820" width="180" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="58" value="Skip / Bypass"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#7F8C8D;strokeColor=#6D7B7C;fontColor=#FFFFFF;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="950" y="4860" width="180" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="59" value="Error / Stop"
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#C0392B;strokeColor=#A93226;fontColor=#FFFFFF;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="950" y="4900" width="180" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES — Section 1: Entry flow                                 -->
+        <!-- ============================================================ -->
+
+        <!-- Start → Parse args -->
+        <mxCell id="60" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="4" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Parse args → Detect version -->
+        <mxCell id="61" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Detect version → Decision diamond -->
+        <mxCell id="62" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="6" target="7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision → SDK2 label (left) -->
+        <mxCell id="63" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="7" target="8">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="540"/>
+              <mxPoint x="190" y="540"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- SDK2 label → ERROR STOP -->
+        <mxCell id="64" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="8" target="9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision → SDK3 label (centre-down) -->
+        <mxCell id="65" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="7" target="10">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- SDK3 label → set flag -->
+        <mxCell id="66" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="10" target="11">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision → SDK4 label (right) -->
+        <mxCell id="67" value="SDK4 detected" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="7" target="12">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="540"/>
+              <mxPoint x="990" y="540"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- SDK4 label → set flag -->
+        <mxCell id="68" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="12" target="13">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- SDK3 flag → Merge (Create branch) via waypoints -->
+        <mxCell id="69" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="11" target="14">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="810"/>
+              <mxPoint x="500" y="870"/>
+              <mxPoint x="590" y="870"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- SDK4 flag → Merge (Create branch) via waypoints -->
+        <mxCell id="70" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="13" target="14">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="990" y="660"/>
+              <mxPoint x="990" y="870"/>
+              <mxPoint x="820" y="870"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES — Create branch → U1                                    -->
+        <!-- ============================================================ -->
+        <mxCell id="71" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="14" target="15">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- U1 header → decision openrewrite? -->
+        <mxCell id="72" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="15" target="16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- openrewrite decision → YES (skip, right, dashed) -->
+        <mxCell id="73" value="YES" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="16" target="17">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="1150"/>
+              <mxPoint x="950" y="1150"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- openrewrite decision → NO (run recipe, left) -->
+        <mxCell id="74" value="NO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="16" target="18">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="1150"/>
+              <mxPoint x="260" y="1150"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- YES branch (skip) → build config merge -->
+        <mxCell id="75" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;dashed=1;"
+                edge="1" parent="1" source="17" target="19">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="950" y="1230"/>
+              <mxPoint x="950" y="1245"/>
+              <mxPoint x="850" y="1245"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- NO branch (run recipe) → build config merge -->
+        <mxCell id="76" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="18" target="19">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="260" y="1230"/>
+              <mxPoint x="260" y="1245"/>
+              <mxPoint x="330" y="1245"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Build config → compileJava gate -->
+        <mxCell id="77" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="19" target="20">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- compileJava gate → commit U1 -->
+        <mxCell id="78" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="20" target="21">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES — U1 commit → U2                                        -->
+        <!-- ============================================================ -->
+        <mxCell id="79" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="21" target="22">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- U2 header → source fixes -->
+        <mxCell id="80" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="22" target="23">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Source fixes → compileJava -->
+        <mxCell id="81" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="23" target="24">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- compileJava → commit U2 -->
+        <mxCell id="82" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="24" target="25">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES — U2 commit → U3                                        -->
+        <!-- ============================================================ -->
+        <mxCell id="83" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="25" target="26">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- U3 header → run tests -->
+        <mxCell id="84" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="26" target="27">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Run tests → decision -->
+        <mxCell id="85" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="27" target="28">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision → NO (stop, right) -->
+        <mxCell id="86" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="28" target="29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="2510"/>
+              <mxPoint x="940" y="2510"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Decision → YES (commit) -->
+        <mxCell id="87" value="YES" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="28" target="30">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES — U3 commit → U4                                        -->
+        <!-- ============================================================ -->
+        <mxCell id="88" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="30" target="31">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- U4 header → decision -->
+        <mxCell id="89" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="31" target="32">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision → NO (skip, right) -->
+        <mxCell id="90" value="NO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="32" target="33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="2890"/>
+              <mxPoint x="940" y="2890"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Decision → YES (run integration tests) -->
+        <mxCell id="91" value="YES" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="32" target="34">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Run integ tests → commit U4 -->
+        <mxCell id="92" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="34" target="35">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- SKIP (U4) → commit U4 merge -->
+        <mxCell id="93" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="33" target="35">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="940" y="2895"/>
+              <mxPoint x="940" y="3160"/>
+              <mxPoint x="750" y="3160"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES — U4 commit → U5                                        -->
+        <!-- ============================================================ -->
+        <mxCell id="94" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="35" target="36">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- U5 header → decision -->
+        <mxCell id="95" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="36" target="37">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision → NO (skip, right) -->
+        <mxCell id="96" value="NO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="37" target="38">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="3400"/>
+              <mxPoint x="940" y="3400"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Decision → YES (checkstyle agent) -->
+        <mxCell id="97" value="YES" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="37" target="39">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Checkstyle agent → commit U5 -->
+        <mxCell id="98" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="39" target="40">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- SKIP (U5) → commit U5 merge -->
+        <mxCell id="99" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="38" target="40">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="940" y="3405"/>
+              <mxPoint x="940" y="3650"/>
+              <mxPoint x="750" y="3650"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES — U5 commit → U6                                        -->
+        <!-- ============================================================ -->
+        <mxCell id="100" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="40" target="41">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- U6 header → verify -->
+        <mxCell id="101" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="41" target="42">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Verify → run test -->
+        <mxCell id="102" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="42" target="43">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- run test → run integ test -->
+        <mxCell id="103" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="43" target="44">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- run integ test → all tests green? -->
+        <mxCell id="104" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="44" target="45">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- All tests green → NO (stop, right) -->
+        <mxCell id="105" value="NO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="45" target="46">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="4220"/>
+              <mxPoint x="960" y="4220"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- All tests green → YES (PASS) -->
+        <mxCell id="106" value="YES" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;"
+                edge="1" parent="1" source="45" target="47">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES — PASS → U7                                             -->
+        <!-- ============================================================ -->
+        <mxCell id="107" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="47" target="48">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- U7 header → push agent -->
+        <mxCell id="108" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="48" target="49">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- push agent → final report -->
+        <mxCell id="109" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="49" target="50">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Final report → END -->
+        <mxCell id="110" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;endFill=1;"
+                edge="1" parent="1" source="50" target="51">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

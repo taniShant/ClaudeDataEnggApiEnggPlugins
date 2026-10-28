@@ -1,0 +1,198 @@
+schema_version: "1.0"
+confidence_threshold: 0.7  # Below this -> guided mode
+
+priority_levels:
+  - level: 1
+    name: "Authoritative — Template/DDL/Data Model"
+    description: "Target Excel template values, target markdown schema, DDL constraints (PK, FK, NOT NULL), Data Model markdown (target entity definitions, column descriptions, relationships)"
+    trust: "never_override"
+    sources:
+      - target_excel_template
+      - target_markdown_schema
+      - ddl_constraints
+      - data_model_markdown  # Target data model docs — entity descriptions, column definitions, relationships
+      - dm1_model_target     # ER/Studio DM1 describing the target model — entity definitions, column types, relationships, constraints
+    fields_governed: [target_database, target_table, target_column_name, target_description, target_datatype, target_null_flag]
+
+  - level: 2
+    name: "Authoritative — Code & Requirements Evidence"
+    description: "SQL/PySpark AST (transformation expressions, lineage), Requirement document markdown (BRD, functional specs with business rules and transformation logic)"
+    trust: "authoritative_for_logic"
+    sources:
+      - sql_ast
+      - pyspark_ast
+      - requirement_document_markdown  # BRD/functional specs describing transformation rules and business logic
+      - dm1_model_source               # ER/Studio DM1 describing source models — entity definitions, column types, relationships, constraints
+    fields_governed: [source_database, source_table, source_column, business_logic, transformation_type]
+
+  - level: 3
+    name: "Strong Supporting"
+    description: "Pre-extracted metadata, source Excel mapping, ER/Studio DM1, crypto config, user config"
+    trust: "strong_supporting"
+    sources:
+      - pre_extracted_metadata
+      - source_excel_mapping
+      - crypto_configuration
+      - user_configuration
+    fields_governed: [source_database, source_table, source_column, table_type, audit_columns]
+
+  - level: 4
+    name: "Supporting"
+    description: "Source dictionary, general markdown documents (NOT requirement docs or data model docs — those are Level 2 and Level 1 respectively)"
+    trust: "supporting_validate_only"
+    sources:
+      - source_data_dictionary
+      - markdown_documents_general  # General/supplementary docs only — requirement docs (Level 2) and data model docs (Level 1) are excluded
+    fields_governed: [business_logic, additional_context, descriptions]
+
+  - level: 5
+    name: "Advisory"
+    description: "Profiling (user answers or Excel report), heuristic matching, user free-text"
+    trust: "advisory_warn_only"
+    sources:
+      - profiling_user_answer
+      - profiling_excel_report
+      - column_name_heuristic
+      - user_instructions
+    profiling_priority_order:
+      - profiling_user_answer
+      - profiling_excel_report
+    fields_governed: []
+
+conflict_resolution:
+  - conflict: "SQL logic ≠ requirement document logic"
+    resolution: "Both are Level 2. When SQL code and requirement doc describe the same transformation differently, surface to guided mode — ask user which is current. Never silently pick one."
+  - conflict: "SQL logic ≠ source metadata"
+    resolution: "Trust SQL/requirement docs (level 2 > level 3). Log metadata discrepancy as warning."
+  - conflict: "Data model markdown ≠ target Excel template"
+    resolution: "Both are Level 1. Surface to guided mode — ask user which is authoritative for the conflicting field."
+  - conflict: "Target DM1 ≠ target Excel template or data model markdown"
+    resolution: "All are Level 1. Surface to guided mode — ask user which is authoritative for the conflicting field."
+  - conflict: "Source DM1 ≠ SQL/PySpark AST"
+    resolution: "Both are Level 2. Surface to guided mode — ask user which reflects the current state. DM1 may be stale if code has evolved."
+  - conflict: "Requirement document logic ≠ general markdown docs"
+    resolution: "Trust requirement document (level 2 > level 4). General docs are supporting only."
+  - conflict: "Profiling suggests different interpretation"
+    resolution: "Use profiling as advisory warning only (level 5). Profiling is obtained exclusively from Excel reports or user answers — never from JSON files. Never override level 1-4."
+  - conflict: "User prompt contradicts governed definitions"
+    resolution: "Prompt user for confirmation. Never silently override governed metadata."
+  - conflict: "Target template conflicts with source observation"
+    resolution: "Surface to user in guided mode. Do not auto-resolve."
+  - conflict: "Same-priority sources conflict"
+    resolution: "Surface to guided mode. Never silently resolve."
+
+provenance_methods:
+  - provided: "Value comes directly from an input artifact without modification"
+  - extracted: "Value derived from parsing code/SQL/DDL"
+  - inferred: "Value deduced from metadata/profiling patterns (profiling from Excel report or user answers only)"
+  - user_supplied: "Value explicitly given by user in guided mode or interview"
+  - rule_generated: "Value produced by plugin rules (audit columns, system columns)"
+
+confidence_penalties:
+  - id: CP1
+    condition: "source_database = '(derived)' AND business_logic contains source table references or aggregation keywords"
+    penalty: -0.25
+    description: "Lineage broken: source tables hidden behind (derived) marker"
+    action: "Route to guided mode — ask user to confirm contributing source tables"
+
+  - id: CP2
+    condition: "source_database = '(derived)' AND business_logic contains LAG/LEAD/window function keywords"
+    penalty: -0.30
+    description: "Historical/temporal derivation requires source table attribution for lineage"
+    action: "Route to guided mode — source tables must be explicitly declared"
+
+  - id: CP3
+    condition: "Unqualified column reference in multi-table SQL resolved via heuristic (driver table preference) rather than metadata lookup or sqlglot schema qualification"
+    penalty: -0.35
+    description: "Column attribution ambiguous — no alias qualifier in SQL, column exists in multiple source tables, resolved by heuristic"
+    action: "Route to guided mode — ask user to confirm source table (Q25)"
+
+  - id: CP4
+    condition: "UNION detected AND source_column does not distinguish which branch provides the value"
+    penalty: -0.40
+    description: "UNION branch attribution missing — cannot determine which source per branch"
+    action: "Route to guided mode — ask user to confirm per-branch source mapping"
+
+  - id: CP5
+    condition: "Self-join detected AND source_column references are ambiguous (same db.table.column for both aliases)"
+    penalty: -0.35
+    description: "Self-join without alias disambiguation"
+    action: "Route to guided mode — ask which alias provides this column"
+
+  - id: CP6
+    condition: "Non-equi join detected AND join condition operators not documented in structured format"
+    penalty: -0.30
+    description: "Non-equi join condition operators missing from Business Logic"
+    action: "Route to guided mode — clarify comparison operators"
+
+  - id: CP7
+    condition: "MERGE statement detected AND lineage does not distinguish matched vs not-matched branches"
+    penalty: -0.45
+    description: "MERGE branch handling missing"
+    action: "Route to guided mode — ask which source applies per branch"
+
+  - id: CP8
+    condition: "PySpark source detected via spark.read with file path (not table name)"
+    penalty: -0.25
+    description: "PySpark path-based read — logical table name unknown"
+    action: "Route to guided mode — confirm logical table name"
+
+  - id: CP9
+    condition: "Temp table reference not resolved to base table"
+    penalty: -0.40
+    description: "Lineage terminates at temp table instead of base table"
+    action: "Route to guided mode — provide base table mapping"
+
+  - id: CP10
+    condition: "NATURAL JOIN detected AND schema_dict is empty or incomplete for one or more joined tables"
+    penalty: -0.35
+    description: "NATURAL JOIN relies on implicit column matching — without schema_dict, matched columns are unknown"
+    action: "Route to guided mode — ask user to confirm matched columns (Q32)"
+
+  - id: CP11
+    condition: "VALUES clause detected as inline source AND column aliases not provided (no AS v(col1, col2) syntax)"
+    penalty: -0.25
+    description: "VALUES clause provides data without schema — column names must be inferred positionally"
+    action: "Route to guided mode — ask user to confirm column semantics (Q36)"
+
+  - id: CP12
+    condition: "FULL OUTER JOIN detected AND columns sourced from either side have Null Flag != 'Y'"
+    penalty: -0.20
+    description: "FULL OUTER JOIN can produce NULLs on both sides — null handling may be incomplete"
+    action: "Emit warning — verify Null Flag = 'Y' on both-side columns (SC15)"
+
+  - id: CP13
+    condition: "CASE WHEN expression detected with protect/unprotect UDF in one or more branches but not all"
+    penalty: -0.50
+    description: "Crypto direction is branch-dependent — some data paths may be unprotected"
+    action: "Route to guided mode — BLOCKER — ask user to confirm crypto intent per branch (Q33)"
+
+  - id: CP14
+    condition: "Window function detected (RANK, DENSE_RANK, ROW_NUMBER, FIRST_VALUE, LAST_VALUE, NTH_VALUE, NTILE, running SUM/AVG/COUNT) AND no PARTITION BY clause present"
+    penalty: -0.10
+    description: "Window function without PARTITION BY operates over entire result set — may be intentional but unusual"
+    action: "Emit warning — verify whether PARTITION BY omission is intentional"
+
+  - id: CP15
+    condition: "PySpark spark.sql() call contains f-string interpolation or .format() and variable value cannot be resolved from static analysis"
+    penalty: -0.60
+    description: "Dynamic SQL with unresolved variables — table/column names unknown at parse time"
+    action: "Route to guided mode — BLOCKER — ask user for resolved SQL or table name (Q35)"
+
+  - id: CP16
+    condition: "Temp table referenced in query but CREATE/DECLARE statement not found in the same code file"
+    penalty: -0.30
+    description: "Temp table source definition not in current file — lineage chain may be incomplete"
+    action: "Route to guided mode — ask user to provide the temp table's source SQL or base table mapping"
+
+  - id: CP17
+    condition: "JOIN ON condition compares columns with different declared datatypes (requires implicit type coercion)"
+    penalty: -0.15
+    description: "Implicit type coercion in JOIN key — may cause silent data loss or unexpected matches"
+    action: "Emit warning — verify JOIN key types are compatible"
+
+  - id: CP18
+    condition: "Target table shows indicators of rolling data retention (date-partitioned, large historical volume, retention policy in design docs) but rolling_deletion_predicate is empty"
+    penalty: -0.20
+    description: "Rolling deletion policy may apply but predicate not determined — data retention risk"
+    action: "Route to guided mode — ask user for rolling deletion predicate (Q38)"

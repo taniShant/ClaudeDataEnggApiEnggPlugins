@@ -1,0 +1,315 @@
+{
+  "_description": "Multi-step ETL output example — demonstrates single-cell consolidation: 4 intermediate steps but exactly 5 output rows (one per target column). All step detail is in business_logic cells, never step-per-row.",
+  "_meta": {
+    "generator": "sttm-generator-plugin",
+    "version": "1.1",
+    "generated_at": "2026-09-15T10:00:00Z",
+    "target_database": "t_riskdb",
+    "target_table": "risk_metrics",
+    "classification": {
+      "data_product_type": "FDP",
+      "table_type": "Transactional",
+      "crypto_aspect": "None"
+    }
+  },
+  "rows": [
+    {
+      "target_database": "t_riskdb",
+      "target_table": "risk_metrics",
+      "target_column_name": "ACCOUNT_ID",
+      "target_column_description": "Unique account identifier — primary key",
+      "target_column_datatype": "decimal(16,0)",
+      "target_column_null_flag": "N",
+      "source_database": "s_acctdb",
+      "source_table_name": "s_acctdb.account_base",
+      "source_column_name": "s_acctdb.account_base.account_id",
+      "business_logic": "Driver Table: work_db.risk_merged (rm)\nValue: rm.account_id\n---\nTransformation Lineage:\nStep 1 (Normal risk score): FROM s_acctdb.account_base (ab)\n  INNER JOIN r_refdb.risk_params (rp) ON ab.scorecard_id = rp.scorecard_id\n  [Filter ab.behaviour_score > 31, ab.status_code NOT IN ('A','B','X')]\n  Columns: account_id = ab.account_id [New]\n  Columns: risk_score = 1/(1+EXP((rp.score_weight * ab.behaviour_score) + (rp.balance_weight * CASE WHEN ab.credit_limit = 0 THEN 0 ELSE CAST(ab.balance AS DECIMAL(18,10)) / CAST(ab.credit_limit AS DECIMAL(18,10)) END) + rp.intercept)) [New]\n  Grain: account_id\n  → risk_normal\n\nStep 2 (Fallback risk score): FROM s_acctdb.account_base (ab)\n  INNER JOIN r_refdb.risk_params_fallback (rpf) ON ab.delinquency_code = rpf.delinquency_code\n  [Filter ab.behaviour_score <= 31, ab.status_code NOT IN ('A','B','X')]\n  Columns: account_id = ab.account_id [New]\n  Columns: risk_score = rpf.default_score [New]\n  Grain: account_id\n  → risk_fallback\n\nStep 3 (Merge + derive band): FROM s_acctdb.account_base (drv)\n  LEFT JOIN work_db.risk_normal (rn) ON drv.account_id = rn.account_id\n  LEFT JOIN work_db.risk_fallback (rf) ON drv.account_id = rf.account_id\n  Columns: risk_score = CASE WHEN COALESCE(rf.risk_score, rn.risk_score) >= 0.9999995 THEN 0.999999 ELSE COALESCE(rf.risk_score, rn.risk_score) END [New]\n  Columns: risk_band = CASE WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.003 THEN '1' WHEN < 0.012 THEN '2' WHEN < 0.050 THEN '3' WHEN < 0.100 THEN '4' WHEN < 1 THEN '5' ELSE NULL END [New]\n  Columns: exposure_value = CASE WHEN drv.credit_limit > drv.highest_balance THEN drv.credit_limit ELSE drv.highest_balance END [New]\n  Grain: account_id\n  → risk_merged\n\nStep 4 (Final insert): FROM work_db.risk_merged (rm)\n  Columns: account_id = rm.account_id [Pass-through]\n  Columns: risk_score = rm.risk_score [Pass-through]\n  Columns: risk_band = rm.risk_band [Pass-through]\n  Columns: exposure_value = rm.exposure_value [Pass-through]\n  Columns: load_date = CURRENT_DATE [New]\n  → t_riskdb.risk_metrics\n---\nEffective Source Filters:\n  s_acctdb.account_base: behaviour_score > 31 (Step 1), behaviour_score <= 31 (Step 2), status_code NOT IN ('A','B','X') (Steps 1,2)",
+      "additional_context": "load_type:full_refresh|partition_key:load_date",
+      "target_table_description": "Risk metrics per account with computed scores and bands. Grain: account_id",
+      "key_column": "Y",
+      "default_value": "",
+      "transformation_type": "Direct"
+    },
+    {
+      "target_database": "t_riskdb",
+      "target_table": "risk_metrics",
+      "target_column_name": "RISK_SCORE",
+      "target_column_description": "Computed risk score — logistic model for normal accounts, lookup for fallback",
+      "target_column_datatype": "decimal(16,8)",
+      "target_column_null_flag": "Y",
+      "source_database": "r_refdb",
+      "source_table_name": "r_refdb.risk_params",
+      "source_column_name": "(derived)",
+      "business_logic": "Step 1: risk_score = 1/(1+EXP((rp.score_weight * ab.behaviour_score) + (rp.balance_weight * CASE WHEN ab.credit_limit = 0 THEN 0 ELSE CAST(ab.balance AS DECIMAL(18,10)) / CAST(ab.credit_limit AS DECIMAL(18,10)) END) + rp.intercept)) [New]\nStep 2: risk_score = rpf.default_score [New]\nStep 3: risk_score = CASE WHEN COALESCE(rf.risk_score, rn.risk_score) >= 0.9999995 THEN 0.999999 ELSE COALESCE(rf.risk_score, rn.risk_score) END [Transformed]\nStep 4: pass-through",
+      "additional_context": "",
+      "target_table_description": "",
+      "key_column": "N",
+      "default_value": "",
+      "transformation_type": "Derived"
+    },
+    {
+      "target_database": "t_riskdb",
+      "target_table": "risk_metrics",
+      "target_column_name": "RISK_BAND",
+      "target_column_description": "Risk band classification (1-5) derived from risk_score thresholds",
+      "target_column_datatype": "string",
+      "target_column_null_flag": "Y",
+      "source_database": "r_refdb",
+      "source_table_name": "r_refdb.risk_params",
+      "source_column_name": "(derived)",
+      "business_logic": "Step 3: risk_band = CASE WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.003 THEN '1' WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.012 THEN '2' WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.050 THEN '3' WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.100 THEN '4' WHEN COALESCE(rf.risk_score, rn.risk_score) < 1 THEN '5' ELSE NULL END [New]\nStep 4: pass-through",
+      "additional_context": "",
+      "target_table_description": "",
+      "key_column": "N",
+      "default_value": "",
+      "transformation_type": "Derived"
+    },
+    {
+      "target_database": "t_riskdb",
+      "target_table": "risk_metrics",
+      "target_column_name": "EXPOSURE_VALUE",
+      "target_column_description": "Expected exposure at default — MAX of credit limit and highest balance",
+      "target_column_datatype": "decimal(16,8)",
+      "target_column_null_flag": "Y",
+      "source_database": "s_acctdb",
+      "source_table_name": "s_acctdb.account_base",
+      "source_column_name": "(derived)",
+      "business_logic": "Step 3: exposure_value = CASE WHEN drv.credit_limit > drv.highest_balance THEN drv.credit_limit ELSE drv.highest_balance END [New]\nStep 4: pass-through",
+      "additional_context": "",
+      "target_table_description": "",
+      "key_column": "N",
+      "default_value": "",
+      "transformation_type": "Derived"
+    },
+    {
+      "target_database": "t_riskdb",
+      "target_table": "risk_metrics",
+      "target_column_name": "LOAD_DATE",
+      "target_column_description": "Date the record was loaded",
+      "target_column_datatype": "date",
+      "target_column_null_flag": "N",
+      "source_database": "(system)",
+      "source_table_name": "(system)",
+      "source_column_name": "CURRENT_DATE",
+      "business_logic": "CURRENT_DATE",
+      "additional_context": "",
+      "target_table_description": "",
+      "key_column": "N",
+      "default_value": "",
+      "transformation_type": "Derived"
+    }
+  ],
+  "source_volumetrics": [
+    {
+      "source_database": "s_acctdb",
+      "source_table": "s_acctdb.account_base",
+      "estimated_rows": null,
+      "estimated_size_gb": null,
+      "daily_increment_rows": null,
+      "daily_increment_size_gb": null,
+      "primary_key": null,
+      "partition_key": null,
+      "table_type": null,
+      "broadcast_hint": "N"
+    },
+    {
+      "source_database": "r_refdb",
+      "source_table": "r_refdb.risk_params",
+      "estimated_rows": null,
+      "estimated_size_gb": null,
+      "daily_increment_rows": null,
+      "daily_increment_size_gb": null,
+      "primary_key": null,
+      "partition_key": null,
+      "table_type": null,
+      "broadcast_hint": "N"
+    },
+    {
+      "source_database": "r_refdb",
+      "source_table": "r_refdb.risk_params_fallback",
+      "estimated_rows": null,
+      "estimated_size_gb": null,
+      "daily_increment_rows": null,
+      "daily_increment_size_gb": null,
+      "primary_key": null,
+      "partition_key": null,
+      "table_type": null,
+      "broadcast_hint": "N"
+    }
+  ],
+  "transformation_lineage": {
+    "schema_version": "1.1",
+    "intermediate_steps": [
+      {
+        "step_number": 1,
+        "step_label": "Normal risk score",
+        "temp_table_name": "work_db.risk_normal",
+        "statement_type": "INSERT_SELECT",
+        "row_operation": "create",
+        "source_tables": ["s_acctdb.account_base", "r_refdb.risk_params"],
+        "joins": [
+          {
+            "driver_table": "s_acctdb.account_base",
+            "joins": [
+              {
+                "join_number": 1,
+                "table": "r_refdb.risk_params",
+                "type": "INNER",
+                "on_condition": "ab.scorecard_id = rp.scorecard_id"
+              }
+            ]
+          }
+        ],
+        "filters": [
+          "ab.behaviour_score > 31",
+          "ab.status_code NOT IN ('A','B','X')"
+        ],
+        "filter_provenance": [
+          {"filter_sql": "ab.behaviour_score > 31", "origin": "applied", "applied_to_table": "s_acctdb.account_base"},
+          {"filter_sql": "ab.status_code NOT IN ('A','B','X')", "origin": "applied", "applied_to_table": "s_acctdb.account_base"}
+        ],
+        "columns_produced": [
+          {"column_name": "account_id", "expression": "ab.account_id", "source_columns": ["s_acctdb.account_base.account_id"], "column_role": "new"},
+          {"column_name": "risk_score", "expression": "1/(1+EXP((rp.score_weight * ab.behaviour_score) + (rp.balance_weight * CASE WHEN ab.credit_limit = 0 THEN 0 ELSE CAST(ab.balance AS DECIMAL(18,10)) / CAST(ab.credit_limit AS DECIMAL(18,10)) END) + rp.intercept))", "source_columns": ["r_refdb.risk_params.score_weight", "s_acctdb.account_base.behaviour_score", "r_refdb.risk_params.balance_weight", "s_acctdb.account_base.balance", "s_acctdb.account_base.credit_limit", "r_refdb.risk_params.intercept"], "column_role": "new"}
+        ],
+        "grain_keys": ["account_id"]
+      },
+      {
+        "step_number": 2,
+        "step_label": "Fallback risk score",
+        "temp_table_name": "work_db.risk_fallback",
+        "statement_type": "INSERT_SELECT",
+        "row_operation": "create",
+        "source_tables": ["s_acctdb.account_base", "r_refdb.risk_params_fallback"],
+        "joins": [
+          {
+            "driver_table": "s_acctdb.account_base",
+            "joins": [
+              {
+                "join_number": 1,
+                "table": "r_refdb.risk_params_fallback",
+                "type": "INNER",
+                "on_condition": "ab.delinquency_code = rpf.delinquency_code"
+              }
+            ]
+          }
+        ],
+        "filters": [
+          "ab.behaviour_score <= 31",
+          "ab.status_code NOT IN ('A','B','X')"
+        ],
+        "filter_provenance": [
+          {"filter_sql": "ab.behaviour_score <= 31", "origin": "applied", "applied_to_table": "s_acctdb.account_base"},
+          {"filter_sql": "ab.status_code NOT IN ('A','B','X')", "origin": "applied", "applied_to_table": "s_acctdb.account_base"}
+        ],
+        "columns_produced": [
+          {"column_name": "account_id", "expression": "ab.account_id", "source_columns": ["s_acctdb.account_base.account_id"], "column_role": "new"},
+          {"column_name": "risk_score", "expression": "rpf.default_score", "source_columns": ["r_refdb.risk_params_fallback.default_score"], "column_role": "new"}
+        ],
+        "grain_keys": ["account_id"]
+      },
+      {
+        "step_number": 3,
+        "step_label": "Merge + derive band",
+        "temp_table_name": "work_db.risk_merged",
+        "statement_type": "INSERT_SELECT",
+        "row_operation": "create",
+        "source_tables": ["s_acctdb.account_base", "work_db.risk_normal", "work_db.risk_fallback"],
+        "joins": [
+          {
+            "driver_table": "s_acctdb.account_base",
+            "joins": [
+              {"join_number": 1, "table": "work_db.risk_normal", "type": "LEFT", "on_condition": "drv.account_id = rn.account_id"},
+              {"join_number": 2, "table": "work_db.risk_fallback", "type": "LEFT", "on_condition": "drv.account_id = rf.account_id"}
+            ]
+          }
+        ],
+        "filters": [],
+        "columns_produced": [
+          {"column_name": "account_id", "expression": "drv.account_id", "source_columns": ["s_acctdb.account_base.account_id"], "column_role": "new"},
+          {"column_name": "risk_score", "expression": "CASE WHEN COALESCE(rf.risk_score, rn.risk_score) >= 0.9999995 THEN 0.999999 ELSE COALESCE(rf.risk_score, rn.risk_score) END", "source_columns": ["work_db.risk_fallback.risk_score", "work_db.risk_normal.risk_score"], "column_role": "new"},
+          {"column_name": "risk_band", "expression": "CASE WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.003 THEN '1' WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.012 THEN '2' WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.050 THEN '3' WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.100 THEN '4' WHEN COALESCE(rf.risk_score, rn.risk_score) < 1 THEN '5' ELSE NULL END", "source_columns": ["work_db.risk_fallback.risk_score", "work_db.risk_normal.risk_score"], "column_role": "new"},
+          {"column_name": "exposure_value", "expression": "CASE WHEN drv.credit_limit > drv.highest_balance THEN drv.credit_limit ELSE drv.highest_balance END", "source_columns": ["s_acctdb.account_base.credit_limit", "s_acctdb.account_base.highest_balance"], "column_role": "new"}
+        ],
+        "grain_keys": ["account_id"]
+      },
+      {
+        "step_number": 4,
+        "step_label": "Final insert",
+        "temp_table_name": "t_riskdb.risk_metrics",
+        "statement_type": "INSERT_SELECT",
+        "row_operation": "create",
+        "source_tables": ["work_db.risk_merged"],
+        "joins": [{"driver_table": "work_db.risk_merged", "joins": []}],
+        "filters": [],
+        "columns_produced": [
+          {"column_name": "account_id", "expression": "rm.account_id", "source_columns": ["work_db.risk_merged.account_id"], "column_role": "pass_through"},
+          {"column_name": "risk_score", "expression": "rm.risk_score", "source_columns": ["work_db.risk_merged.risk_score"], "column_role": "pass_through"},
+          {"column_name": "risk_band", "expression": "rm.risk_band", "source_columns": ["work_db.risk_merged.risk_band"], "column_role": "pass_through"},
+          {"column_name": "exposure_value", "expression": "rm.exposure_value", "source_columns": ["work_db.risk_merged.exposure_value"], "column_role": "pass_through"},
+          {"column_name": "load_date", "expression": "CURRENT_DATE", "source_columns": [], "column_role": "new"}
+        ],
+        "grain_keys": ["account_id"]
+      }
+    ],
+    "column_lineage_chains": {
+      "account_id": {
+        "chain_depth": 4,
+        "steps": [1, 2, 3, 4],
+        "final_expression": "rm.account_id",
+        "intermediate_expressions": [
+          {"step": 1, "expression": "ab.account_id", "role": "new"},
+          {"step": 2, "expression": "ab.account_id", "role": "new"},
+          {"step": 3, "expression": "drv.account_id", "role": "new"},
+          {"step": 4, "expression": "rm.account_id", "role": "pass_through"}
+        ]
+      },
+      "risk_score": {
+        "chain_depth": 3,
+        "steps": [1, 3, 4],
+        "final_expression": "rm.risk_score",
+        "intermediate_expressions": [
+          {"step": 1, "expression": "1/(1+EXP((rp.score_weight * ab.behaviour_score) + (rp.balance_weight * CASE WHEN ab.credit_limit = 0 THEN 0 ELSE CAST(ab.balance AS DECIMAL(18,10)) / CAST(ab.credit_limit AS DECIMAL(18,10)) END) + rp.intercept))", "role": "new"},
+          {"step": 3, "expression": "CASE WHEN COALESCE(rf.risk_score, rn.risk_score) >= 0.9999995 THEN 0.999999 ELSE COALESCE(rf.risk_score, rn.risk_score) END", "role": "transformed"},
+          {"step": 4, "expression": "rm.risk_score", "role": "pass_through"}
+        ]
+      },
+      "risk_band": {
+        "chain_depth": 2,
+        "steps": [3, 4],
+        "final_expression": "rm.risk_band",
+        "intermediate_expressions": [
+          {"step": 3, "expression": "CASE WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.003 THEN '1' WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.012 THEN '2' WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.050 THEN '3' WHEN COALESCE(rf.risk_score, rn.risk_score) < 0.100 THEN '4' WHEN COALESCE(rf.risk_score, rn.risk_score) < 1 THEN '5' ELSE NULL END", "role": "new"},
+          {"step": 4, "expression": "rm.risk_band", "role": "pass_through"}
+        ]
+      },
+      "exposure_value": {
+        "chain_depth": 2,
+        "steps": [3, 4],
+        "final_expression": "rm.exposure_value",
+        "intermediate_expressions": [
+          {"step": 3, "expression": "CASE WHEN drv.credit_limit > drv.highest_balance THEN drv.credit_limit ELSE drv.highest_balance END", "role": "new"},
+          {"step": 4, "expression": "rm.exposure_value", "role": "pass_through"}
+        ]
+      },
+      "load_date": {
+        "chain_depth": 1,
+        "steps": [4],
+        "final_expression": "CURRENT_DATE",
+        "intermediate_expressions": [
+          {"step": 4, "expression": "CURRENT_DATE", "role": "new"}
+        ]
+      }
+    },
+    "effective_source_filters": {
+      "s_acctdb.account_base": [
+        "behaviour_score > 31 (Step 1 — normal population)",
+        "behaviour_score <= 31 (Step 2 — fallback population)",
+        "status_code NOT IN ('A','B','X') (Steps 1, 2)"
+      ],
+      "r_refdb.risk_params": [],
+      "r_refdb.risk_params_fallback": []
+    },
+    "resolved_variables": {}
+  }
+}

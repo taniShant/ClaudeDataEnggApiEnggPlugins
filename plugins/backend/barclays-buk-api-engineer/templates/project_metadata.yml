@@ -1,0 +1,11 @@
+project_owner: buk.digital.platform@barclays.com
+business_unit: buk
+pod: digital_channels
+itba: BUK-DIGITAL-PLATFORM
+cio: digital.platform.cio@barclays.com
+transaction_cycle: REAL_TIME
+language: java
+target_deployment: kubernetes
+bitbucket_repo_name: {ARTIFACT_ID}
+maintainer_ad_group: fglbGL_buk_digital_Main
+developer_ad_group: fglbGL_buk_digital_Dev

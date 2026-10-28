@@ -1,0 +1,110 @@
+openapi: 3.0.2
+# -----------------------------------------------------------------------------
+# TODO: Update the info section with your details.
+# Version must be in the format 'v<MAJOR>.<MINOR>'
+# -----------------------------------------------------------------------------
+info:
+  title: ${API_TITLE}
+  description:  |-
+    -**API Type:** Internal
+    -**API Risk Classification:** TODO
+    -**API Owner (business):** TODO
+    -**API Owner (technical):** TODO
+    -**Overview:** TODO
+  contact:
+    name: 'MCA - Core Engineering Team'
+    email: TODOTeam@barclays.com
+  version: 'v1.0'
+# -----------------------------------------------------------------------------
+# TODO: Update this externalDocs section with your details.
+# -----------------------------------------------------------------------------
+externalDocs:
+  description: Find more information here.
+  url: https://barclays.com
+
+# -----------------------------------------------------------------------------
+servers:
+  - url: 'http://localhost:9998/${CONTEXT_PATH}'
+    description: Server url
+
+# -----------------------------------------------------------------------------
+tags:
+  - name: oasRef
+    description: OAS3 Reference APIs
+  # TODO: Add tags for each endpoint group
+
+# -----------------------------------------------------------------------------
+
+security:
+  - InternalTiaaRopcAuth: []
+
+components:
+  securitySchemes:
+    InternalTiaaRopcAuth:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/InternalTiaaRopcAuth'
+
+  # -----------------------------------------------------------------------------
+  schemas:
+    UserContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/UserContext'
+    AccountContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/AccountContext'
+    CustomerContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/CustomerContext'
+    AccountList:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/AccountList'
+    CallerContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/CallerContext'
+    CaseContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/CaseContext'
+    ProcessContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/ProcessContext'
+    SystemContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/SystemContext'
+    LocaleContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/LocaleContext'
+    SecureContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/SecureContext'
+    MultipleCustomerContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/MultipleCustomerContext'
+    MultipleAccountsContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/MultipleAccountsContext'
+    DeviceContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/DeviceContext'
+    GeoLocation:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/GeoLocation'
+
+  #------------------------------------------------------------------------------------
+  # Declare all the parameters under the parameters section below
+  #-------------------------------------------------------------------------------------
+  parameters:
+    X-SystemContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/X-SystemContext'
+    X-UserContext:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/X-UserContext'
+    X-AID:
+      $ref: './common-libraries/components/mca-iol-headers.yaml#/X-AID'
+
+  #--------------------------------------------------------------------
+  # Declare all the common responses in the responses section.
+  #--------------------------------------------------------------------
+  responses:
+    InternalServerError:
+      $ref: './common-libraries/components/responses.yaml#/InternalServerError'
+    Forbidden:
+      $ref: './common-libraries/components/responses.yaml#/Forbidden'
+    NotFound:
+      $ref: './common-libraries/components/responses.yaml#/NotFound'
+    BadRequest:
+      $ref: './common-libraries/components/responses.yaml#/BadRequest'
+    Unauthorized:
+      $ref: './common-libraries/components/responses.yaml#/Unauthorized'
+    TooManyRequests:
+      $ref: './common-libraries/components/responses.yaml#/TooManyRequests'
+    ServiceUnavailable:
+      $ref: './common-libraries/components/responses.yaml#/ServiceUnavailable'
+
+# -----------------------------------------------------------------------------
+# TODO: Define paths from migrated controllers
+# -----------------------------------------------------------------------------
+paths: {}

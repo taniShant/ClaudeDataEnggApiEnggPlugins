@@ -1,0 +1,64 @@
+schema_version: '1.0'
+domain:
+  id: dom.retail-secured-lending
+  name: Retail Secured Lending
+  description: The Secured Lending domain, is dedicated to providing customers with reliable and comprehensive mortgage solutions. This domain encompasses the processes and tools required to manage secure applications, approvals (decision-in-principle), and servicing. It includes capabilities for assessing customer eligibility, verifying property details, and calculating loan amounts based on various factors such as income, credit history, and property value. The Secured Lending domain ensures that customers receive competitive interest rates, flexible repayment options, and personalized support throughout the Product lifecycle.
+  owner: msi
+  bian_links:
+    - title: Mortgage Loan
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=31825"
+  sub_domains:
+  - id: sub.rsl.mortgage-fulfilment
+    name: Mortgage Fulfilment
+    description: Activities associated with post-approval operational execution to release funds, complete mandatory checks, and activate the secured lending facility.
+    capabilities:
+    - id: cap.rsl.execute-mortgage-fulfilment
+      name: Execute Mortgage Fulfilment
+      description: Determination of asset value and suitability as lending security using appropriate valuation approaches, encompassing physical inspections and automated models, enabling accurate loan sizing and security adequacy decisions.
+  - id: sub.rsl.mortgage-origination
+    name: Mortgage Origination
+    description: Activities associated with collection, evaluation, and approval of secured lending applications through underwriting and fulfilment processes.
+    capabilities:
+    - id: cap.rsl.collect-mortgage-application-information
+      name: Collect Mortgage Application Information
+      description: Collection of customer, property, financial, and product information required to assess a secured lending application, enabling comprehensive evaluation of applicant creditworthiness and security suitability.
+    - id: cap.rsl.manage-mortgage-products
+      name: Manage Mortgage Products
+      description: Definition and lifecycle management of secured lending products including pricing, fees, eligibility criteria, and market availability, enabling consistent product delivery and competitive positioning.
+    - id: cap.rsl.assess-mortgage-applicant-affordability
+      name: Assess Mortgage Applicant Affordability
+      description: Evaluation of applicant ability to sustain loan repayments based on verified income, expenditure, and existing credit commitments, encompassing stress testing and joint assessments, enabling responsible lending decisions.
+    - id: cap.rsl.authorize-mortgage-underwriting
+      name: Authorize Mortgage Underwriting
+      description: Assessment of creditworthiness, affordability, property suitability, and overall lending risk to approve, amend, or decline a loan application, encompassing automated and manual review processes, enabling informed credit decisions. 
+    - id: cap.rsl.manage-mortgage-application-documents
+      name: Manage Mortgage Application Documents
+      description: Creation, receipt, and lifecycle management of loan application documents ensuring auditability and regulatory compliance throughout the origination process.
+    - id: cap.rsl.manage-mortgage-application-fees
+      name: Manage Mortgage Application Fees
+      description: Collection, allocation, and refund of application, valuation, and product-related fees in accordance with product terms and regulatory requirements.
+    - id: cap.rsl.manage-mortgage-intermediary-relationships
+      name: Manage Mortgage Intermediary Relationships
+      description: Support for lending intermediaries (brokers, advisors) to submit applications, track status, and obtain product and policy information, enabling efficient distribution channels.
+  - id: sub.rsl.mortgage-servicing
+    name: Mortgage Servicing
+    description: Activities supporting ongoing management of a Mortgage, including payments, account changes, documentation, and interactions with external parties.
+    capabilities:
+    - id: cap.rsl.manage-mortgage-contractual-payments
+      name: Manage Mortgage Contractual Payments
+      description: Management of customer payment instructions, including Direct Debit setup, updates, mandate governance, and collections, ensuring accurate processing in line with product terms and regulatory requirements.
+    - id: cap.rsl.process-additional-mortgage-payments
+      name: Process Additional Mortgage Payments
+      description: Processing of voluntary payments, applying funds according to product rules, updating balances, and recalculating repayments where applicable.
+    - id: cap.rsl.manage-mortgage-changes
+      name: Manage Mortgage Changes
+      description: Servicing of customer initiated changes such as rate switches, term adjustments, and repayment type amendments, subject to eligibility, affordability, and policy controls.
+    - id: cap.rsl.mortgage-servicing-issue-customer-communications
+      name: Mortgage Servicing Issue Customer Communications
+      description: Issuance of regulatory and servicing communications statements, confirmations, notices, and alerts in a channel-agnostic manner, ensuring accuracy and timeliness.
+    - id: cap.rsl.mortgage-servicing-manage-solicitor-collaboration
+      name: Mortgage Servicing Manage Solicitor Collaboration
+      description: Support and governance of information exchange with solicitors, including document submission, provision of statements, and confirmations required for completion and redemption activities.
+    - id: cap.rsl.process-mortgage-redemptions
+      name: Process Mortgage Redemptions
+      description: End to end processing of full mortgage repayment, including provision of redemption statements, receipt of settlement funds, account closure, and release of security.

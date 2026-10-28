@@ -1,0 +1,12 @@
+{
+    "name": "barclays-buk-detox",
+    "description": "Automated CWE vulnerability remediation toolkit. Ingests Wiz SAST reports and threat models, applies CWE-specific fixes, validates with WIZ CLI rescan and Semgrep, produces per-finding evidence records, and creates PRs with atomic commits and full audit trail.",
+    "version": "2.6.2",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": [
+        "barclays-buk-standards"
+    ]
+}

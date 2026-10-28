@@ -1,0 +1,204 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LogicalModel",
+  "description": "Schema for a logical data model. Captures entities, their attributes, and relationships in a technology-agnostic form including classification, PII flagging, data quality expectations, lineage references, and any unresolved modelling decisions.",
+  "type": "object",
+  "required": [
+    "model_id",
+    "name",
+    "version",
+    "scope",
+    "created_by",
+    "created_at",
+    "entities",
+    "relationships",
+    "unresolved_decisions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "model_id": {
+      "type": "string",
+      "description": "Unique identifier for this logical model."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of this logical model."
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of this logical model."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Description of the business domain or subject area covered by this model."
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Identity of the person or agent that created this model."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this model was created."
+    },
+    "entities": {
+      "type": "array",
+      "description": "List of entities defined in this logical model.",
+      "items": {
+        "type": "object",
+        "required": [
+          "entity_id",
+          "name",
+          "definition",
+          "owner",
+          "classification",
+          "attributes"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "description": "Unique identifier for this entity within the model."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the entity."
+          },
+          "definition": {
+            "type": "string",
+            "description": "Business definition of the entity."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Business owner of the entity."
+          },
+          "classification": {
+            "type": "string",
+            "description": "Data classification level for this entity.",
+            "enum": [
+              "public",
+              "internal",
+              "confidential",
+              "restricted"
+            ]
+          },
+          "attributes": {
+            "type": "array",
+            "description": "Attributes belonging to this entity.",
+            "items": {
+              "type": "object",
+              "required": [
+                "attribute_id",
+                "name",
+                "definition",
+                "data_type",
+                "optionality",
+                "is_key",
+                "is_pii",
+                "classification"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "attribute_id": {
+                  "type": "string",
+                  "description": "Unique identifier for this attribute within the entity."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the attribute."
+                },
+                "definition": {
+                  "type": "string",
+                  "description": "Business definition of the attribute."
+                },
+                "data_type": {
+                  "type": "string",
+                  "description": "Logical data type of the attribute (e.g. string, integer, date, boolean)."
+                },
+                "optionality": {
+                  "type": "string",
+                  "description": "Whether the attribute is mandatory or optional."
+                },
+                "is_key": {
+                  "type": "boolean",
+                  "description": "Indicates whether this attribute is part of the entity key."
+                },
+                "is_pii": {
+                  "type": "boolean",
+                  "description": "Indicates whether this attribute contains personally identifiable information."
+                },
+                "classification": {
+                  "type": "string",
+                  "description": "Data classification level for this attribute."
+                },
+                "dq_expectations": {
+                  "type": "string",
+                  "description": "Data quality expectations or rules applicable to this attribute."
+                },
+                "lineage_ref": {
+                  "type": "string",
+                  "description": "Reference to a lineage record for this attribute."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "description": "Relationships between entities defined in this model.",
+      "items": {
+        "type": "object",
+        "required": [
+          "relationship_id",
+          "from_entity",
+          "to_entity",
+          "cardinality",
+          "description",
+          "identifying"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "relationship_id": {
+            "type": "string",
+            "description": "Unique identifier for this relationship."
+          },
+          "from_entity": {
+            "type": "string",
+            "description": "Entity ID of the source entity in this relationship."
+          },
+          "to_entity": {
+            "type": "string",
+            "description": "Entity ID of the target entity in this relationship."
+          },
+          "cardinality": {
+            "type": "string",
+            "description": "Cardinality of the relationship.",
+            "enum": [
+              "1:1",
+              "1:N",
+              "N:1",
+              "N:M"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Business description of this relationship."
+          },
+          "identifying": {
+            "type": "boolean",
+            "description": "Indicates whether this is an identifying relationship."
+          }
+        }
+      }
+    },
+    "unresolved_decisions": {
+      "type": "array",
+      "description": "List of modelling decisions that remain unresolved and require human input.",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "source_volumetrics.schema.json",
+  "title": "Source Volumetrics",
+  "description": "Standalone schema for source-table volumetric profiles. Extracted from mapping_excel.schema.json#/definitions/sourceVolumetric. Validates an array of per-source-table volumetric entries that drive Day 0 sizing (estimated_size_gb), Day 1 sizing (daily_increment_size_gb), and transform optimizations (broadcast_hint).",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/sourceVolumetric"
+  },
+  "definitions": {
+    "sourceVolumetric": {
+      "type": "object",
+      "required": ["source_database", "source_table"],
+      "description": "Volumetric profile for a single source table. Drives Day 0 sizing (estimated_size_gb), Day 1 sizing (daily_increment_size_gb), and transform optimizations (broadcast_hint).",
+      "properties": {
+        "source_database": {
+          "type": "string",
+          "description": "Source database name — must match a source_database in mapping columns"
+        },
+        "source_table": {
+          "type": "string",
+          "description": "Source table name — must match a source table in mapping columns"
+        },
+        "estimated_rows": {
+          "type": ["integer", "null"],
+          "description": "Total row count of full table"
+        },
+        "estimated_size_gb": {
+          "type": ["number", "null"],
+          "description": "Approximate total storage size in GB (primary input for Day 0 worker sizing)"
+        },
+        "daily_increment_rows": {
+          "type": ["integer", "null"],
+          "description": "Average rows added/changed per day (informational)"
+        },
+        "daily_increment_size_gb": {
+          "type": ["number", "null"],
+          "description": "Average daily delta size in GB (primary input for Day 1 worker sizing)"
+        },
+        "primary_key": {
+          "type": ["string", "null"],
+          "description": "Primary key column(s) of source table — comma-separated if composite (e.g. 'account_id, eff_start_date'). Used for repartition key selection and dedup logic."
+        },
+        "partition_key": {
+          "type": ["string", "null"],
+          "description": "Partition key column(s) of source table (e.g. 'dw_bus_dt', 'active'). Used for partition pruning filter selection."
+        },
+        "table_type": {
+          "type": ["string", "null"],
+          "enum": ["NonTransactional_SCD1", "NonTransactional_SCD2", "Transactional", null],
+          "description": "Source table type. NonTransactional_SCD2 = entity-state tables with SCD2 history (eff_start_date, eff_end_date, active); NonTransactional_SCD1 = entity-state tables with dw_lod_tmp/dw_upd_lod_tmp only (no temporal columns); Transactional = append-only event/fact tables partitioned by business date. Directly maps to source_table_type used for runtime filtering strategy."
+        },
+        "broadcast_hint": {
+          "type": ["boolean", "null"],
+          "description": "True if analyst flags this as a small reference/decode table suitable for F.broadcast(). Auto-set to true if estimated_size_gb < 0.01."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

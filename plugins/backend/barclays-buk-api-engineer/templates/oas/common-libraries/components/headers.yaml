@@ -1,0 +1,109 @@
+# -----------------------------------------------------------------------------
+# NOTICE: DO NOT CHANGE this file in your project.
+# Raise a pull request to oas-template in case of fixes and improvements.
+#
+# Common USCB Request headers
+# -----------------------------------------------------------------------------
+
+Correlation-ID:
+  name: Correlation-ID
+  in: header
+  required: true
+  deprecated: false
+  allowEmptyValue: false
+  description: |
+    Unique end-to-end trace ID. The initiating system (such as a Channel or
+    Batch Job), must generate this unique ID, then this must be passed
+    through the API call stack. This is required to maintain compliance with the current Barclays REST Standard.
+  schema:
+    type: string
+    pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+    minLength: 36
+    maxLength: 36
+  example: "7d444840-9dc0-11d1-b245-5ffdce74fad2"
+
+Authorization:
+  name: Authorization
+  in: header
+  required: true
+  deprecated: false
+  allowEmptyValue: false
+  description: Bearer Token
+  schema:
+    type: string
+    pattern: ^[A-Za-z0-9_.\ -]{32,2048}$
+    minLength: 32
+    maxLength: 2048
+  example: "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Imctb09kUnc1TWFlTmcwbWpsN1VpczlXT010NCIsInBpLmF0bSI6IjQ2N3YifQ.eyJzY29wZSI6ImFjY291bnRzIiwiY2xpZW50X2lkIjoiR2FwQ2xpZW50IiwiaXNzIjoiVElBQSBERVYiLCJhdWQiOiJCRE4tVVMtREVWIiwianRpIjoia0F0c2JYYW5CdnZOSFBacVd6WEs4TlhzczlPSXozamdBT090IiwiZmlyc3ROYW1lIjoiSm9obiIsImxhc3ROYW1lIjoiU21pdGgiLCJmcmF1ZFRva2VuIjoiOThjYmVlNWEtOTU4MS00NTdlLTk3NTEtZjVlYzNlNWZiYTUwIiwiZnJhdWRUb2tlbklzc3VlVGltZSI6IjE2MzAwMDMyNTQiLCJhY2NvdW50cyI6WyIxMjM0NTY3OCIsIjk4NzY1NDMyIl0sInBhcnR5SWQiOiIxMjM0NTYiLCJ1c2VybmFtZSI6ImJhcmNsYXlzdXNlciIsImV4cCI6MTYzMDAwMTQ1NX0.Jkgb2A2HAOdLKaion8ff097GedtQkxtAV4Qxea538owLS8zaEvTm9kHBWOxmuNHIgP1V8mx3NUflwbY8A823Ut00wWqbUbB-cSV0idDaQJ2pKWHDFYbipvi5I7yPGj2BR-oHhQao1ZGlW6DyxYuZ12q8IK7LpKVWbCSPZ-fFAlD5HgH_FORq6Avc5oLH--Zcww63fI6gtZ48pwnXX2gM1aiSQ3lfvLXWVQ9fooAlP65LOW1MMjh5HOtrNvA7ObBSYepYzef5ykP2YvIz3OOS4hLhTo-3-iEbUDvkPx_mmz_pi7piXrMqQPfPnz5y2VkLOHTYfQJeQmVg60YTG7uPdw"
+
+# Optional operational request headers — include only when referenced in the API input document
+
+channelId:
+  name: channelId
+  in: header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  description: Channel Id/system id.
+  schema:
+    type: string
+    pattern: ^[a-zA-Z0-9-]{1,20}$
+    minLength: 1
+    maxLength: 20
+  example: "BRU"
+
+deviceId:
+  name: deviceId
+  in: header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  description: Device Id/terminal id.
+  schema:
+    type: string
+    pattern: ^[a-zA-Z0-9-]{1,20}$
+    minLength: 1
+    maxLength: 20
+  example: "BARC00000708"
+
+businessId:
+  name: businessId
+  in: header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  description: Business unit identifier.
+  schema:
+    type: string
+    pattern: ^[a-zA-Z0-9-]{1,20}$
+    minLength: 1
+    maxLength: 20
+  example: "GBRBB"
+
+sourceSortCode:
+  name: sourceSortCode
+  in: header
+  required: false
+  deprecated: false
+  allowEmptyValue: false
+  description: Unique ID for the originating branch.
+  schema:
+    type: string
+    pattern: ^[a-zA-Z0-9-]{1,20}$
+    minLength: 1
+    maxLength: 20
+  example: "201656"
+
+# Common USCB Response Headers
+
+Cache-Control:
+  description: "GIS mandatory response header. This is added by the Cognac sidecar."
+  schema:
+    type: string
+    pattern: ^no-cache, no-store, must-revalidate$
+    minLength: 35
+    maxLength: 35
+    nullable: false
+    deprecated: false
+    default: no-cache, no-store, must-revalidate
+    example: no-cache, no-store, must-revalidate

@@ -1,0 +1,132 @@
+schema_version: '1.0'
+domain:
+  id: dom.savings
+  name: Savings
+  description: The Savings domain manages the full lifecycle of savings products for customers. It enables customers to build financial security through a range of savings accounts, fixed term deposits, notice products and tax efficient options such as Cash Individual Savings Accounts. The domain owns the product definitions, rules and operational processes that govern how these products are created, maintained and delivered. It defines and maintains the business logic for interest calculation, eligibility, withdrawal rules, maturity outcomes and ISA behaviour. It manages activities such as rate changes, product switching and subscription tracking to ensure each product operates consistently and meets regulatory expectations across all channels. The domain maintains clear boundaries with other domains and supports account opening, servicing, balance checks, maturity processing, deposits, withdrawals and transfers. This allows domains such as Customer, Payments and Product Catalogue to interact with savings capabilities without replicating logic. It is responsible for core savings data including interest tables, tier structures, ISA rules and maturity information, ensuring this data is accurate, governed and distributed correctly. This supports regulatory outcomes such as fair value assessments, interest accuracy and tax compliance. Operationally, the domain supports customers and colleagues throughout the account lifecycle, delivering consistent servicing across digital and assisted channels. It also contributes to the bank's funding stability and liquidity by maintaining a reliable and well governed savings portfolio.
+  owner: msi
+  bian_links:
+    - title: Savings Account
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=38858"
+    - title: Term Deposit Framework Agreement
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=33675"
+    - title: Term Deposit
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=30653"
+  sub_domains:
+  - id: sub.sav.savings-account-maintenance-and-servicing
+    name: Savings Account Maintenance and Servicing
+    description: Account Maintenance & Servicing governs how customers open, maintain and close their savings accounts. It manages customer onboarding into savings products, ensures accurate balance provision, displays applicable interest rates, and handles servicing activities such as statements, correspondence and the handling of dormant accounts. It applies relevant fees or penalties, and ensures that servicing flows follow established business rules for savings products.
+    capabilities:
+    - id: cap.sav.establish-savings-accounts
+      name: Establish Savings Accounts
+      description: Establishment of new savings accounts following application approval, encompassing account number assignment, product parameter configuration, initial deposit processing, and account activation, enabling customer account access and supporting new account onboarding completion.
+    - id: cap.sav.manage-savings-account-closures
+      name: Manage Savings Account Closures
+      description: Management of savings account closure lifecycle, encompassing closure request processing, balance settlement, interest finalization, account deactivation, and closure confirmation, enabling customer account exit and supporting regulatory closure requirements and record retention.
+    - id: cap.sav.provide-savings-account-information
+      name: Provide Savings Account Information
+      description: Delivery of current and historical savings account information, encompassing account balances, transaction history, account status, and product details, enabling informed financial decisions and supporting customer self-service and assisted service interactions.
+    - id: cap.sav.process-savings-applications
+      name: Process Savings Applications
+      description: Processing of new savings account applications from submission to decision, encompassing application validation, eligibility assessment, referral management, and account opening, enabling customer onboarding and supporting new account acquisition.
+    - id: cap.sav.manage-savings-dormant-accounts
+      name: Manage Savings Dormant Accounts
+      description: Management of savings accounts with prolonged inactivity, encompassing dormancy identification, customer notification, account status updates, and reactivation or closure processing, enabling regulatory compliance and supporting customer account lifecycle management.
+    - id: cap.sav.provide-savings-account-notifications
+      name: Provide Savings Account Notifications
+      description: Delivery of event-triggered communications for savings accounts, encompassing interest rate changes, account status updates, and regulatory notices, enabling timely customer awareness and supporting informed financial decision-making.
+    - id: cap.sav.provide-savings-account-statements
+      name: Provide Savings Account Statements
+      description: Delivery of periodic account statements for savings products, encompassing transaction history, balance summaries, and interest calculations, enabling customers to review account activity and supporting regulatory compliance and record-keeping requirements.
+    - id: cap.sav.enforce-savings-early-withdrawal-terms
+      name: Enforce Savings Early Withdrawal Terms
+      description: Enforcement of early withdrawal terms and conditions through application of penalties and interest adjustments when customers access funds from savings products before maturity, encompassing penalty determination, calculation, and account application, supporting adherence to product terms while maintaining customer transparency.
+    - id: cap.sav.open-business-savings-account
+      name: Open Business Savings Account
+      description: Opens Business Banking savings accounts by establishing account arrangements aligned to defined savings products.
+  - id: sub.sav.customer-tools-and-experience
+    name: Customer Tools and Experience
+    description: Customer Tools and Experience provides tools to help customers understand, optimize and plan their savings. It includes calculators for interest projections, product comparisons, and withdrawal impacts, as well as savings-goal functionality that helps customers track progress toward personal financial objectives. These tools enhance customer engagement and support better financial decision-making.
+    capabilities:
+    - id: cap.sav.model-savings-contribution-scenarios
+      name: Model Savings Contribution Scenarios
+      description: Modeling of savings contribution scenarios and their financial outcomes, encompassing contribution amount variation, frequency adjustment, timeframe projection, and interest impact calculation, enabling customers to evaluate different savings strategies and select contribution approaches aligned with their financial goals and circumstances.
+    - id: cap.sav.calculate-savings-withdrawal-impact
+      name: Calculate Savings Withdrawal Impact
+      description: Calculation of savings withdrawal impact on account balances and future interest earnings, encompassing withdrawal amount assessment, interest recalculation, balance projection, and impact presentation, enabling customers to make informed withdrawal decisions and understand financial consequences of withdrawal actions.
+    - id: cap.sav.manage-savings-goals
+      name: Manage Savings Goals
+      description: Management of customer savings goals and objectives, encompassing goal creation, target setting, progress tracking, milestone monitoring, and achievement notification, enabling customers to plan and monitor savings progress toward personal financial objectives and supporting goal-oriented savings behavior.
+  - id: sub.sav.interest-and-maturity-management
+    name: Interest and Maturity Management
+    description: Interest & Maturity Management handles all aspects of interest calculation, interest application and maturity processing for savings products. It calculates daily and periodic interest based on product rules, applies interest at the correct intervals, and provides summaries of credited interest. It also manages fixed‑term maturity events, including customer notifications and maturity outcomes, ensuring that customers receive appropriate guidance and options as their product reaches the end of its term.
+    capabilities:
+    - id: cap.sav.provide-savings-interest-summaries
+      name: Provide Savings Interest Summaries
+      description: Delivery of interest summary reports for savings accounts, encompassing interest credited calculations, tax year summaries, gross and net interest reporting, and historical interest analysis, enabling tax reporting and supporting customer financial planning and regulatory compliance requirements.
+    - id: cap.sav.calculate-savings-account-interest
+      name: Calculate Savings Account Interest
+      description: Calculation and application of interest on savings accounts, encompassing interest accrual computation, rate application, credit and debit interest processing, retroactive adjustments, and balance updates, enabling accurate interest crediting and supporting product profitability and customer value delivery.
+    - id: cap.sav.manage-savings-product-maturities
+      name: Manage Savings Product Maturities
+      description: Management of savings product maturity lifecycle from identification through customer action execution, encompassing maturity event determination, available option presentation, customer choice capture, and selected action fulfillment, enabling timely maturity resolution aligned with customer preferences and product terms.
+  - id: sub.sav.product-management-and-configuration
+    name: Product Management and Configuration
+    description: Product Management & Configuration sub‑domain manages the definition, design, and configuration of savings products. It ensures that new products and variants are created with clear rules, rate structures, eligibility conditions, and maturity behavior. It governs the ongoing management of interest rate changes and customer‑initiated product switches, ensuring consistent and controlled behavior across the savings portfolio.
+    capabilities:
+    - id: cap.sav.launch-savings-products
+      name: Launch Savings Products
+      description: Introduction of new savings product offerings to market, encompassing product specification finalization, pricing approval, configuration, regulatory clearance, and market release, enabling product portfolio expansion and supporting competitive market positioning.
+    - id: cap.sav.maintain-savings-product-catalogue
+      name: Maintain Savings Product Catalogue
+      description: Maintenance of active savings product portfolio, encompassing product feature updates, pricing adjustments, terms and conditions modifications, and product attribute management, enabling ongoing product optimization and supporting market responsiveness and regulatory compliance.
+    - id: cap.sav.manage-savings-product-interest-rates
+      name: Manage Savings Product Interest Rates
+      description: Management of interest rates for savings products, encompassing rate setting, rate change approvals, effective date scheduling, customer notification triggers, and rate history maintenance, enabling competitive pricing management and supporting margin optimization and regulatory transparency requirements.
+    - id: cap.sav.provide-savings-product-information
+      name: Provide Savings Product Information
+      description: Delivery of savings product details and specifications, encompassing product features, interest rates, eligibility criteria, terms and conditions, and comparative information, enabling product evaluation and supporting informed product selection and sales processes.
+    - id: cap.sav.process-savings-product-switches
+      name: Process Savings Product Switches
+      description: Processing of customer-initiated switches between savings products, encompassing switch request validation, eligibility verification, balance transfer, standing order migration, account closure, and new account activation, enabling product portfolio movement and supporting customer retention and product optimization.
+  - id: sub.sav.regulatory-and-compliance-management
+    name: Regulatory and Compliance Management
+    description: Regulatory and Compliance Management supports the regulatory obligations associated with savings products, particularly Individual Savings Accounts. It manages customer eligibility declarations, assesses customer eligibility against regulatory criteria including residency and tax-domicile requirements, and processes subscription adjustments including additional permitted contributions. It ensures regulatory compliance with HMRC ISA regulations, enabling the bank to meet statutory obligations and maintain accurate regulatory reporting.
+    capabilities:
+    - id: cap.sav.manage-savings-isa-eligibility-declarations
+      name: Manage Savings ISA Eligibility Declarations
+      description: Management of customer declarations regarding Individual Savings Account eligibility and compliance, encompassing declaration capture, validation against eligibility criteria, declaration storage, and status tracking, enabling compliant ISA account opening and maintenance in accordance with HMRC regulations.
+    - id: cap.sav.assess-isa-customer-eligibility
+      name: Assess ISA Customer Eligibility
+      description: Assessment of customer eligibility for Individual Savings Accounts, encompassing UK residency verification, age requirement validation, subscription limit checking, and existing ISA holding evaluation, enabling compliant ISA account provisioning and ensuring adherence to HMRC eligibility regulations.
+    - id: cap.sav.process-isa-subscription-adjustments
+      name: Process ISA Subscription Adjustments
+      description: Processing of additional permitted Individual Savings Account subscriptions, encompassing subscription adjustment validation, allowable excess determination, correction processing, and subscription limit reconciliation, enabling compliant management of ISA contributions beyond standard annual limits in accordance with HMRC permitted circumstances.
+  - id: sub.sav.reporting-and-analytics
+    name: Reporting and Analytics
+    description: Reporting and Analytics delivers management information, regulatory reporting and financial analysis related to the savings portfolio. It provides operational insights, product performance metrics, and inputs into financial reporting and profitability analysis. It also supports mid‑year and end‑of‑year regulatory submissions. These insights help the bank manage operational performance, satisfy regulatory requirements, and understand the financial contribution of savings products.
+    capabilities:
+    - id: cap.sav.provide-savings-management-insights
+      name: Provide Savings Management Insights
+      description: Provision of management insights for savings product portfolio and operations, encompassing product performance analysis, operational metrics reporting, trend identification, and exception highlighting, enabling informed management decision-making and supporting strategic planning for savings business optimization.
+    - id: cap.sav.report-savings-product-performance
+      name: Report Savings Product Performance
+      description: Reporting of savings product financial performance and profitability metrics, encompassing revenue analysis, cost allocation, margin calculation, and performance trend reporting, enabling financial analysis and supporting business decision-making regarding savings product portfolio management and pricing strategies.
+    - id: cap.sav.report-savings-isa-regulatory-data
+      name: Report Savings ISA Regulatory Data
+      description: Reporting of Individual Savings Account regulatory data to HMRC, encompassing subscription data compilation, account holder information aggregation, tax year reporting preparation, and regulatory submission execution, ensuring compliance with HMRC ISA reporting obligations and supporting regulatory oversight of ISA scheme administration.
+  - id: sub.sav.savings-transaction-processing-and-management
+    name: Savings Transaction Processing and Management
+    description: Transaction Processing and Management enables customers to move money into and out of savings products under the applicable product constraints. It processes payments, withdrawals, deposits and internal or external transfers, ensuring that all activity complies with product‑specific rules such as withdrawal restrictions or ISA contribution limits. It manages the definition and enforcement of payment rules and account limits, and reconciles all transaction activity to verify accuracy, completeness, and consistency across systems, ensuring safe, compliant, and financially sound operation.
+    capabilities:
+    - id: cap.sav.process-savings-payments
+      name: Process Savings Payments
+      description: Processing of inbound and outbound payments for savings accounts, encompassing payment initiation, validation, and execution across multiple payment types and beneficiary destinations, enabling customers to transfer funds while maintaining account integrity and regulatory compliance.
+    - id: cap.sav.execute-savings-fund-transfers
+      name: Execute Savings Fund Transfers
+      description: Execution of fund transfers between customer's savings and current accounts within and across institutions, encompassing transfer validation, balance verification, internal and external account movements, and transaction confirmation, enabling account-to-account fund management and supporting customer liquidity needs.
+    - id: cap.sav.process-savings-cash-transactions
+      name: Process Savings Cash Transactions
+      description: Processing of cash deposits and withdrawals for savings accounts, encompassing transaction validation, account eligibility verification, balance and limit checks, authorization decisions, and transaction execution, enabling cash-based account funding and withdrawals while supporting account integrity and regulatory compliance.
+    - id: cap.sav.manage-savings-account-limits
+      name: Manage Savings Account Limits
+      description: Management of contribution and transaction limits for savings accounts, encompassing limit configuration, threshold enforcement, contribution tracking, limit breach detection, and exception handling, enabling regulatory compliance and supporting product rule enforcement and customer protection requirements.

@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-confluence",
+    "description": "Read-only Confluence integration: search pages, read content, ask questions (RAG), view history, browse page trees, and read comments",
+    "version": "1.0.0",
+    "author": {
+        "name": "Vishal Khare",
+        "email": "vishal.khare1@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

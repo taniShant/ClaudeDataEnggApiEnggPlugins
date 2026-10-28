@@ -1,0 +1,127 @@
+schema_version: '1.0'
+domain:
+  id: dom.payment-card-issuing
+  name: Payment Card Issuing
+  description: "The Payment Card Issuing domain provides the technical infrastructure and processing capabilities required to issue, manage, and process physical and virtual payment cards (debit, credit, and prepaid) for UK retail banking customers to use at a Point of Sale.  This domain encompasses administration of the payment cards themselves, real-time transaction authorisation and switching, fraud detection, and settlement operations across the complete lifecycle of the payment cards.  The account ledger, balance management, and account lifecycle for the underlying debit accounts are owned by the Current Account domain; for credit accounts by the Credit Card domain."
+  owner: capl
+  bian_links:
+    -
+      title: Card Authorization
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=44578"
+    -
+      title: Card Clearing
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=36804"
+    -
+      title: Card Financial Settlement
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=34230"
+    -
+      title: Card Transaction Switch
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=29401"
+    -
+      title: Issued Device Administration
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=30905"
+    -
+      title: Issued Device Tracking
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=30205"
+  sub_domains:
+    -
+      id: sub.pci.card-data-management
+      name: Card Data Management
+      description: "This subdomain delivers the capabilities required to maintain accurate and comprehensive data about payment cards and their associated accounts. It enables the storage, retrieval, and management of card information, transaction history, and configuration settings while ensuring data integrity, consistency, and compliance with data protection requirements."
+      capabilities:
+        -
+          id: cap.pci.manage-card-information
+          name: Manage Card Information
+          description: "Storage, maintenance, and organization of core card data including account relationships, physical characteristics, operational parameters, and historical card information. Encompasses establishment of card-to-customer and card-to-account linkages, maintenance of card status and control configuration history, and archival of retired card records."
+    -
+      id: sub.pci.card-issuance-and-production
+      name: Card Issuance and Production
+      description: "This subdomain delivers the capabilities required to issue new payment cards to customers and manage the physical and digital card production process. It enables the creation of physical and virtual payment instruments tied to customer accounts, manages the allocation of card identifiers, and orchestrates the secure delivery of cards and associated security credentials to customers."
+      capabilities:
+        -
+          id: cap.pci.deliver-card-products
+          name: Deliver Card Products
+          description: "Orchestration of secure distribution of physical cards and associated security credentials to customers through multiple delivery channels. Encompasses address verification, delivery method selection, timing management, delivery tracking provision, and support for standard, expedited, and international delivery options."
+        -
+          id: cap.pci.determine-card-credentials
+          name: Determine Card Credentials
+          description: "Creation of unique card identifiers, security codes, and cryptographic keys required for transaction processing and network communication. Encompasses allocation of Bank Identification Numbers (BINs), Primary Account Numbers (PANs), Card Verification Values (CVVs), magnetic stripe encoding, and integrated circuit chip data generation, maintaining compliance with payment industry security standards."
+        -
+          id: cap.pci.issue-virtual-cards
+          name: Issue Virtual Cards
+          description: "Issuance of digital payment card credentials for immediate use in electronic commerce environments without requiring physical card production. Encompasses generation of virtual card numbers, device-specific card instances, digital wallet integration, and instant enablement for e-commerce, mobile wallet, and contactless payment channels."
+        -
+          id: cap.pci.manage-card-inventory
+          name: Manage Card Inventory
+          description: "Management of physical card stock throughout the supply chain from production through personalization and delivery. Encompasses stock level tracking, production queue management, supplier coordination, forecasting, and identification of supply chain bottlenecks."
+        -
+          id: cap.pci.produce-physical-cards
+          name: Produce Physical Cards
+          description: "Manufacturing and personalization of physical payment card instruments according to product specifications and customer requirements. Encompasses embossing data preparation, encoding, quality assurance, and support for multiple card types including standard plastic, metal, high-visibility variants, and customer-personalized designs."
+    -
+      id: sub.pci.card-maintenance-and-servicing
+      name: Card Maintenance and Servicing
+      description: "This subdomain delivers the capabilities required to manage access controls, usage parameters, and security settings for payment cards. It enables the configuration of transaction limits, usage restrictions, and card status management, ensuring that cards operate according to customer preferences and bank policies while providing flexibility to adapt card settings based on customer needs."
+      capabilities:
+        -
+          id: cap.pci.activate-card-products
+          name: Activate Card Products
+          description: "Transition of issued cards from inactive to active operational status through secure verification processes. Encompasses customer identity verification, multi-channel activation support, initial control configuration, and notification to downstream payment networks."
+        -
+          id: cap.pci.configure-card-usage-controls
+          name: Configure Card Usage Controls
+          description: "Configuration and management of transaction parameters, spending limits, and merchant category restrictions for payment cards. Encompasses establishment of daily spending thresholds, merchant-type restrictions, geographic controls, and channel-specific permissions (ATM, contactless, online) with support for both temporary and persistent control settings."
+        -
+          id: cap.pci.manage-card-authentication-credentials
+          name: Manage Card Authentication Credentials
+          description: "Secure generation, distribution, maintenance, and lifecycle management of Personal Identification Numbers (PINs) and other card authentication credentials. Encompasses PIN generation for new cards, customer-initiated PIN changes, PIN recovery, accessibility accommodations, and comprehensive audit logging of all authentication credential operations."
+        -
+          id: cap.pci.manage-card-lifecycle
+          name: Manage Card Lifecycle
+          description: "Establishment and maintenance of operational states for payment cards reflecting customer requests, security events, and lifecycle transitions. Encompasses activation, blocking, temporary suspension, permanent deactivation, and loss/theft designation, with propagation of status changes across all payment networks and digital wallet systems."
+        -
+          id: cap.pci.manage-card-replacement
+          name: Manage Card Replacement
+          description: "Orchestration of replacement processes for damaged, lost, stolen, or expired payment cards while maintaining account continuity and customer service experience. Encompasses cancellation of original cards, issuance of replacement credentials, control and merchant token transfer, and coordinated delivery of replacement card and authentication credentials."
+        -
+          id: cap.pci.provide-card-information
+          name: Provide Card Information
+          description: "Delivery of secure access to card information required for customer servicing, transaction research, and operational support. Encompasses controlled visibility of card details, transaction history, authentication history, and configuration settings through customer self-service and colleague-assisted channels with appropriate information governance."
+    -
+      id: sub.pci.card-tokenization-services
+      name: Card Tokenization Services
+      description: "This subdomain delivers the capabilities required to create, manage, and process tokenized payment credentials that replace actual card data with secure substitutes. It enables enhanced security for digital payments through token provisioning and lifecycle management while supporting integration with digital wallets, merchant systems, and payment service providers."
+      capabilities:
+        -
+          id: cap.pci.manage-token-lifecycle
+          name: Manage Token Lifecycle
+          description: "Ongoing management of tokenized payment credential states including provisioning, activation, suspension, reactivation, and termination. Encompasses automatic token state synchronization with underlying card status, merchant-specific token management, and notification of token state changes to payment networks."
+        -
+          id: cap.pci.provision-payment-tokens
+          name: Provision Payment Tokens
+          description: "Generation and provisioning of secure payment tokens representing card credentials for use in digital commerce and merchant environments. Encompasses merchant-specific token issuance, device-specific token creation, digital wallet integration, instant enablement, and coordination with payment networks for token generation."
+    -
+      id: sub.pci.card-transaction-processing
+      name: Card Transaction Processing
+      description: "This subdomain delivers the capabilities required to authorize, process, and manage payment card transactions across various channels and transaction types. It enables secure real-time decision making on transaction requests, manages the messaging with payment networks, and ensures proper accounting and settlement of approved transactions while maintaining transaction integrity."
+      capabilities:
+        -
+          id: cap.pci.analyse-authorisation-decisions
+          name: Analyse Authorisation Decisions
+          description: "Investigation and analysis of card transaction authorisation decisions to support customer service, compliance, and fraud investigation requirements. Encompasses visibility into authorisation rule application, risk score evaluation, and decline reason identification while supporting appeals and dispute resolution."
+        -
+          id: cap.pci.authorise-card-transactions
+          name: Authorise Card Transactions
+          description: "Real-time evaluation and decision-making for payment card transaction requests based on card status, account parameters, spending limits, and risk assessment. Encompasses validation of card eligibility, verification of control compliance, fraud checking, and generation of authorisation decisions across all transaction channels including Point of Sale, ATM, online, contactless, and telephone."
+        -
+          id: cap.pci.resolve-transaction-disputes
+          name: Resolve Transaction Disputes
+          description: "Resolution framework for contested card transactions including fraudulent charges, billing errors, and merchant disputes. Encompasses investigation of transaction claims, chargeback coordination with networks, regulatory protection provision, and refund processing for upheld disputes."
+        -
+          id: cap.pci.route-transaction-messages
+          name: Route Transaction Messages
+          description: "Secure exchange and routing of transaction data between merchants, payment networks, and the card issuing platform. Encompasses message formatting, protocol conversion, network-specific routing, and maintenance of transaction integrity across payment ecosystems."
+        -
+          id: cap.pci.settle-card-transactions
+          name: Settle Card Transactions
+          description: "Financial settlement of authorized transactions through posting to customer accounts and reconciliation with payment networks. Encompasses clearing cycle management, transaction posting, fee application, currency conversion, and reconciliation with scheme and network settlement files."

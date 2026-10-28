@@ -1,0 +1,11 @@
+{
+  "value": {
+    "errors": [
+      {
+        "id": "9709-4675-2456-7801",
+        "code": "INTERNAL_SERVER_ERROR",
+        "title": "The request failed due to an internal error."
+      }
+    ]
+  }
+}

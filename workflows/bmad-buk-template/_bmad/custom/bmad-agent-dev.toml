@@ -1,0 +1,59 @@
+# BUK override for BMAD Developer/Engineer agent
+# Injects platform-specific generation capabilities and BUK coding standards.
+# Covers: SDF (React Native), iOS (SwiftUI), Android (Jetpack Compose), Web (Blueprint React), API, Data.
+
+[persistent_facts]
+platform_routing = """
+BUK supports multiple frontend platforms. Route to the correct specialist:
+- @barclays/chameleon-blueprint in package.json → SDF (React Native) → use barclays-buk-ui-engineer-sdf
+- *.xcodeproj / *.xcworkspace present → iOS (SwiftUI) → use barclays-buk-ui-engineer-ios
+- build.gradle present → Android (Jetpack Compose) → use barclays-buk-ui-engineer-android
+- @barclays/blueprint-react in package.json → Web → use barclays-buk-ui-engineer-web
+- Unsure → use barclays-buk-ui-engineer dispatcher (auto-detects)
+"""
+
+sdf_rules = """
+SDF (React Native / @barclays/chameleon-blueprint) Iron Rules — non-negotiable:
+- Root element is always <VanillaLayout>
+- Always use onPress not onClick
+- Never use icon="close" — use icon="dismiss"
+- FormInput never has a label prop — use separate <Type> component
+- No inline styles, no hardcoded colours
+- Modal always via useRef<ModalRef> — never via visible prop
+"""
+
+api_standards = """
+All APIs must comply with barclays-buk-standards:api-design:
+- OAuth 2.0/OIDC authentication
+- Standard error response shape
+- OpenAPI 3.x spec required
+- No internal data structure exposure
+"""
+
+security = """
+All generated code must comply with barclays-buk-standards:security:
+- No hardcoded secrets or credentials
+- Parameterised queries only (no string concatenation for SQL)
+- Input validation at all system boundaries
+- Sensitive fields masked in logs
+"""
+
+[[menu]]
+code = "barclays-buk-ui-sdf"
+description = "Generate SDF Blueprint React Native screens from Figma"
+skill = "barclays-buk-ui-engineer-sdf:ui-engineer-sdf-worker-agent"
+
+[[menu]]
+code = "barclays-buk-ui"
+description = "Generate UI screens (auto-detects platform)"
+skill = "barclays-buk-ui-engineer:ui-engineer-agent"
+
+[[menu]]
+code = "barclays-buk-api"
+description = "Generate API contracts, endpoints, and OpenAPI spec"
+skill = "barclays-buk-api-engineer:api-engineer-agent"
+
+[[menu]]
+code = "barclays-buk-data"
+description = "Generate data models, schema, and migration scripts"
+skill = "barclays-buk-data-engineer:data-engineer-agent"

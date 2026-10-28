@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "orchestration_result.schema.json",
+  "title": "OrchestrationResult",
+  "description": "Output contract for orchestrate_prerequisites.py. schema_version 1.0.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "issue_key",
+    "requirements_path",
+    "evidence_status",
+    "evidence_sha256",
+    "analysis_status",
+    "required_next_action"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Contract version. Must be '1.0'."
+    },
+    "issue_key": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Jira issue key (e.g. BUKL2CUSX-173655)."
+    },
+    "requirements_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path to the validated requirements.json."
+    },
+    "evidence_status": {
+      "type": "string",
+      "enum": ["retrieved", "validated"],
+      "description": "'retrieved' if evidence was fetched this invocation; 'validated' if pre-existing evidence passed validation."
+    },
+    "evidence_sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "description": "SHA-256 hex digest of the raw Jira response bytes, as recorded in requirements.json."
+    },
+    "analysis_path": {
+      "type": ["string", "null"],
+      "description": "Absolute path to the requirements-analysis.json, or null if absent."
+    },
+    "analysis_status": {
+      "type": "string",
+      "enum": ["absent", "stale", "invalid", "reused"],
+      "description": "State of the requirements analysis artefact: 'absent' (not yet produced), 'stale' (SHA-256 mismatch), 'invalid' (corrupt or structurally invalid), 'reused' (valid and current)."
+    },
+    "required_next_action": {
+      "type": "string",
+      "enum": ["run_analysis", "none"],
+      "description": "'run_analysis' if the skill must execute Stages 1-3; 'none' if existing analysis can be returned directly."
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "value": {
+    "errors": [
+      {
+        "id": "9709-4675-2456-7801",
+        "code": "AUTHENTICATION_ERROR",
+        "title": "The user could not be authenticated for this request",
+        "severity": "E"
+      }
+    ]
+  }
+}
+  

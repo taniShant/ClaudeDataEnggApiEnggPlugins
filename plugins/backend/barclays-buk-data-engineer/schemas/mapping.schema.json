@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Mapping",
+  "description": "Schema for a source-to-target field mapping document. Captures field-level mappings between source and target systems including transformation rules, business rules, data quality rule references, lineage, and confidence level for each mapped item.",
+  "type": "object",
+  "required": [
+    "mapping_id",
+    "name",
+    "version",
+    "source_system",
+    "target_system",
+    "created_by",
+    "created_at",
+    "status",
+    "items"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "mapping_id": {
+      "type": "string",
+      "description": "Unique identifier for this mapping document."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name describing this mapping."
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of this mapping document."
+    },
+    "source_system": {
+      "type": "string",
+      "description": "Identifier of the source system."
+    },
+    "target_system": {
+      "type": "string",
+      "description": "Identifier of the target system."
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Identity of the person or agent that created this mapping."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this mapping was created."
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status of this mapping document.",
+      "enum": [
+        "draft",
+        "proposed",
+        "approved",
+        "implemented"
+      ]
+    },
+    "items": {
+      "type": "array",
+      "description": "Individual field-level mapping entries.",
+      "items": {
+        "type": "object",
+        "required": [
+          "source_entity",
+          "source_field",
+          "source_type",
+          "target_entity",
+          "target_field",
+          "target_type",
+          "transformation_rule",
+          "business_rule",
+          "confidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "source_entity": {
+            "type": "string",
+            "description": "Source table, object, or entity name."
+          },
+          "source_field": {
+            "type": "string",
+            "description": "Source field or attribute name."
+          },
+          "source_type": {
+            "type": "string",
+            "description": "Data type of the source field."
+          },
+          "target_entity": {
+            "type": "string",
+            "description": "Target table, object, or entity name."
+          },
+          "target_field": {
+            "type": "string",
+            "description": "Target field or attribute name."
+          },
+          "target_type": {
+            "type": "string",
+            "description": "Data type of the target field."
+          },
+          "transformation_rule": {
+            "type": "string",
+            "description": "Description or expression defining the transformation applied to the source value."
+          },
+          "business_rule": {
+            "type": "string",
+            "description": "Business rule governing this mapping."
+          },
+          "dq_rule_refs": {
+            "type": "array",
+            "description": "References to data quality rules applicable to this mapping.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lineage_ref": {
+            "type": "string",
+            "description": "Reference to a lineage record tracking this field mapping."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes or caveats for this mapping entry."
+          },
+          "confidence": {
+            "type": "string",
+            "description": "Confidence level in the correctness of this mapping.",
+            "enum": [
+              "verified",
+              "proposed",
+              "inferred"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

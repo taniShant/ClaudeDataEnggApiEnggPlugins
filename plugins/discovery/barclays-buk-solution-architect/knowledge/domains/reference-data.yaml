@@ -1,0 +1,50 @@
+schema_version: '1.0'
+domain:
+  id: dom.reference-data
+  name: Reference Data
+  description: "The Reference Data domain in BUK (Barclays UK) focuses on managing and maintaining key types of reference data required for various business operations, with a specific emphasis on Master Reference Data Types (MRDT)."
+  owner: cdao
+  bian_links:
+    -
+      title: Location Data Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=45002"
+  sub_domains:
+    -
+      id: sub.rd.business-reference-data
+      name: Business Reference Data
+      description: "Business Reference Data is reference data that defines standard classifications, permissible values, and controlled vocabularies used to ensure consistent interpretation of the data in a domain.  Business Reference Data may be cross-domain or domain-specific, and may be static or dynamic, depending on its scope and how it is used at runtime. Examples includes but not limited to Risk and control classifications, Regulatory codes and status indicators, Enterprise process or service classifications, Product taxonomies, Customer segment definitions."
+      capabilities:
+        -
+          id: cap.rd.govern-business-reference-data
+          name: Govern Business Reference Data
+          description: "The capability to define and enforce standards, policies, and controls, ensuring business reference data is of high quality, consistent, and compliant, while enabling reuse and alignment across domains through effective oversight."
+        -
+          id: cap.rd.manage-business-reference-data
+          name: Manage Business Reference Data
+          description: "The capability to define, maintain, and distribute authoritative business reference data consistently. It ensures business reference data is standardized, accurate, controlled, and aligned to agreed definitions, supporting reliable operations, regulatory compliance, and consistent reporting across systems and business processes."
+    -
+      id: sub.rd.enterprise-reference-data
+      name: Enterprise Reference Data
+      description: "Enterprise Reference Data is reference data that is managed centrally and mandated for consistent use across the enterprise, providing authoritative classifications, codes, or definitions that apply across multiple Business Units, Functions, products, or legal entities. Examples include Country and region codes, Currency codes, Legal entity identifiers, Industry or regulatory classification codes."
+      capabilities:
+        -
+          id: cap.rd.govern-enterprise-reference-data
+          name: Govern Enterprise Reference Data
+          description: "The capability to define and enforce standards, policies, and controls, ensuring enterprise reference data is of high quality, consistent, and compliant, while enabling reuse and alignment across domains through effective oversight."
+        -
+          id: cap.rd.manage-enterprise-reference-data
+          name: Manage Enterprise Reference Data
+          description: "The capability to define, maintain, and distribute authoritative enterprise reference data consistently. It ensures enterprise reference data is standardized, accurate, controlled, and aligned to agreed definitions, supporting reliable operations, regulatory compliance, and consistent reporting across systems and business processes."
+    -
+      id: sub.rd.technical-reference-data
+      name: Technical Reference Data
+      description: "Technical Reference Data is domain and application specific reference data that is defined, owned, and maintained by domain to support the configuration, operation, and integration of systems or application, rather than business classification or reporting. It provides system-level codes, parameters, and identifiers that enable applications, platforms, and integrations to function consistently and reliably. Examples include but not limited to Environment codes (DEV / UAT / PROD), Application or system identifiers, Interface and message type codes, Local dropdown values, UI labels and display groupings, Journey specific categorizations, Temporary or exploratory classifications."
+      capabilities:
+        -
+          id: cap.rd.govern-technical-reference-data
+          name: Govern Technical Reference Data
+          description: "The capability to define and enforce standards, policies, and controls, ensuring technical reference data is of high quality, consistent, and compliant, while enabling reuse and alignment across domains through effective oversight."
+        -
+          id: cap.rd.manage-technical-reference-data
+          name: Manage Technical Reference Data
+          description: "The capability to define, maintain, and distribute authoritative technical reference data consistently. It ensures technical reference data is standardized, accurate, controlled, and aligned to agreed definitions, supporting reliable operations, regulatory compliance, and consistent reporting across systems and business processes."

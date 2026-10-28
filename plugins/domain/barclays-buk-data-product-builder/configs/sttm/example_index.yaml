@@ -1,0 +1,80 @@
+# Example Index — Maps classification + detected patterns to a single output example
+#
+# Purpose: Instead of loading all ~64 KB of examples per agent spawn,
+# the orchestrator selects ONE example (5–10 KB) based on classification
+# and detected patterns. Loaded once for the first batch; subsequent
+# batches reference "same example as batch 1" without reloading.
+#
+# Resolution order:
+#   1. Check pattern_overrides (highest priority — specific ETL patterns)
+#   2. Check table_type + crypto_aspect combination
+#   3. Fall back to default
+#
+# Only output examples are listed — input examples are NOT needed by sttm-row-generator-agent.
+
+example_selector:
+
+  # Fallback when no specific match
+  default:
+    output: "fdp_transactional_output.json"
+
+  # By table_type × crypto_aspect
+  table_type:
+    Transactional:
+      crypto_None:
+        output: "fdp_transactional_output.json"
+      crypto_Tokenize:
+        output: "fdp_crypto_tokenize_output.json"
+      crypto_Detokenize:
+        output: "fdp_crypto_detokenize_output.json"
+      crypto_Both:
+        output: "fdp_crypto_both_output.json"
+    NonTransactional_SCD1:
+      crypto_None:
+        output: "fdp_nontransactional_output.json"
+      crypto_Tokenize:
+        output: "fdp_crypto_tokenize_output.json"
+      crypto_Detokenize:
+        output: "fdp_crypto_detokenize_output.json"
+      crypto_Both:
+        output: "fdp_crypto_both_output.json"
+    NonTransactional_SCD2:
+      crypto_None:
+        output: "merge_scd2_output.json"
+      crypto_Tokenize:
+        output: "fdp_crypto_tokenize_output.json"
+      crypto_Detokenize:
+        output: "fdp_crypto_detokenize_output.json"
+      crypto_Both:
+        output: "fdp_crypto_both_output.json"
+
+  # By data_product_type (when table_type match is ambiguous)
+  data_product_type:
+    CDP:
+      output: "cdp_multisource_output.json"
+    BDP:
+      output: "bdp_aggregated_output.json"
+
+  # Pattern-based overrides (highest priority — checked first)
+  pattern_overrides:
+    union:
+      output: "union_multisource_output.json"
+      trigger: "union_metadata is non-null"
+    multi_step_etl:
+      output: "multi_step_etl_output.json"
+      trigger: "intermediate_steps is non-empty"
+    pyspark:
+      output: "pyspark_multi_join_agg_output.json"
+      trigger: "any code_artifact type = pyspark"
+    teradata:
+      output: "teradata_qualify_zeroifnull_output.json"
+      trigger: "Teradata dialect detected"
+    cte_deep:
+      output: "cte_chain_3level_output.json"
+      trigger: "CTE chain depth >= 3"
+    merge:
+      output: "merge_scd2_output.json"
+      trigger: "merge_metadata is non-null"
+
+# Note: view_resolution_* and nested_view_resolution_* are lineage-agent outputs — not indexed here.
+# selfjoin_mom_* and source_volumetrics_* are supplementary reference examples.

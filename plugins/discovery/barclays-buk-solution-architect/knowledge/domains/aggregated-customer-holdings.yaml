@@ -1,0 +1,54 @@
+schema_version: '1.0'
+domain:
+  id: dom.aggregated-customer-holdings
+  name: Aggregated Customer Holdings
+  description: This domain provides a comprehensive aggregated view of all account holdings for a customer, including current balances, enriched transaction history and customer level transaction spend analysis. It ensures that customers have real-time access to their account information, enabling them to monitor their financial activities effectively. The domain also supports various account types and integrates seamlessly with other financial services to provide a holistic view of a customer's financial status. By maintaining a detailed transaction history, the Account Holdings and Balances domain aids in financial planning, budgeting.
+  owner: digital
+  bian_links:
+    - title: Customer Product and Service Directory
+      url: https://bian.org/servicelandscape-12-0-0/object_22.html?object=41591
+    - title: Transaction Engine
+      url: https://bian.org/servicelandscape-12-0-0/object_22.html?object=41033
+  sub_domains:
+  - id: sub.ach.money-management
+    name: Money Management
+    description: The Money Management sub-domain encompasses the capabilities that enable customers to understand, organise, and manage their financial activity by categorising spending, analysing trends, generating personalised financial insights, setting and tracking savings goals, and applying customer and transaction intelligence to support informed financial decision-making.
+    capabilities:
+    - id: cap.ach.analyse-customer-financials
+      name: Analyse Customer Financials
+      description: Analyse Customer Financials is the capability that delivers customer-specific intelligence derived from account, product, and transaction information to support awareness, understanding, and effective day-to-day money management.
+    - id: cap.ach.provide-financial-insights
+      name: Provide Financial Insights
+      description: Provide Financial Insights is the capability that delivers customer-facing insights derived from account, product, and transaction information to support servicing needs and relevant communications that help customers understand and manage their financial position.
+    - id: cap.ach.track-budgets-and-goals
+      name: Track Budgets and Goals
+      description: Track Budgets and Goals is the capability that supports the monitoring of customer budgets by associating transaction and balance information with defined budget structures and savings goals, enabling comparison of actual spending against planned budgets over time.
+    - id: cap.ach.categorise-customer-spend
+      name: Categorise Customer Spend
+      description: Categorise Customer Spend is the capability that enables customers to assign, view, and maintain metadata for their transaction activity, supporting improved understanding and management of personal spending.
+  - id: sub.ach.product-holdings
+    name: Product Holdings
+    description: The Product Holdings sub-domain encompasses the capabilities required to maintain an accurate and consolidated view of product holding instances across single and multi-party structures, and provide timely access to holdings information and change events for downstream consumers.
+    capabilities:
+    - id: cap.ach.provide-customer-product-holdings
+      name: Provide Customer Product Holdings
+      description: Provide Customer Product Holdings is the capability that delivers a consolidated view of all products and accounts held by a customer across supported business units, including current balance information, enabling consistent access to an up-to-date representation of the customer's holdings.
+    - id: cap.ach.provide-product-holdings-details
+      name: Provide Product Holdings Details
+      description: Provide Product Holding Details is the capability that delivers detailed information for individual product holdings, including limits, features, preferences, fees, rates, and other product-specific attributes, enabling consistent access to comprehensive holding-level information across the enterprise.
+    - id: cap.ach.provide-product-holdings-balance-history
+      name: Provide Product Holdings Balance History
+      description: Provide Product Holding Balance History is the capability that delivers historical balance information for individual product holdings over defined time periods, enabling customer awareness, budgeting, and financial planning through consistent access to past holding balances.
+  - id: sub.ach.transactions
+    name: Transactions
+    description: The Transactions sub-domain encompasses the capabilities required to represent, enrich, and make available customer transaction activity across supported products, maintaining a consistent and comprehensive view of pending and posted transactions and their contextual attributes to support customer awareness, servicing, and downstream consumption.
+    capabilities:
+    - id: cap.ach.provide-transactions-details
+      name: Provide Transactions Details
+      description: Provide Transaction Details is the capability that delivers a unified and enriched view of customer transactions, including pending and posted activity, categorisation, merchant information, location data, and extended transaction history, enabling customers and consumers to understand transaction context and behaviour.
+    - id: cap.ach.search-transactions
+      name: Search Transactions
+      description: Search Transactions is the capability that enables the retrieval of customer transactions using defined search, filtering, and sorting criteria such as merchant, amount, date, and category, supporting efficient discovery and analysis of transaction activity.
+    - id: cap.ach.enrich-transactions
+      name: Enrich Transactions
+      description: Enrich Transactions is the capability that enhances transaction records with additional contextual attributes, including categorisation, merchant metadata, and location information, improving the interpretability and usability of transaction data across the enterprise.

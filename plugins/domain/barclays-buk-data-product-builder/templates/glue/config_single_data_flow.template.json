@@ -1,0 +1,146 @@
+{
+    "_template_notes": {
+        "purpose": "Table-level data config for single data flow pipeline. Separate from the dtxog config which controls Glue job infrastructure.",
+        "scenario": "Single data flow — all source tables originate from one database/system. Use this template when domain_knowledge does not specify a source_system field.",
+        "source": "Source tables are organized under three keys: 'non-transactional' (SCD2 sources with eff_start/end/active), 'non-transactional-scd1' (SCD1 sources with dw_lod_tmp/dw_upd_lod_tmp only), and 'transactional' (append-only). The template shows examples — add or remove entries as required.",
+        "source_placement_rule": "Source classified as NonTransactional_SCD2 → 'non-transactional' key. Source classified as NonTransactional_SCD1 → 'non-transactional-scd1' key. Source classified as Transactional → 'transactional' key.",
+        "columns": "Each source table entry lists only the columns needed for the transformation. Add or remove column entries to match the mapping document — no fixed limit.",
+        "filters": "Three-case resolution: (1) No alias key for a table → 'default' filter applied. (2) Alias key present → that filter used exclusively; 'default' is NOT merged — write the combined expression explicitly if both are needed. (3) To suppress the default entirely for a table → set alias to '1=1'; this overrides the default and results in no effective row restriction. Date columns (eff_start_date, eff_end_date, dw_bus_dt, plus any listed in 'date_columns') are automatically rewritten to CAST(col AS DATE) <op> CAST('date' AS DATE) by SourceReader — write plain comparisons in config; do not add CAST manually.",
+        "date_columns": "Optional. List pipeline-specific date columns beyond the standard set (eff_start_date, eff_end_date, dw_bus_dt). SourceReader auto-applies CAST(col AS DATE) for all columns in this list when they appear in filter expressions. Omit the key entirely if no additional date columns are required.",
+        "crypto": "The crypto section is included only when the crypto flow is active for this pipeline. Remove the entire crypto block if no tokenization or detokenization is required.",
+        "file_locations": "S3 paths for staging, checkpoint, and date control files. No source_system prefix — single data flow scenario.",
+        "staging_path": "General-purpose intermediate staging S3 prefix. Used by transform when multi-step logic needs materialization between stages. The transform constructs the full S3 URI as s3://{s3_bucket}/{staging_path}/step_name.",
+        "environments": "Per-environment S3 bucket names. The wrapper resolves config['environments'][env]['s3_bucket'] at runtime using the env parameter passed by the DTX framework. Values sourced from session_state.env_config.{env}.s3_bucket during generation.",
+        "rolling_deletion": "Optional. Applicable to Transactional and NonTransactional_SCD1 only. Omit entirely for NonTransactional_SCD2. {current_business_date} is interpolated at runtime.",
+        "source_file": "source.file is conditionally populated by /gen-config STEP 1.8 when io_mode is 'file' or 'hybrid'. Omitted entirely for table-only pipelines.",
+        "target_io": "target_io is conditionally populated by /gen-config STEP 3.8 when target is a parquet file. When present, the cdc and rolling_deletion sections are omitted."
+    },
+    "environments": {
+        "dev": {
+            "s3_bucket": "{{s3_bucket_dev}}"
+        },
+        "uat": {
+            "s3_bucket": "{{s3_bucket_uat}}"
+        },
+        "prd": {
+            "s3_bucket": "{{s3_bucket_prd}}"
+        }
+    },
+    "database": "{{database_name}}",
+    "tablename": "{{table_name}}",
+    "catch_up_threshold_days": 1,
+    "source": {
+        "non-transactional": {
+            "{{scd2_source_table_name_1}}": {
+                "table": "{{source_database_name}}.{{scd2_source_table_name_1}}",
+                "columns": [
+                    "{{source_column_1}}",
+                    "{{source_column_2}}"
+                ]
+            }
+        },
+        "non-transactional-scd1": {
+            "{{scd1_source_table_name_1}}": {
+                "table": "{{source_database_name}}.{{scd1_source_table_name_1}}",
+                "columns": [
+                    "{{source_column_1}}",
+                    "{{source_column_2}}"
+                ]
+            }
+        },
+        "transactional": {
+            "{{transactional_source_table_name_1}}": {
+                "table": "{{source_database_name}}.{{transactional_source_table_name_1}}",
+                "columns": [
+                    "{{source_column_1}}",
+                    "{{source_column_2}}"
+                ]
+            }
+        },
+        "file": {}
+    },
+    "filters": {
+        "day0": {
+            "non-transactional": {
+                "default": "eff_start_date <= '{current_business_date}'"
+            },
+            "non-transactional-scd1": {
+                "default": "1=1"
+            },
+            "transactional": {
+                "default": "dw_bus_dt <= '{current_business_date}'"
+            }
+        },
+        "day1": {
+            "non-transactional": {
+                "default": "active = '1'"
+            },
+            "non-transactional-scd1": {
+                "default": "1=1"
+            },
+            "transactional": {
+                "default": "dw_bus_dt = '{current_business_date}'",
+                "{{source_table_name_override}}": "{{custom_day1_filter_for_specific_table}}"
+            }
+        },
+        "catch_up_mode": {
+            "non-transactional": {
+                "default": "eff_start_date <= '{current_business_date}' AND eff_end_date > '{current_business_date}'"
+            },
+            "non-transactional-scd1": {
+                "default": "1=1"
+            },
+            "transactional": {
+                "default": "dw_bus_dt <= '{current_business_date}'",
+                "{{source_table_name_override}}": "{{custom_catch_up_filter_for_specific_table}}"
+            }
+        }
+    },
+    "crypto": {
+        "dev": {
+            "secret_name": "sms-crypto-{{tenancy_name}}",
+            "itsi": "{{crypto_itsi_dev}}",
+            "api_endpoint_url": "{{crypto_api_endpoint_url_dev}}"
+        },
+        "uat": {
+            "secret_name": "sms-crypto-{{tenancy_name}}",
+            "itsi": "{{crypto_itsi_uat}}",
+            "api_endpoint_url": "{{crypto_api_endpoint_url_uat}}"
+        },
+        "prd": {
+            "secret_name": "sms-crypto-{{tenancy_name}}",
+            "itsi": "{{crypto_itsi_prd}}",
+            "api_endpoint_url": "{{crypto_api_endpoint_url_prd}}"
+        }
+    },
+    "file_locations": {
+        "staging": {
+            "flag_indicator": "data/stg/flag_indicator/{{database_name}}/{{table_name}}",
+            "surrogate_key": "data/stg/surrogate_key/{{database_name}}/{{table_name}}",
+            "staging_path": "data/stg/intermediate/{{database_name}}/{{table_name}}"
+        },
+        "spark_checkpoint_dir": "data/spark_checkpoint/{{database_name}}/{{table_name}}"
+    },
+    "date_columns": [],
+    "date_control": {
+        "filename": "data/stg/date_control/{{database_name}}/{{table_name}}/date_control.dat",
+        "backup_filename": "data/stg/date_control/{{database_name}}/{{table_name}}/date_control_bkp.dat",
+        "file_path": "",
+        "frequency": "{{frequency}}",
+        "workday_number_monthly": "{{workday_number_monthly}}",
+        "workday_number_weekly": "{{workday_number_weekly}}",
+        "run_on_weekends": "{{run_on_weekends}}",
+        "run_on_bank_holidays": "{{run_on_bank_holidays}}"
+    },
+    "cdc": {
+        "_notes": "For NonTransactional_SCD2: include primary_key_cols, exclude_cols, snapshot_mode. For NonTransactional_SCD1: include ONLY primary_key_cols, exclude_cols (no snapshot_mode, no high_ended_date). For Transactional: omit entire cdc section. NOTE: validate_unique_keys, duplicates_ts_col, dedup_order are NOT applicable to Glue platform (run_cdc is Databricks-only).",
+        "primary_key_cols": ["{{primary_key_col_1}}"],
+        "exclude_cols": ["{{cdc_exclude_col_1}}"],
+        "snapshot_mode": "{{snapshot_mode — omit for SCD1}}"
+    },
+    "rolling_deletion": {
+        "enabled": "{{rolling_deletion_enabled}}",
+        "predicate": "{{rolling_deletion_predicate}}"
+    },
+    "target_io": {}
+}

@@ -1,0 +1,203 @@
+{
+  "__typename": "CloudEvent",
+  "id": "006a6c39-d90b-88f3-8049-834991d18001",
+  "origin": "WIZ_CLI",
+  "timestamp": "2026-09-23T14:00:00Z",
+  "severity": "HIGH",
+  "status": "SUCCESS",
+  "rawAuditLogRecord": {
+    "id": "006a6c39-d90b-88f3-8049-834991d18001",
+    "startedAt": "2026-09-23T14:00:00Z",
+    "createdAt": "2026-09-23T14:02:30Z",
+    "scanDuration": "150000",
+    "analytics": {
+      "numSASTFindings": 4,
+      "numVulnerabilityFindings": 1,
+      "numSecretFindings": 0,
+      "numTotalFindings": 5
+    },
+    "failedPolicies": [
+      {
+        "id": "ac8f640a-aa90-458f-8937-aa307f95b241",
+        "name": "Barclays vulnerabilities policy"
+      }
+    ],
+    "passedPolicies": [
+      {
+        "id": "39e1d48c-b00e-445a-90d1-3e33b16aab90",
+        "name": "Default sensitive data policy"
+      }
+    ]
+  },
+  "extraDetails": {
+    "__typename": "CloudEventCICDScanDetails",
+    "totalMatches": 5,
+    "criticalMatches": 1,
+    "highMatches": 2,
+    "mediumMatches": 1,
+    "lowMatches": 1,
+    "sastDetails": {
+      "__typename": "CICDSASTScanResult",
+      "analytics": {
+        "lowCount": 1,
+        "mediumCount": 1
+      },
+      "findings": [
+        {
+          "__typename": "CICDDiskScanResultSASTFinding",
+          "id": "/builds/repo##WS-SQL-INJECT-001##src/db/queries.py##42##42##1##50",
+          "name": "SQL Injection via String Concatenation",
+          "description": "Raw SQL query with user input concatenation.",
+          "filePath": "src/db/queries.py",
+          "startLine": 42,
+          "startColumn": 1,
+          "endLine": 42,
+          "endColumn": 50,
+          "snippet": "cursor.execute(\"SELECT * FROM users WHERE id = \" + user_id)",
+          "snippetLineOffset": 0,
+          "severity": "CRITICAL",
+          "impact": "HIGH",
+          "likelihood": "HIGH",
+          "origin": "WIZ",
+          "remediationInstructions": "Use parameterized queries.",
+          "weaknesses": [
+            {
+              "__typename": "Weakness",
+              "id": "CWE-89",
+              "name": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+            }
+          ],
+          "rule": {
+            "__typename": "SASTRule",
+            "id": "WS-SQL-INJECT-001",
+            "name": "WS-SQL-INJECT-001"
+          },
+          "failedPolicyMatches": [],
+          "ignoredPolicyMatches": []
+        },
+        {
+          "__typename": "CICDDiskScanResultSASTFinding",
+          "id": "/builds/repo##WS-XSS-001##src/web/views.py##88##88##1##40",
+          "name": "Cross-Site Scripting (XSS)",
+          "description": "Unescaped user input in HTML response.",
+          "filePath": "src/web/views.py",
+          "startLine": 88,
+          "startColumn": 1,
+          "endLine": 88,
+          "endColumn": 40,
+          "snippet": "return HttpResponse(f\"<p>{user_input}</p>\")",
+          "snippetLineOffset": 0,
+          "severity": "HIGH",
+          "impact": "MEDIUM",
+          "likelihood": "HIGH",
+          "origin": "WIZ",
+          "remediationInstructions": "Escape user input before rendering.",
+          "weaknesses": [
+            {
+              "__typename": "Weakness",
+              "id": "CWE-79",
+              "name": "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+            }
+          ],
+          "rule": {
+            "__typename": "SASTRule",
+            "id": "WS-XSS-001",
+            "name": "WS-XSS-001"
+          },
+          "failedPolicyMatches": [],
+          "ignoredPolicyMatches": []
+        },
+        {
+          "__typename": "CICDDiskScanResultSASTFinding",
+          "id": "/builds/repo##WS-SQL-INJECT-001##src/db/queries.py##67##67##1##55",
+          "name": "SQL Injection via String Formatting",
+          "description": "String formatting in SQL query.",
+          "filePath": "src/db/queries.py",
+          "startLine": 67,
+          "startColumn": 1,
+          "endLine": 67,
+          "endColumn": 55,
+          "snippet": "cursor.execute(f\"DELETE FROM logs WHERE date < '{cutoff}'\")",
+          "snippetLineOffset": 0,
+          "severity": "HIGH",
+          "impact": "HIGH",
+          "likelihood": "MEDIUM",
+          "origin": "WIZ",
+          "remediationInstructions": "Use parameterized queries.",
+          "weaknesses": [
+            {
+              "__typename": "Weakness",
+              "id": "CWE-89",
+              "name": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+            }
+          ],
+          "rule": {
+            "__typename": "SASTRule",
+            "id": "WS-SQL-INJECT-001",
+            "name": "WS-SQL-INJECT-001"
+          },
+          "failedPolicyMatches": [],
+          "ignoredPolicyMatches": []
+        },
+        {
+          "__typename": "CICDDiskScanResultSASTFinding",
+          "id": "/builds/repo##WS-HARDCODED-001##src/main/java/Config.java##15##15##1##40",
+          "name": "Hardcoded Credential",
+          "description": "Hardcoded password in source code.",
+          "filePath": "src/main/java/Config.java",
+          "startLine": 15,
+          "startColumn": 1,
+          "endLine": 15,
+          "endColumn": 40,
+          "snippet": "private String password = \"admin123\";",
+          "snippetLineOffset": 0,
+          "severity": "MEDIUM",
+          "impact": "HIGH",
+          "likelihood": "LOW",
+          "origin": "WIZ",
+          "remediationInstructions": "Use environment variables or secrets manager.",
+          "weaknesses": [
+            {
+              "__typename": "Weakness",
+              "id": "CWE-798",
+              "name": "CWE-798: Use of Hard-coded Credentials"
+            }
+          ],
+          "rule": {
+            "__typename": "SASTRule",
+            "id": "WS-HARDCODED-001",
+            "name": "WS-HARDCODED-001"
+          },
+          "failedPolicyMatches": [],
+          "ignoredPolicyMatches": []
+        }
+      ]
+    },
+    "vulnerabilityDetails": {
+      "__typename": "CICDDiskScanResult",
+      "libraries": [
+        {
+          "__typename": "CICDDiskScanResultLibrary",
+          "name": "log4j:log4j",
+          "version": "1.2.17",
+          "path": "/build.gradle",
+          "vulnerabilities": [
+            {
+              "__typename": "DiskScanVulnerability",
+              "name": "CVE-2021-4104",
+              "severity": "HIGH",
+              "fixedVersion": "N/A",
+              "source": "NVD"
+            }
+          ],
+          "detectionMethod": "LIBRARY",
+          "layerMetadata": null
+        }
+      ],
+      "vulnerableSBOMArtifactsByNameVersion": []
+    },
+    "secretDetails": {
+      "findings": []
+    }
+  }
+}

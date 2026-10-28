@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-security-architect",
+    "description": "Evaluates solutions for security risks and scans code for vulnerabilities. Produces threat models, security reviews, and compliance validation.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

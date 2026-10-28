@@ -1,0 +1,239 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dag_spec.schema.json",
+  "title": "DAG Specification",
+  "description": "Intermediate DAG specification produced during /gen-dag. Captures resolved scheduling and dependency configuration for template substitution.",
+  "type": "object",
+  "required": ["platform", "tenancy", "schedule", "tables"],
+  "properties": {
+    "platform": {
+      "type": "string",
+      "enum": ["glue", "databricks"],
+      "description": "Target platform. Determines template family selection."
+    },
+    "tenancy": {
+      "type": "string",
+      "description": "Feature Team Name from tenancy skill (e.g., 'fdpmortgage', 'fdpcomplaints')."
+    },
+    "data_product_type": {
+      "type": "string",
+      "enum": ["FDP", "CDP", "BDP"],
+      "description": "Data product type. Affects DAG naming and dependency patterns."
+    },
+    "is_shared_data_product": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if the session target uses a shared_ prefix (e.g. shared_bdp_). Informational — does not affect DAG generation logic."
+    },
+    "dag_owner": {
+      "type": "string",
+      "description": "DAG owner for default_args (e.g., 'Customer-FDP', 'Savings-FDP')."
+    },
+    "schedule": {
+      "type": "object",
+      "required": ["schedule_type"],
+      "properties": {
+        "schedule_type": {
+          "type": "string",
+          "enum": ["cron", "business_calendar", "adhoc"],
+          "description": "Determines which template variant to use."
+        },
+        "cron_expression": {
+          "type": ["string", "null"],
+          "description": "5-field cron expression. Required when schedule_type='cron'.",
+          "pattern": "^[0-9*,/-]+ [0-9*,/-]+ [0-9*,/-]+ [0-9*,/-]+ [0-9*,/-]+$"
+        },
+        "schedule_hour": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 23,
+          "description": "Hour for business_calendar timetable. Required when schedule_type='business_calendar'."
+        },
+        "schedule_minute": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 59,
+          "description": "Minute for business_calendar timetable. Required when schedule_type='business_calendar'."
+        },
+        "timezone": {
+          "type": "string",
+          "default": "Europe/London",
+          "description": "IANA timezone. Fixed to Europe/London per platform standard."
+        },
+        "skip_bank_holidays": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true and schedule_type='cron', inject ShortCircuitOperator as first task."
+        },
+        "business_lag_days": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 0,
+          "description": "Number of business days lag. Currently informational (driver handles lag internally)."
+        },
+        "catchup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether DAG should backfill missed runs."
+        },
+        "sequential_processing": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, each DAG run waits for the previous run to succeed before starting (depends_on_past=True, wait_for_downstream=True). If false (default), DAG runs are independent."
+        }
+      }
+    },
+    "tables": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One entry per target table in the session.",
+      "items": {
+        "type": "object",
+        "required": ["target_database", "target_table", "dag_id", "process_name"],
+        "properties": {
+          "target_database": {
+            "type": "string",
+            "description": "Target database name (e.g., 'bdp_uk_complaints_db')."
+          },
+          "target_table": {
+            "type": "string",
+            "description": "Target table name (e.g., 'dispute_summary')."
+          },
+          "dag_id": {
+            "type": "string",
+            "description": "Generated DAG ID following convention: {tenancy}_{table}_dag."
+          },
+          "process_name": {
+            "type": "string",
+            "description": "Process name for date_control and notebook params (e.g., '{schema}_{table}')."
+          },
+          "dependencies": {
+            "type": "array",
+            "default": [],
+            "description": "Resolved upstream dependencies for this table.",
+            "items": {
+              "type": "object",
+              "required": ["source_database", "source_table", "orchestration_type"],
+              "properties": {
+                "source_database": {
+                  "type": "string",
+                  "description": "Upstream source database name."
+                },
+                "source_table": {
+                  "type": "string",
+                  "description": "Upstream source table name."
+                },
+                "orchestration_type": {
+                  "type": "string",
+                  "enum": ["dynamodb", "dag_sensor", "cross_deployment"],
+                  "description": "How to check upstream completion."
+                },
+                "dag_id": {
+                  "type": ["string", "null"],
+                  "description": "Upstream DAG ID. Required for dag_sensor and cross_deployment."
+                },
+                "deployment_tenancy": {
+                  "type": ["string", "null"],
+                  "description": "Target Astronomer tenancy. Required for cross_deployment."
+                },
+                "api_token_variable": {
+                  "type": ["string", "null"],
+                  "description": "Airflow Variable name holding API token. Required for cross_deployment."
+                },
+                "deployment_url": {
+                  "type": ["string", "null"],
+                  "description": "Deployment URL pattern. Derivable from tenancy if not provided."
+                },
+                "upstream_task": {
+                  "type": ["string", "null"],
+                  "description": "Specific task to wait for. Null = wait for entire DAG."
+                }
+              }
+            }
+          },
+          "internal_task_dependency": {
+            "type": "array",
+            "default": [],
+            "description": "Reserved — always empty. One table per DAG means no internal task dependencies.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "job_accepted_params": {
+            "type": ["object", "null"],
+            "description": "Mapping of job base_parameter name (from job YAML) to Airflow XCom key. Resolved by reading generated job YAML. Only runtime-overridable params included (empty string default in base_parameters). Default: {business_date: curr_bus_dt}.",
+            "additionalProperties": {"type": "string"}
+          },
+          "databricks_config": {
+            "type": ["object", "null"],
+            "description": "Databricks-specific configuration. Null for Glue platform.",
+            "properties": {
+              "connection_id": {
+                "type": "string",
+                "description": "Databricks connection ID (e.g., 'buk_fdpmortgage_fdp_cicd_dev_sp')."
+              },
+              "job_name": {
+                "type": "string",
+                "description": "Databricks job name. Derived from bundle: {schema}_{table}. Required."
+              },
+              "itsi_env_var": {
+                "type": ["string", "null"],
+                "description": "ITSI environment variable name (e.g., 'FDPMORTGAGE_ITSI'). Used in cron template for DynamoDB sensor connection derivation. Tenancy-specific — provided by user or domain knowledge."
+              }
+            }
+          },
+          "glue_config": {
+            "type": ["object", "null"],
+            "description": "Glue-specific configuration. Null for Databricks platform.",
+            "properties": {
+              "lambda_function_name": {
+                "type": "string",
+                "description": "Lambda function name (e.g., 'dtx-glue-sm-invoke-fdpmortgage')."
+              },
+              "s3_bucket_pattern": {
+                "type": "string",
+                "description": "S3 bucket with {ENV} and {AWS_ACCOUNT_ID} placeholders."
+              },
+              "dtxog_config_key": {
+                "type": "string",
+                "description": "S3 key to DTXOG config (e.g., 'apps/dtx/mortgage_account_dtxog.json')."
+              },
+              "change_request_no": {
+                "type": "string",
+                "default": "1",
+                "description": "Change request number for Lambda payload."
+              },
+              "csm_name": {
+                "type": ["string", "null"],
+                "description": "CSM name for Airflow connection ID derivation."
+              },
+              "itsi_env_var": {
+                "type": ["string", "null"],
+                "description": "ITSI environment variable name (e.g., 'FDPMORTGAGE_ITSI')."
+              }
+            }
+          }
+        }
+      }
+    },
+    "multi_table_dag": {
+      "type": "boolean",
+      "default": false,
+      "description": "Deprecated — always false. One DAG per table is mandatory. Retained for schema backward compatibility."
+    },
+    "start_date": {
+      "type": "object",
+      "properties": {
+        "year": {"type": "integer"},
+        "month": {"type": "integer", "minimum": 1, "maximum": 12},
+        "day": {"type": "integer", "minimum": 1, "maximum": 31}
+      },
+      "description": "DAG start_date components."
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Airflow DAG tags for filtering (e.g., ['customer', 'cdc', 'databricks'])."
+    }
+  }
+}

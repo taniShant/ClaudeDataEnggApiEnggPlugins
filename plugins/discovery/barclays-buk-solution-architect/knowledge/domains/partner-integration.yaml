@@ -1,0 +1,54 @@
+schema_version: '1.0'
+domain:
+  id: dom.partner-integration
+  name: Partner Integration
+  description: The Partner Domain is a foundational component of the API Technology landscape, designed to enable and scale external integrations across Barclays' digital ecosystem. It provides a structured and secure interface for third parties and regulatory bodies to interact with Barclays services via APIs.
+  owner: digital
+  sub_domains:
+  - id: sub.pi.third-party-integration-channel
+    name: Third Party Integration Channel
+    description: Provides the core services that enable secure and governed interaction with third party consumers. It manages third party customer consent and maintains authoritative records of Third Party Providers (TPPs), while offering supporting services that underpin the reliable operation, compliance, and scalability of the Third Party Integration Channel.
+    capabilities:
+    - id: cap.pi.manage-third-party-customer-consent
+      name: Manage Third Party Customer Consent
+      description: Management of customer consents for third party data access and usage across Open Banking, partner integrations, and aggregation services, ensuring regulatory compliance, supporting secure data sharing, and providing customers with transparency and control over their data.
+    - id: cap.pi.manage-third-party-provider-tpp-registry-and-lifecycle
+      name: Manage Third Party Provider (TPP) Registry and Lifecycle
+      description: Management of authoritative Third Party Provider (TPP) registry and lifecycle, including TPP onboarding, validation, and operational integrity, ensuring regulatory compliance, secure interoperability, and reliable identity and security controls across Open Banking and partner ecosystems.
+  - id: sub.pi.commercial-partner-product-integration
+    name: Commercial Partner Product Integration
+    description: Focuses on delivering value‑added, third party consumable API products that enable partners to integrate with and build on the organisation’s services. It packages, manages, and exposes commercial APIs in a scalable and product‑oriented way, supporting partner growth, innovation, and revenue opportunities.
+    capabilities:
+    - id: cap.pi.provide-third-party-consumable-commercial-products
+      name: Provide Third Party Consumable Commercial Products
+      description: Provision of commercial partner products and integration capabilities enabling third party partners to leverage organizational services for revenue-generating ventures, supporting partner innovation, business growth, and commercial ecosystem expansion.
+  - id: sub.pi.third-party-partner-product-integration
+    name: Third Party Partner Product Integration
+    description: The Partner API Products subdomain provides curated, third party consumable API products designed specifically for strategic partners. It enables controlled and scalable access to internal capabilities through partner‑focused APIs, supporting collaboration, integration, and the delivery of shared business outcomes.
+    capabilities:
+    - id: cap.pi.provide-third-party-consumable-partner-products
+      name: Provide Third Party Consumable Partner Products
+      description: Provision of strategic partner products and integration capabilities enabling authorized partners to access organizational services for collaborative business initiatives, supporting partner relationships, shared value creation, and ecosystem collaboration.
+  - id: sub.pi.regulatory-api-products
+    name: Regulatory API Products
+    description: Delivers externally facing services required to meet regulatory obligations and standards. It provides Open Banking, Open Data, and Confirmation of Payee services to authorised Third Party Providers (TPPs), while also enabling mandated reporting and data sharing with external regulators in a secure and compliant manner.
+    capabilities:
+    - id: cap.pi.provide-open-data-services-to-third-party-providers
+      name: Provide Open Data Services to Third Party Providers
+      description: Provision of publicly available information including ATM and branch locations, product details, and service quality metrics, ensuring regulatory compliance, market transparency, and enabling customer-informed decision-making across the financial services ecosystem.
+    - id: cap.pi.provide-open-banking-services-to-third-party-providers
+      name: Provide Open Banking Services to Third Party Providers
+      description: Provision of Open Banking services including payment initiation, account information access, and event notifications to authorized third parties, ensuring regulatory compliance, enabling customer-directed data sharing, and supporting competitive financial services innovation.
+    - id: cap.pi.provide-confirmation-of-payee-services-to-tpps
+      name: Provide Confirmation of Payee Services to Third Party Providers (TPPS)
+      description: Provision of payee verification services enabling payment originators to confirm payee details before transaction execution, preventing fraud, reducing misdirected payments, and ensuring accurate payment delivery in compliance with regulatory requirements.
+    - id: cap.pi.provision-reporting-to-external-regulators
+      name: Provision Reporting to External Regulators
+      description: Provision of regulatory data and reports to external regulators and legal authorities, ensuring compliance with mandatory reporting obligations, supporting regulatory oversight, and enabling timely response to legal information requests and court orders.
+  - id: sub.pi.saas-product-integration
+    name: SaaS Product Integration
+    description: Provides services designed to be consumed by Software‑as‑a‑Service (SaaS) platforms and services. It enables secure, scalable integration between SaaS solutions and internal capabilities, supporting reuse, automation, and consistent consumption across SaaS‑based services.
+    capabilities:
+    - id: cap.pi.provide-third-party-consumable-saas-products
+      name: Provide Third Party Consumable Software-as-as-Service (SaaS) Products
+      description: Provides services designed to be consumed by Software‑as‑a‑Service (SaaS) platforms and services. It enables secure, scalable integration between SaaS solutions and internal capabilities, supporting reuse, automation, and consistent consumption across SaaS‑based services.

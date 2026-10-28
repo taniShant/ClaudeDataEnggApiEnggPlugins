@@ -1,0 +1,163 @@
+schema_version: '1.0'
+domain:
+  id: dom.current-account
+  name: Current Account
+  description: "The Current Account Processing domain encompasses the end-to-end management of current account products and services for UK retail banking customers. This domain provides the core capabilities required to establish, maintain, and process transactions for consumer current accounts, including standard current accounts, premium accounts, basic bank accounts, and student accounts."
+  owner: capl
+  bian_links:
+    -
+      title: Current Account
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=37122"
+    -
+      title: Internal Bank Account
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=46477"
+    -
+      title: Virtual Account
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=45513"
+  sub_domains:
+    -
+      id: sub.ca.current-account-account-maintenance-and-servicing
+      name: Current Account Account Maintenance and Servicing
+      description: "The Account Maintenance and Servicing capability group supports ongoing maintenance and servicing of established current accounts such as, account modification, account statement, dormant account management, issue notices of variation etc."
+      capabilities:
+        -
+          id: cap.ca.manage-account-closures
+          name: Manage Account Closures
+          description: We have the ability to manage the closure process for accounts including final settlements and documentation.
+        -
+          id: cap.ca.manage-dormant-account
+          name: Manage Dormant Account
+          description: "We have the ability to identify, notify and resolve account that have shown no activity over a defined period."
+        -
+          id: cap.ca.process-account-modifications
+          name: Process Account Modifications
+          description: "We have the ability to process changes to account parameters, limits and customer details, including the ability to add and remove a third party, account supervisor, and user to account mandates."
+        -
+          id: cap.ca.share-account-information-with-third-parties
+          name: Share Account Information With Third Parties
+          description: "We have the ability to provide secure, regulated access to customer current account information through Open Banking APIs, in compliance with PSD2 and relevant UK regulations."
+        -
+          id: cap.ca.support-query-and-dispute-resolution
+          name: Support Query and Dispute Resolution
+          description: "we have the ability to maintain the data for the historical view which enables to support queries &amp;amp; disputes."
+        -
+          id: cap.ca.switch-current-account-to-and-from-another-bank
+          name: Switch Current Account to and From Another Bank
+          description: "style=&quot;color:var(--ds-text,#000000);&quot;&gt;We have the ability to compliant to the Sterling Current Account Switching scheme&lt;/span&gt;, including switching a Barclays current account to an external bank, switching in a current account from an external bank, and transferring all associated payments and mandates during the account switching process."
+        -
+          id: cap.ca.view-account-and-transaction-details
+          name: View Account and Transaction Details
+          description: "style=&quot;color:var(--ds-text,#000000);&quot;&gt;We have the ability to enable colleagues and customers to view the account details such as transaction history, account status, overdraft limits and other non-financial data via digital channels or colleagues servicing platforms.&lt;/span&gt;"
+    -
+      id: sub.ca.current-account-account-opening-and-configuration
+      name: Current Account Account Opening and Configuration
+      description: "The Account Opening capability group covers the end-to-end process of opening new current accounts, from application processing and account creation and agreement management."
+      capabilities:
+        -
+          id: cap.ca.current-account-process-applications
+          name: Current Account Process Applications
+          description: "We have the ability to capture, validate, and process current account applications across multiple channels, Bapp &amp;amp; Fullserve, managing referrals and generating appropriate welcome communications."
+        -
+          id: cap.ca.open-business-currency-account
+          name: Open Business Currency Account
+          description: Opens Business Banking currency accounts by establishing required account structures and enabling foreign currency holding and transactions.
+        -
+          id: cap.ca.open-business-current-account
+          name: Open Business Current Account
+          description: Opens Business Banking current accounts (Business Current Account or Charity Impact Account) by establishing compliant account arrangements and enabling day-to-day banking activities.
+        -
+          id: cap.ca.open-new-account
+          name: Open New Account
+          description: "We have the ability to create new current account with appropriate account parameters, terms and conditions. Establish a customer relationship with the accounts."
+    -
+      id: sub.ca.current-account-product-management
+      name: Current Account Product Management
+      description: "The Product Management capability group encompasses the development, configuration, and lifecycle management of current account products, and product information services."
+      capabilities:
+        -
+          id: cap.ca.current-account-manage-product-lifecycle
+          name: Current Account Manage Product Lifecycle
+          description: "We have the ability to manage the full lifecycle of current account products including launching, back booking and product closure."
+        -
+          id: cap.ca.current-account-provide-product-information
+          name: Current Account Provide Product Information
+          description: "We have the ability to surface current account product information, features and benefits etc. to a marketing channel, either Barclays or third party hosted, allowing customers to make an informed decision on whether any of these meet their particular needs."
+        -
+          id: cap.ca.deliver-current-account-products
+          name: Deliver Current Account Products
+          description: We have the ability to deliver new current account in Sterling and Non-Sterling products and propositions aligned with market needs and business strategy.
+        -
+          id: cap.ca.manage-communication-of-terms-andamp-conditions
+          name: "Manage Communication of Terms &amp; Conditions"
+          description: "We have the ability to create, present, and manage account documentation including terms and conditions, customer agreements and regulatory disclosures."
+        -
+          id: cap.ca.monitor-product-performance
+          name: Monitor Product Performance
+          description: We have the ability to monitor and analyze product performance against targets and market benchmarks.
+    -
+      id: sub.ca.current-account-transaction-processing-and-management
+      name: Current Account Transaction Processing and Management
+      description: "The Transaction Processing and Management capability group covers cash transactions processing, payment services, change management, account balance maintenance and reconciliation."
+      capabilities:
+        -
+          id: cap.ca.cash-deposits-and-withdrawals
+          name: Cash Deposits and Withdrawals
+          description: "We have the ability to evaluate and approve or decline cash deposits and withdrawals through multiple channels (including branches, Post Office, Barclays ATMs &amp;amp; external ATMs) in real-time based on account status, available balance, fraud rules, and other parameters."
+        -
+          id: cap.ca.generate-account-statements
+          name: Generate Account Statements
+          description: We have the ability to generate regular account statements and transaction histories.
+        -
+          id: cap.ca.issue-cheque-book
+          name: Issue Cheque Book
+          description: "We have the ability to offer customer a cheque book, support payment out by cheque as well as cheque deposit."
+        -
+          id: cap.ca.maintain-account-balances
+          name: Maintain Account Balances
+          description: We have the ability to support fund based decision and customer visibility.
+        -
+          id: cap.ca.maintain-referral-markers
+          name: Maintain Referral Markers
+          description: We have the ability to refer payment decisions based on the availability of funds or the markers in the account.
+        -
+          id: cap.ca.post-transactions-and-payments
+          name: Post Transactions and Payments
+          description: "We have the ability to post finalised transactions to customer accounts, updating balances and transaction history with complete and accurate transaction details."
+    -
+      id: sub.ca.interest-and-fee-administration
+      name: Interest and Fee Administration
+      description: The Interest and Fee Administration capability group provides interest calculations and fee applications and interest fee changes notification.
+      capabilities:
+        -
+          id: cap.ca.apply-account-fees
+          name: Apply Account Fees
+          description: "We have the ability to apply account maintenance fees, transaction charges and other applicable fees."
+        -
+          id: cap.ca.calculate-account-interest
+          name: Calculate Account Interest
+          description: "We have the ability to calculate and apply credit or debit interest on current accounts and credit balances according to agreed rates, and support back-valuation for retroactive adjustment."
+        -
+          id: cap.ca.pre-notify-fees-and-charges
+          name: Pre-Notify Fees and Charges
+          description: "style=&quot;color:var(--ds-text,#172b4d);&quot;&gt;We have the ability to pre-notify customer customer for debit interest, account fee or overdraft charges via email/letter&lt;/span&gt;"
+    -
+      id: sub.ca.overdraft-and-credit-management
+      name: Overdraft and Credit Management
+      description: "The Overdraft and Credit Management capability group encompasses overdraft limits configuration, monitor credit usage, and apply appropriate fees and interest charges for overdraft usage. It also supports digital overdraft management. Additionally, the platform offers pre-notifying customers of overdraft charges."
+      capabilities:
+        -
+          id: cap.ca.apply-overdraft-charges
+          name: Apply Overdraft Charges
+          description: We have the ability to apply appropriate fees and interest charges for overdraft usage according to account terms.
+        -
+          id: cap.ca.manage-overdraft
+          name: Manage Overdraft
+          description: "style=&quot;color:var(--ds-text,#000000);&quot;&gt;We have the ability to enable customer and colleague to apply/remove overdraft and overdraft limit adjustments via digital or colleague servicing platform. We also provide real-time alerts for approaching or exceeding limits.&lt;/span&gt;"
+        -
+          id: cap.ca.monitor-and-manage-overdraft-facilities
+          name: Monitor and Manage Overdraft Facilities
+          description: "We have the ability to monitor customer usage of overdraft facilities and credit lines.&amp;nbsp;"
+        -
+          id: cap.ca.provide-overdraft-facilities
+          name: Provide Overdraft Facilities
+          description: We have the ability to provide and configure overdraft limits based on customer eligibility and risk assessment.

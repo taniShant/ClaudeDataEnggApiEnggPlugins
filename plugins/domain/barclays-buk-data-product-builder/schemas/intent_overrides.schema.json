@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "intent_overrides.schema.json",
+  "title": "Intent Overrides",
+  "description": "Schema for session/intent_overrides.json — user-supplied field values for unresolved intent fields. Applied as Priority 0 (highest) during /de-identify-intent or /de-resume.",
+  "type": "object",
+  "required": ["overrides"],
+  "properties": {
+    "overrides": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["target_database", "target_table"],
+        "properties": {
+          "target_database": {
+            "type": "string",
+            "description": "Target database name (must match mapping_parsed.json)"
+          },
+          "target_table": {
+            "type": "string",
+            "description": "Target table name (must match mapping_parsed.json)"
+          },
+          "table_type": {
+            "type": "string",
+            "enum": ["NonTransactional_SCD1", "NonTransactional_SCD2", "Transactional"],
+            "description": "Override table type classification. NonTransactional_SCD2 = SCD2 history. NonTransactional_SCD1 = overwrite-in-place (no history). Transactional = append-only."
+          },
+          "grain_description": {
+            "type": "string",
+            "description": "Human-readable grain statement (e.g. 'One row per account_id per effective period')"
+          },
+          "primary_key_columns": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string"},
+            "description": "Natural key columns for MERGE ON clause"
+          },
+          "partition_key_columns": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string"},
+            "description": "Partition columns (e.g. ['active'] for SCD2, ['dw_bus_dt'] for transactional)"
+          },
+          "eff_date_source": {
+            "type": "string",
+            "enum": ["explicit", "row_lst_mod_dte", "updated_at", "none"],
+            "description": "How eff_start_date is determined. 'none' for Transactional tables."
+          },
+          "load_type": {
+            "type": "string",
+            "enum": ["Day0", "BAU", "full_then_incremental"],
+            "description": "Day0 = full historical load; BAU = incremental/delta; full_then_incremental = both day0 and day1 generated"
+          },
+          "snapshot_mode": {
+            "type": "boolean",
+            "description": "True = source provides full snapshot (absence = deletion); False = delta feed (absence = unchanged). Overrides mapping cdc_type_hint and domain knowledge."
+          },
+          "data_flow_type": {
+            "type": "string",
+            "enum": ["single", "multiple"],
+            "description": "Override data flow mode detection. 'single' = one source system/data flow feeds the target. 'multiple' = multiple independent source systems/data flows converge on the same target table."
+          },
+          "protegrity_de_mappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["source_column", "de_name", "operation"],
+              "properties": {
+                "source_column": {
+                  "type": "string",
+                  "description": "Column name in the transformation"
+                },
+                "de_name": {
+                  "type": "string",
+                  "description": "Protegrity Data Element name"
+                },
+                "operation": {
+                  "type": "string",
+                  "enum": ["tokenize", "detokenize"]
+                }
+              }
+            },
+            "description": "Override crypto mappings. Empty array = no crypto."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "override_source": {
+      "type": "string",
+      "description": "Who/what provided these overrides for audit trail",
+      "default": "user_manual",
+      "enum": ["user_manual", "ci_pipeline", "domain_expert"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when overrides were created"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,312 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ResultManifest",
+  "description": "Schema for the agent result manifest. Captures the outcome of a task execution including status, standards applied, outputs produced, assumptions made, unknowns identified, validation results, and handoff recommendation.",
+  "type": "object",
+  "required": [
+    "request_id",
+    "agent_version",
+    "skill_versions",
+    "task_type",
+    "status",
+    "standards_applied",
+    "input_fingerprints",
+    "outputs",
+    "assumptions",
+    "unknowns",
+    "warnings",
+    "blocking_findings",
+    "validations",
+    "evidence_refs",
+    "handoff_recommendation",
+    "timestamp"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "Unique identifier of the originating request, matching the input manifest."
+    },
+    "agent_version": {
+      "type": "string",
+      "description": "Version of the agent that produced this result."
+    },
+    "skill_versions": {
+      "type": "array",
+      "description": "Versions of each skill invoked during task execution.",
+      "items": {
+        "type": "object",
+        "required": ["skill_id", "version"],
+        "additionalProperties": false,
+        "properties": {
+          "skill_id": {
+            "type": "string",
+            "description": "Identifier of the skill."
+          },
+          "version": {
+            "type": "string",
+            "description": "Version string of the skill."
+          }
+        }
+      }
+    },
+    "task_type": {
+      "type": "string",
+      "description": "The task type processed, matching the input manifest task_type.",
+      "enum": [
+        "assess",
+        "profile",
+        "map",
+        "model-logical",
+        "model-physical",
+        "tech-choice",
+        "generate-pipeline",
+        "generate-dq",
+        "db-change",
+        "plan-migration",
+        "lineage-impact",
+        "metadata",
+        "performance",
+        "streaming-design",
+        "pii-discovery",
+        "review-mr",
+        "validate",
+        "handoff",
+        "run",
+        "status"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "description": "Overall status of the task result.",
+      "enum": [
+        "PASS",
+        "PASS_WITH_WARNINGS",
+        "NEEDS_HUMAN_DECISION",
+        "BLOCKED_SAFETY",
+        "FAILED"
+      ]
+    },
+    "standards_applied": {
+      "type": "array",
+      "description": "Standards consulted and applied during task execution.",
+      "items": {
+        "type": "object",
+        "required": ["standard_id", "version", "owner", "review_status", "source_url"],
+        "additionalProperties": false,
+        "properties": {
+          "standard_id": {
+            "type": "string",
+            "description": "Identifier of the standard."
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the standard applied."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owning team or authority for the standard."
+          },
+          "review_status": {
+            "type": "string",
+            "description": "Review or approval status of the standard (e.g. current_approved, draft, expired)."
+          },
+          "source_url": {
+            "type": "string",
+            "description": "URL to the authoritative source of the standard."
+          }
+        }
+      }
+    },
+    "input_fingerprints": {
+      "type": "array",
+      "description": "Checksums of input artefacts consumed during execution, for traceability.",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path or URI of the input artefact."
+          },
+          "sha256": {
+            "type": "string",
+            "description": "SHA-256 checksum of the input artefact at time of consumption."
+          }
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "description": "Artefacts produced by the agent during this task execution.",
+      "items": {
+        "type": "object",
+        "required": ["path", "type", "checksum"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path or URI of the output artefact."
+          },
+          "type": {
+            "type": "string",
+            "description": "Artefact type identifier."
+          },
+          "checksum": {
+            "type": "string",
+            "description": "Checksum of the output artefact for integrity verification."
+          }
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "description": "Assumptions made during task execution that affect the outputs.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "severity", "evidence_state"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this assumption."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the assumption made."
+          },
+          "severity": {
+            "type": "string",
+            "description": "Severity of the assumption on the output quality or correctness."
+          },
+          "evidence_state": {
+            "type": "string",
+            "description": "Whether the assumption is evidenced, inferred, or unverified."
+          }
+        }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "description": "Items that could not be resolved and require further clarification or human input.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "severity", "owner_needed"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this unknown."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of what is unknown or unresolved."
+          },
+          "severity": {
+            "type": "string",
+            "description": "Severity of the unknown on the task outcome."
+          },
+          "owner_needed": {
+            "type": "string",
+            "description": "Role or team that needs to resolve this unknown."
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "description": "Non-blocking warnings raised during task execution.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocking_findings": {
+      "type": "array",
+      "description": "Findings that block acceptance of the outputs and require remediation.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "control_ref", "severity"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this blocking finding."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the blocking finding."
+          },
+          "control_ref": {
+            "type": "string",
+            "description": "Reference to the control or standard that was not met."
+          },
+          "severity": {
+            "type": "string",
+            "description": "Severity level of the blocking finding."
+          }
+        }
+      }
+    },
+    "validations": {
+      "type": "array",
+      "description": "Results of validation checks performed on the outputs.",
+      "items": {
+        "type": "object",
+        "required": ["validator", "result", "details"],
+        "additionalProperties": false,
+        "properties": {
+          "validator": {
+            "type": "string",
+            "description": "Name or identifier of the validator or check performed."
+          },
+          "result": {
+            "type": "string",
+            "description": "Result of the validation (e.g. pass, fail, warn)."
+          },
+          "details": {
+            "type": "string",
+            "description": "Additional details or findings from the validation."
+          }
+        }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "description": "References to evidence sources consulted or cited during task execution.",
+      "items": {
+        "type": "object",
+        "required": ["id", "source", "retrieved_at", "authority_status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this evidence reference."
+          },
+          "source": {
+            "type": "string",
+            "description": "URL or identifier of the evidence source."
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the evidence was retrieved."
+          },
+          "authority_status": {
+            "type": "string",
+            "description": "Authority status of the evidence (e.g. VERIFIED_STANDARD, ASSUMPTION)."
+          }
+        }
+      }
+    },
+    "handoff_recommendation": {
+      "type": "string",
+      "description": "Recommended next action or handoff instruction for the human reviewer."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this result manifest was produced."
+    }
+  }
+}

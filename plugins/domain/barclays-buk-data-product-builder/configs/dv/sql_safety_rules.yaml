@@ -1,0 +1,133 @@
+# =============================================================================
+# DV Plugin — SQL Safety Rules
+# 10 checks (SAFETY-01–SAFETY-10) to ensure generated validation SQL is
+# read-only, parameterized, and environment-safe.
+# =============================================================================
+
+version: "1.0"
+description: >
+  SQL safety validation rules for the Data Validation stage of the Barclays BUK
+  Data Product Builder plugin. These rules are applied to every SQL query
+  generated or submitted by the DV engine before execution. They enforce
+  read-only access, prevent dynamic SQL, detect hardcoded literals, and guard
+  against cross-environment references. All blockers prevent query execution;
+  warnings are surfaced but do not halt the validation run.
+
+sql_safety:
+  - id: SAFETY-01
+    category: sql_safety
+    check: "No DDL statements (CREATE, DROP, ALTER, TRUNCATE)"
+    severity: blocker
+    logic: |
+      regex: \b(CREATE|DROP|ALTER|TRUNCATE)\b
+      flags: case_insensitive
+    error_message: "DDL statement detected: '{{matched_text}}'. Validation SQL must be read-only."
+    fix_suggestion: "Remove the DDL statement. Validation queries must only use SELECT/WITH. If you need a temporary structure, use a CTE (WITH clause) instead."
+
+  - id: SAFETY-02
+    category: sql_safety
+    check: "No DML statements (INSERT, UPDATE, DELETE, MERGE)"
+    severity: blocker
+    logic: |
+      regex: \b(INSERT|UPDATE|DELETE|MERGE)\b
+      flags: case_insensitive
+    error_message: "DML statement detected: '{{matched_text}}'. Validation SQL must not modify data."
+    fix_suggestion: "Remove the DML statement. Rewrite the validation as a SELECT query that detects the condition without modifying data."
+
+  - id: SAFETY-03
+    category: sql_safety
+    check: "No dynamic SQL execution (EXEC, EXECUTE, PREPARE, CALL)"
+    severity: blocker
+    logic: |
+      regex: \b(EXEC|EXECUTE|PREPARE|CALL)\b
+      flags: case_insensitive
+    error_message: "Dynamic SQL detected: '{{matched_text}}'. Validation SQL must not use dynamic execution."
+    fix_suggestion: "Remove the dynamic SQL call. All validation logic must be expressed as static SELECT/WITH queries with {{placeholder}} parameters."
+
+  - id: SAFETY-04
+    category: sql_safety
+    check: "No catalog mutation statements (MSCK REPAIR, REFRESH TABLE, ANALYZE TABLE, COMPUTE STATISTICS)"
+    severity: blocker
+    logic: |
+      regex: \b(MSCK\s+REPAIR|REFRESH\s+TABLE|ANALYZE\s+TABLE|COMPUTE\s+STATISTICS)\b
+      flags: case_insensitive
+    error_message: "Catalog mutation statement detected: '{{matched_text}}'. Validation SQL must not alter catalog metadata."
+    fix_suggestion: "Remove the catalog mutation statement. Validation queries read data only and must not trigger metadata operations."
+
+  - id: SAFETY-05
+    category: sql_safety
+    check: "Parameterized control_date — no hardcoded date literals except sentinel '3499-12-31'"
+    severity: blocker
+    logic: |
+      regex: DATE\s+'[0-9]{4}-[0-9]{2}-[0-9]{2}'
+      flags: case_insensitive
+      exceptions:
+        - pattern: "DATE '3499-12-31'"
+          reason: "SCD2 sentinel end-date — always hardcoded by convention"
+    error_message: "Hardcoded date literal found: '{{matched_text}}'. Use DATE '{{control_date}}' placeholder."
+    fix_suggestion: "Replace the hardcoded date with the {{control_date}} parameter placeholder. The DV engine injects the actual control date at runtime."
+    notes: >
+      The sentinel value DATE '3499-12-31' is explicitly exempt from this rule.
+      It is the standard SCD2 open-ended end-date convention used across all
+      Barclays BUK data products and is always hardcoded rather than
+      parameterized. All other date literals must use the {{control_date}}
+      placeholder to ensure validation queries are date-portable across runs.
+
+  - id: SAFETY-06
+    category: sql_safety
+    check: "No cross-environment references (prod, production, uat, staging with dot-qualified table access)"
+    severity: blocker
+    logic: |
+      regex: \b(prod|production|uat|staging)\b\s*\.\s*[\w]+
+      flags: case_insensitive
+    error_message: "Cross-environment reference detected: '{{matched_text}}'. Validation SQL must not reference other environments."
+    fix_suggestion: "Remove the cross-environment reference. Use {{source}} and {{target}} placeholders which resolve to the current environment's tables."
+    notes: >
+      This rule uses dot-qualified scoping (e.g., 'prod.table_name',
+      'production.schema') to avoid false positives on column names or values
+      that happen to contain environment-like substrings. Column names such as
+      'product_type', 'production_date', 'product_code', or 'staging_area'
+      will NOT trigger this rule because they are not followed by a dot and
+      another identifier in the pattern 'environment.object'. Only explicit
+      dot-qualified database/schema references are flagged.
+
+  - id: SAFETY-07
+    category: sql_safety
+    check: "Query size limit — SQL must not exceed 500 lines"
+    severity: warning
+    logic: |
+      line_count > 500
+    error_message: "SQL file exceeds 500 lines ({{line_count}} lines). Consider breaking into smaller validation queries."
+    fix_suggestion: "Split the query into multiple smaller validation checks, each targeting a specific aspect. Use CTEs to simplify complex logic within the 500-line limit."
+
+  - id: SAFETY-08
+    category: sql_safety
+    check: "SELECT-only — first non-comment keyword must be SELECT or WITH"
+    severity: blocker
+    logic: |
+      -- Strip all leading comments (single-line -- and multi-line /* */)
+      -- and whitespace, then verify the first keyword is SELECT or WITH.
+      first_keyword = extract_first_keyword(sql_text)
+      first_keyword UPPER must be in ('SELECT', 'WITH')
+    error_message: "First statement is not SELECT/WITH: found '{{matched_text}}'. Validation SQL must begin with a SELECT or WITH clause."
+    fix_suggestion: "Restructure the query to start with SELECT or WITH. If a CTE is needed, use WITH ... AS (...) SELECT ... syntax."
+
+  - id: SAFETY-09
+    category: sql_safety
+    check: "No GRANT/REVOKE statements"
+    severity: blocker
+    logic: |
+      regex: \b(GRANT|REVOKE)\b
+      flags: case_insensitive
+    error_message: "Permission statement detected: '{{matched_text}}'. Validation SQL must not modify access controls."
+    fix_suggestion: "Remove the GRANT/REVOKE statement. Validation queries have no reason to modify permissions."
+
+  - id: SAFETY-10
+    category: sql_safety
+    check: "No USE statements (database/schema context switching)"
+    severity: blocker
+    logic: |
+      regex: \bUSE\b
+      flags: case_insensitive
+    error_message: "USE statement detected: '{{matched_text}}'. Validation SQL must not switch database or schema context."
+    fix_suggestion: "Remove the USE statement. Reference tables with fully qualified names (database.schema.table or database.table) instead of switching context."

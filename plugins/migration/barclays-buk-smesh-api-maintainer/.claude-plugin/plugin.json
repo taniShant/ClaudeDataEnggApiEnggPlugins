@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-smesh-api-maintainer",
+    "description": "Complete SDK2 to SDK3 migration toolkit and SDK3 to SDK4 uplift support with /sdk3-migrate command, RAML to OAS conversion, validation agents, lessons learned integration and phased branching strategy",
+    "version": "2.9.0",
+    "author": {
+        "name": "Barclays AI",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

@@ -1,0 +1,21 @@
+{
+    "name": "barclays-buk-strangler-refactoring",
+    "description": "Spec-first strangler pattern refactoring with TDD pipeline. Inspects existing APIs to discover domain patterns, generates service specifications, writes tests first (RED), generates clean implementations (GREEN), and validates with quality gates. Supports parallel extraction, model-aware execution, 90%+ test coverage enforcement, and dry-run preview. Java-focused.",
+    "version": "3.2.0",
+    "author": {
+        "name": "Preetha Ramaswamy",
+        "email": "preetha.ramaswamy@barclays.com"
+    },
+    "contributors": [
+        {
+            "name": "Rajshree Jha",
+            "email": "rajshree.jha@barclays.com"
+        }
+    ],
+    "dependencies": ["barclays-buk-reverse-spec-generator", "barclays-buk-standards"],
+    "changelog": {
+        "3.2.0": "God Class Reduction Guard (Phase 4.5 health-aware blocking + spec size validation + --override-guard), per-task health scoring (Worker 7C refreshes metrics after each extraction), parallel extraction (--parallel/--all with dependency wave scheduling), 90%+ test coverage gate with supplementary generation, model-aware execution (optimal model per phase — 52% cost savings), dry-run preview mode (--dry-run for impact analysis without changes)",
+        "3.1.0": "Integrate barclays-buk-reverse-spec-generator for Phase 5 BDD extraction; hexagonal mapping from .spec YAML; dual-artifact output (.spec + hexagonal service spec)",
+        "3.0.0": "Spec-first TDD pipeline (Code→Specs→Tests→Generate), API pattern inference, 9-phase lifecycle, rollback support, state machine, error codes"
+    }
+}

@@ -1,0 +1,79 @@
+%% Detox Telemetry Architecture
+%% Full data flow from pipeline execution to the Barclays Observe platform (gRPC OTLP)
+
+flowchart TD
+    %% Entry point
+    CMD["/barclays-buk-detox:remediate<br/>(Developer or CI)"]
+
+    %% Identity resolution
+    CMD --> ID["identity.py<br/>Resolve WHO + WHAT REPO"]
+    ID -->|"CI env / git config / env vars"| ID_OUT["Identity<br/>user_name, user_email,<br/>repo_name, ci_job_id, source"]
+
+    %% Pipeline execution
+    CMD --> PIPELINE["Pipeline Executes<br/>9 Stages"]
+
+    %% Stages 0-3 create the state file (source of truth for run counts)
+    PIPELINE --> PREP["prepare_pipeline.py<br/>Stages 0-3: findings +<br/>phases 1-3 into state file"]
+    PREP --> STATE_FILE[("{repo}/.detox/state.json<br/>Pipeline state<br/>(findings, fixes, tests, phases)")]
+
+    %% Stages 4-9 record results + phase changes through pipeline_state.py
+    PIPELINE --> STATE["pipeline_state.py<br/>update / append;<br/>timestamps phase changes"]
+    STATE --> STATE_FILE
+
+    %% Granular event emission (one per phase change)
+    PREP --> EMIT["telemetry.py<br/>emit_event()"]
+    STATE -->|"phase.started / completed /<br/>skipped / failed"| EMIT
+    EMIT -->|"append JSONL<br/>fcntl.LOCK_EX"| EVENTS[("events.jsonl<br/>~/.detox/telemetry/<br/>Granular OTel events")]
+
+    %% Run recording
+    PIPELINE -->|"Pipeline ends<br/>(success or failure)"| RECORD["run_recorder.py<br/>Build denormalized<br/>run summary"]
+    ID_OUT --> RECORD
+    STATE_FILE -->|"counts read from file<br/>(job_id must match)"| RECORD
+    RECORD -->|"append JSONL<br/>fcntl.LOCK_EX"| RUNS[("runs.jsonl<br/>~/.detox/telemetry/<br/>One line per run")]
+
+    %% Export to the Barclays Observe platform (strategic gRPC path)
+    RECORD -->|"Fire-and-forget<br/>run summary + all events, one batch"| OTEL_EXPORT["otel_exporter.py +<br/>observe_batch.py send_many_to_observe<br/>(over plugin_observability.py, gRPC OTLP)"]
+    EVENTS -->|"read_events_for_job"| OTEL_EXPORT
+
+    %% Barclays Collector
+    OTEL_EXPORT -->|"one gRPC OTLP batch (TLS :443)"| COLLECTOR[("Barclays Collector<br/>metrics.dev-ai-tooling<br/>.barclays.intranet:443")]
+
+    %% Observe pipeline
+    COLLECTOR -->|"FluentBit → CloudWatch"| BACKENDS["Observe<br/>(dataset: claude_code_client)"]
+
+    %% Local usage command
+    RUNS -->|"Read + aggregate"| USAGE["usage_report.py<br/>Aggregation engine"]
+    USAGE --> TABLE["Terminal Table"]
+    USAGE --> JSON["JSON Output"]
+    USAGE --> HTML["HTML Report"]
+
+    %% Subgraphs for visual grouping
+    subgraph LOCAL ["Local Storage (~/.detox/telemetry/)"]
+        EVENTS
+        RUNS
+    end
+
+    subgraph OTEL ["Barclays Observe Pipeline (strategic, platform-owned)"]
+        COLLECTOR
+        BACKENDS
+    end
+
+    subgraph DASHBOARD ["Dashboard Outputs"]
+        TABLE
+        JSON
+        HTML
+    end
+
+    %% Styling
+    classDef script fill:#e1f0ff,stroke:#00395d,stroke-width:2px,color:#00395d
+    classDef storage fill:#fff3cd,stroke:#856404,stroke-width:2px,color:#856404
+    classDef remote fill:#d4edda,stroke:#155724,stroke-width:2px,color:#155724
+    classDef output fill:#f8d7da,stroke:#721c24,stroke-width:2px,color:#721c24
+    classDef entry fill:#00395d,stroke:#00395d,stroke-width:2px,color:#ffffff
+
+    class CMD entry
+    class ID,PREP,EMIT,STATE,RECORD,OTEL_EXPORT,USAGE script
+    class EVENTS,RUNS,STATE_FILE storage
+    class COLLECTOR,BACKENDS remote
+    class TABLE,JSON,HTML output
+    class ID_OUT script

@@ -1,0 +1,51 @@
+schema_version: '1.0'
+domain:
+  id: dom.customer-party
+  name: Customer / Party
+  description: The Customer domain in BUK (Barclays UK) provides services for managing and optimising Customer and Party data. This domain owns authoritative customer and party master data.
+  owner: cdao
+  bian_links:
+    - title: Party Reference Data Directory
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=45230"
+    - title: Customer Product and Service Directory
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=41591"
+    - title: Customer Proposition
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=44191"
+    - title: Party Lifecycle Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=29780"
+    - title: Location Data Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=45002"
+    - title: Customer Agreement
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=32862"
+    - title: Party Routing Profile
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=31558"
+  sub_domains:
+  - id: sub.cp.data-management
+    name: Data Management
+    description: This subdomain provides operational master data management capabilities for Customer and Party - Persons and Organisations.
+    capabilities:
+    - id: cap.cp.manage-customer-core-data
+      name: Manage Customer Core Data 
+      description: Provides capability for managing core Customer and Party data, some of these key data subject areas include Party, Know Your Customer (KYC), Demographic details, Contact details, Party to Party relationships, Customer Product Holdings, Preferences.
+    - id: cap.cp.manage-customer-financial-profile-data
+      name: Manage Customer Financial Profile Data
+      description: Provides capability for managing customer income, expenditure, commitments, monthly disposable income, and credit limits, which are captured and used for customer onboarding, servicing, and affordability decisioning.
+    - id: cap.cp.manage-customer-product-holdings-data
+      name: Manage Customer Product Holdings Data
+      description: This capability manages the relationship between Customers and bank products or services they have acquired. It maintains Customers' current product and service data, including product instance references (holdings) and customer to product association states, but does not store product usage, transactions or balance data.
+    - id: cap.cp.manage-third-party-master-data
+      name: Manage Third Party Master Data
+      description: Provides capability to record, locate, and retrieve details of third parties (persons or organisations) who may or may not be associated with Customers.
+    - id: cap.cp.manage-party-application-data
+      name: Manage Party Application Data
+      description: This capability manages application data provided by Parties who are either new to the bank or existing customers. The data includes Party demographic details, contact details, preferences, selected product, and application status.
+  - id: sub.cp.data-matching
+    name: Data Matching
+    description: The Subdomain provides Data Cleansing, Enriching and Matching capabilities at party, address or other levels, with both strong and suspect grading.
+    capabilities:
+    - id: cap.cp.lookup-and-standardise-address-data
+      name: Lookup and Standardise Address Data
+      description: Address Lookup and Standardisation (also known as Global Address Locator) is a capability that combines address validation and geocoding. It validates, cleanses, standardises and enriches any input address as well as matches the address to precise latitude and longitude coordinates.
+    - id: cap.cp.search-and-match-party-data
+      name: Search and Match Party Data 
+      description: This capability offers fuzzy search on Barclays party records, as a distinct feature this capability also offers an ability to match Party records instantly to identify similarities between them. It identifies and groups records of a same Party using data matching. It produces the grouping of record identifiers as an index outcome for operational and analytical consumption. It offers various matching schemes based on combination of party identity and location data matching.

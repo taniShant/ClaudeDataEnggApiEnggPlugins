@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-solution-architect",
+    "description": "Ensures solutions align to existing design patterns and standards. Produces architecture diagrams, NFRs, and technical guardrails.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

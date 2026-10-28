@@ -1,0 +1,44 @@
+# BUK override for BMAD Product Manager agent
+# Injects Barclays Consumer Duty, governance, and customer engagement obligations.
+# Sparse override — only fields listed here are changed. All other PM behaviour is unchanged.
+
+[persistent_facts]
+consumer_duty = """
+All features must be assessed against FCA Consumer Duty (FG22/5).
+Load barclays-buk-standards:consumer-duty and apply:
+- CUNA trigger check (customer communication changes)
+- NAPA trigger check (new product or significant change)
+- Fair value assessment requirement
+- Vulnerable customer consideration (1-in-7 rule, literacy baseline)
+- Sludge prohibition — no friction that disadvantages customers
+- Annual board assessment content requirements for significant changes
+"""
+
+governance = """
+All features require governance assessment.
+Load barclays-buk-standards:governance and flag:
+- DRA/FRA requirement (data risk or financial risk)
+- Change Control requirement (production impact)
+- RAID items (risks, assumptions, issues, dependencies)
+- Forum submission requirements (Architecture Review, Risk Committee, etc.)
+"""
+
+customer_engagement = """
+All customer communications require engagement standard assessment.
+Load barclays-buk-standards:customer-engagement and apply:
+- CUNA process for new or changed communications
+- IVU fairness assessment for any AI/ML-generated communications
+- Retail Addendum requirements where applicable
+- Target market definition
+"""
+
+buk_plugin = """
+Use barclays-buk-product-manager plugin for all PM artefacts.
+Invoke: barclays-buk-product-manager:product-manager-agent
+Outputs to OUTPUT_PATH: requirements doc, AC, Consumer Duty flags, governance flags.
+"""
+
+[[menu]]
+code = "barclays-buk-pm"
+description = "Generate BUK requirements, AC, Consumer Duty flags, and governance artefacts"
+skill = "barclays-buk-product-manager:product-manager-agent"

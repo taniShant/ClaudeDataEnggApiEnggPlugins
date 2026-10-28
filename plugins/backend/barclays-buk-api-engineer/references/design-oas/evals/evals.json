@@ -1,0 +1,166 @@
+{
+  "skill_name": "design-oas",
+  "skill_path": "plugins/backend/barclays-buk-api-engineer/skills/design-oas",
+  "description": "Validates that the design-oas skill produces correct Barclays-compliant OAS output across CISO rules, endpoint extraction, BAN fix patterns, header injection, metadata handling, and path structure.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "ciso-string-without-enum",
+      "prompt": "Generate an OAS component for a field called 'accountType' that is a string without enum values. The design doc says max 50 characters.",
+      "expected_output": "Should include type: string, minLength: 1, maxLength: 50, pattern with safe regex, example value. Should NOT include deprecated or nullable on the string property itself.",
+      "assertions": [
+        { "id": "has-minLength", "description": "Includes minLength constraint", "check": "contains: minLength: 1" },
+        { "id": "has-maxLength", "description": "Uses source-specified maxLength", "check": "contains: maxLength: 50" },
+        { "id": "has-pattern", "description": "Includes pattern regex", "check": "contains: pattern:" },
+        { "id": "no-deprecated-on-leaf", "description": "Does not add deprecated to string leaf", "check": "does not contain: deprecated: false" }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "ciso-string-with-enum",
+      "prompt": "Generate an OAS component for a field called 'accountStatus' that can only be ACTIVE, DORMANT, or CLOSED.",
+      "expected_output": "Should use enum with the three values. Should NOT include minLength, maxLength, or pattern — enum is the sole constraint per CISO rules.",
+      "assertions": [
+        { "id": "has-enum", "description": "Uses enum constraint", "check": "contains: enum:" },
+        { "id": "enum-values", "description": "Lists all three values", "check": "contains any of: ACTIVE, DORMANT, CLOSED" },
+        { "id": "no-minLength", "description": "No minLength with enum", "check": "does not contain: minLength" },
+        { "id": "no-pattern", "description": "No pattern with enum", "check": "does not contain: pattern:" }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "endpoint-extraction-from-design-doc",
+      "prompt": "Extract endpoints from this design doc excerpt: 'The service exposes a POST /v1/payments endpoint for initiating payments and a GET /v1/payments/{paymentId} for retrieving payment status.'",
+      "expected_output": "Should extract two endpoints: POST /v1/payments (operationId: postPayments, response 201) and GET /v1/payments/{paymentId} (operationId: getPaymentsByPaymentId, response 200). operationId is always derived mechanically as {verb}{PascalCasePath} — never a semantic synonym. Should include all standard error responses.",
+      "assertions": [
+        { "id": "post-endpoint", "description": "Extracts POST endpoint", "check": "contains: POST /v1/payments" },
+        { "id": "get-endpoint", "description": "Extracts GET endpoint", "check": "contains: GET /v1/payments/{paymentId}" },
+        { "id": "post-201", "description": "POST returns 201", "check": "contains any of: 201, Created" },
+        { "id": "operation-id-format", "description": "operationId is mechanical {verb}{PascalCasePath} derivation", "check": "contains any of: postPayments, getPaymentsByPaymentId" }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "rest-standards-verb-in-path",
+      "prompt": "I want to generate an OAS for endpoint POST /v1/createPayment. Check REST standards.",
+      "expected_output": "Should detect verb 'create' in path, auto-fix to POST /v1/payments (remove verb, pluralise noun), recalculate operationId to 'postPayments' using the {verb}{PascalCasePath} rule. Should report the fix in REST Standards Check.",
+      "assertions": [
+        { "id": "verb-detected", "description": "Detects verb in path", "check": "contains any of: verb in path, verb detected, createPayment" },
+        { "id": "auto-fixed-path", "description": "Fixes to /v1/payments", "check": "contains: /v1/payments" },
+        { "id": "plural-noun", "description": "Uses plural noun", "check": "contains: payments" },
+        { "id": "corrected-operation-id", "description": "operationId recalculated from fixed path", "check": "contains: postPayments" }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "ciso-email-pattern",
+      "prompt": "Generate an OAS field definition for 'emailAddress' which is a customer email field.",
+      "expected_output": "Should use the CSO-approved email regex pattern (RFC 5321/5322 with permitted special chars in local-part), appropriate minLength/maxLength, and a sanitised example (user@example.com, not real email).",
+      "assertions": [
+        { "id": "cso-email-pattern", "description": "Uses CSO-approved email regex", "check": "contains any of: ^(?=.{1,256}$), @(([a-zA-Z0-9" },
+        { "id": "sanitised-example", "description": "Example uses @example.com", "check": "contains: @example.com" },
+        { "id": "no-format-email", "description": "Does not use format: email (BAN rejects it)", "check": "does not contain: format: email" }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "object-schema-mandatory-fields",
+      "prompt": "Generate an OAS object schema for a response type called 'PaymentResponseType' with a 'data' wrapper containing 'id' and 'type' fields.",
+      "expected_output": "Should include on the object: type: object, deprecated: false, nullable: false, additionalProperties: false. Should NOT add deprecated/nullable to string leaf properties.",
+      "assertions": [
+        { "id": "additional-properties-false", "description": "Object has additionalProperties: false", "check": "contains: additionalProperties: false" },
+        { "id": "deprecated-false-object", "description": "Object has deprecated: false", "check": "contains: deprecated: false" },
+        { "id": "nullable-false-object", "description": "Object has nullable: false", "check": "contains: nullable: false" }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "standard-error-responses-always-present",
+      "prompt": "Generate a GET /v1/accounts/{accountId} endpoint. Only include a 200 success response with account data.",
+      "expected_output": "Should include ALL 7 standard error responses (400, 401, 403, 404, 429, 500, 503) via $ref to common-libraries regardless of user only mentioning 200. These are mandatory on every endpoint.",
+      "assertions": [
+        { "id": "has-400", "description": "Includes 400 BadRequest", "check": "contains any of: '400', BadRequest" },
+        { "id": "has-401", "description": "Includes 401 Unauthorized", "check": "contains any of: '401', Unauthorized" },
+        { "id": "has-403", "description": "Includes 403 Forbidden", "check": "contains any of: '403', Forbidden" },
+        { "id": "has-404", "description": "Includes 404 NotFound", "check": "contains any of: '404', NotFound" },
+        { "id": "has-429", "description": "Includes 429 TooManyRequests", "check": "contains any of: '429', TooManyRequests" },
+        { "id": "has-500", "description": "Includes 500 InternalServerError", "check": "contains any of: '500', InternalServerError" },
+        { "id": "has-503", "description": "Includes 503 ServiceUnavailable", "check": "contains any of: '503', ServiceUnavailable" }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "ban-critical-auto-fix-pattern",
+      "prompt": "BAN validator returned a CRITICAL issue: E-02-02 on field 'sortCode' in type-ValidateAccountRequestData.yaml — missing maxLength. The field currently has minLength: 6 and pattern: '^[0-9]{6}$'. What should the auto-fix do?",
+      "expected_output": "Should add maxLength: 6 (derived from the pattern quantifier {6}). Should NOT change minLength or pattern. Should re-run BAN after fix to verify resolution.",
+      "assertions": [
+        { "id": "adds-maxLength", "description": "Adds the missing maxLength", "check": "contains: maxLength: 6" },
+        { "id": "derived-from-pattern", "description": "Derives value from pattern", "check": "contains any of: pattern, {6}, derived" },
+        { "id": "re-run-ban", "description": "Mentions re-running BAN to verify", "check": "contains any of: re-run, re-validate, verify, iteration" }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "path-no-version-prefix-duplication",
+      "prompt": "Generate an OAS spec for POST /v1/accounts. The servers section should correctly handle the version prefix.",
+      "expected_output": "servers[0].url must be /v1 and the paths key must be /accounts (not /v1/accounts). The version prefix belongs only in servers.url — repeating it in the path key produces a broken URL /v1/v1/accounts.",
+      "assertions": [
+        { "id": "server-url-has-version", "description": "servers.url contains /v1", "check": "contains: url: /v1" },
+        { "id": "path-key-no-version", "description": "paths key does not duplicate version prefix", "check": "contains: /accounts:" },
+        { "id": "path-key-not-versioned", "description": "paths key is NOT /v1/accounts", "check": "does not contain: /v1/accounts:" }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "operational-headers-not-auto-added",
+      "prompt": "Generate an OAS spec for POST /v1/payments. The input document only mentions Authorization and Correlation-ID headers.",
+      "expected_output": "Parameters should contain only Correlation-ID and Authorization. channelId, deviceId, businessId, sourceSortCode must NOT be added — they are optional Barclays operational headers and must only be included if the input document explicitly mentions them.",
+      "assertions": [
+        { "id": "has-correlation-id", "description": "Correlation-ID is always added", "check": "contains: Correlation-ID" },
+        { "id": "has-authorization", "description": "Authorization is always added", "check": "contains: Authorization" },
+        { "id": "no-channelId", "description": "channelId not added when not in input", "check": "does not contain: channelId" },
+        { "id": "no-deviceId", "description": "deviceId not added when not in input", "check": "does not contain: deviceId" }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "metadata-placeholder-without-config",
+      "prompt": "Generate an openapi.yaml info block. No api-config.yaml is provided. The input is a design doc that mentions the team email 'payments-team@barclays.com' and calls this a 'payment processing API'.",
+      "expected_output": "info.title must be derived from the source document (h1 heading or resource noun — never a placeholder). contact.email must use '# placeholder — update before publishing' — NOT the inferred team email. API Owner and API Designer must use placeholder. api_type must be derived from the security scheme (Internal for InternalTiaaUsRopcAuth). API Risk Classification must default to MEDIUM when not in config. API Overview must be derived from source, not a placeholder.",
+      "assertions": [
+        { "id": "title-derived-not-placeholder", "description": "title is derived from source, not a placeholder", "check": "does not contain: title: '# placeholder" },
+        { "id": "contact-not-inferred", "description": "contact.email is not taken from the document", "check": "does not contain: payments-team@barclays.com" },
+        { "id": "risk-classification-medium", "description": "Risk Classification defaults to MEDIUM", "check": "contains: MEDIUM" },
+        { "id": "api-type-internal", "description": "API Type derived from security scheme as Internal", "check": "contains: Internal" },
+        { "id": "api-overview-derived", "description": "API Overview is derived from source, not a placeholder", "check": "does not contain: API Overview: '# placeholder" }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "tags-resource-noun-only",
+      "prompt": "Generate a POST /v1/accounts endpoint. The design doc mentions 'tc31', 'lifecycle:live', and internal system codes in its metadata.",
+      "expected_output": "The tags section must only contain 'accounts' (the resource noun from the path) with a description. Internal codes like 'tc31' and 'lifecycle:live' must NOT appear as tags. Tags without descriptions must NOT be generated.",
+      "assertions": [
+        { "id": "resource-tag-present", "description": "Resource noun tag is present", "check": "contains: accounts" },
+        { "id": "no-tc31-tag", "description": "Internal code tc31 not added as tag", "check": "does not contain: tc31" },
+        { "id": "no-lifecycle-tag", "description": "lifecycle label not added as tag", "check": "does not contain: lifecycle:live" },
+        { "id": "tag-has-description", "description": "Tag has a description", "check": "contains: description:" }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "common-libraries-headers-all-entries",
+      "prompt": "Generate an OAS spec and write the common-libraries/components/headers.yaml file. This file must be copied verbatim from the plugin template, not generated from memory.",
+      "expected_output": "The headers.yaml must contain all 7 entries: Correlation-ID, Authorization, channelId, deviceId, businessId, sourceSortCode, Cache-Control. If any are missing, the agent generated from memory instead of copying the template. The Read tool must be used to read the template file, then Write to copy it exactly.",
+      "assertions": [
+        { "id": "has-correlation-id", "description": "Correlation-ID entry present", "check": "contains: Correlation-ID:" },
+        { "id": "has-authorization", "description": "Authorization entry present", "check": "contains: Authorization:" },
+        { "id": "has-channelId", "description": "channelId entry present", "check": "contains: channelId:" },
+        { "id": "has-deviceId", "description": "deviceId entry present", "check": "contains: deviceId:" },
+        { "id": "has-businessId", "description": "businessId entry present", "check": "contains: businessId:" },
+        { "id": "has-sourceSortCode", "description": "sourceSortCode entry present", "check": "contains: sourceSortCode:" },
+        { "id": "has-cache-control", "description": "Cache-Control entry present", "check": "contains: Cache-Control:" }
+      ]
+    }
+  ]
+}

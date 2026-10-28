@@ -1,0 +1,67 @@
+# -----------------------------------------------------------------------------
+# NOTICE: DO NOT CHANGE this file in your project.
+# Raise a pull request to oas-template in case of fixes and improvements.
+# -----------------------------------------------------------------------------
+
+ErrorResponseType:
+  type: object
+  additionalProperties: false
+  deprecated: false
+  nullable: false
+  description: |
+      An API error response.
+  properties:
+    meta:
+      type: object
+      description: Contains Non-standard meta information
+      additionalProperties: true
+    errors:
+      description: |
+          Contains one or more error messages and is mutually exclusive with the data item.
+          This will not be returned in success scenarios.
+      type: array
+      minItems: 0
+      maxItems: 50
+      items:
+        $ref: '#/ErrorType'
+
+ErrorType:
+  description: Message details - additional operation execution information.
+  type: object
+  additionalProperties: true
+  required:
+    - id
+    - code
+    - title
+  properties:
+    id:
+      description: Generated message identifier for particular request, helping to locate server logs.
+      type: string
+      pattern: ^[a-zA-Z0-9-]{1,50}$
+      minLength: 1
+      maxLength: 50
+      example: 9709-4675-2456-7801
+    code:
+      description: Machine readable, unique code of the message related to particular case within operation execution.
+      type: string
+      pattern: ^[a-zA-Z0-9_]{1,100}$
+      minLength: 1
+      maxLength: 100
+      example: ACCOUNT_NUMBER_NOT_FOUND
+    title:
+      description: Short description of the error. Not for displaying purposes.
+      type: string
+      pattern: ^[a-zA-Z0-9\s"=,.']{1,250}$
+      minLength: 1
+      maxLength: 250
+      example: The authorization credentials required for this request are invalid.
+    detail:
+      description: Provides additional low-level details about the error to assist with troubleshooting. Not for displaying purposes.
+      type: string
+      pattern: ^[a-zA-Z0-9\s"=,.']{1,250}$
+      minLength: 1
+      maxLength: 250
+    meta:
+      description: Object containing non-standard meta-information about the error.
+      type: object
+      additionalProperties: true

@@ -1,0 +1,31 @@
+# BUK custom agent: Security Architect
+# BMAD has no default security agent — this is registered as a custom agent in config.toml.
+# Injects Barclays Secure Coding Practices and threat modelling requirements.
+
+[persistent_facts]
+secure_coding = """
+All code and design must comply with Barclays Secure Coding Practices.
+Load barclays-buk-standards:security and apply:
+- STRIDE threat model for all new features touching customer data or auth
+- OWASP Top 10 checks on all code
+- Sensitive data handling: PII, financial data, credentials — classify and protect
+- Vulnerability severity: Critical (fix before release), High (fix within sprint), Medium (next sprint)
+"""
+
+sign_off = """
+Security sign-off recommendation must be one of:
+- APPROVED — all checks passed, no Critical or High findings
+- CONDITIONAL — High findings present with agreed remediation plan
+- REJECTED — Critical findings present, release blocked
+"""
+
+buk_plugin = """
+Use barclays-buk-security-architect plugin for all security artefacts.
+Invoke: barclays-buk-security-architect:security-architect-agent
+Outputs to OUTPUT_PATH: threat model, security review, code scan findings, compliance validation, sign-off recommendation.
+"""
+
+[[menu]]
+code = "barclays-buk-sec"
+description = "Generate BUK threat model, security review, and sign-off recommendation"
+skill = "barclays-buk-security-architect:security-architect-agent"

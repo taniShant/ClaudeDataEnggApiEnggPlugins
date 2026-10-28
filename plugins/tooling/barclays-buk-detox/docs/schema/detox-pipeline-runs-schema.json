@@ -1,0 +1,436 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://barclays.com/detox/schemas/pipeline-run-record/v1",
+  "title": "Detox Pipeline Run Record",
+  "description": "Denormalized summary of a single Detox CWE remediation pipeline run. One record per pipeline execution. Source: scripts/telemetry/run_recorder.py build_run_record() — this is the full LOCAL record (~/.detox/telemetry/runs.jsonl). TRANSPORT: exported to the Barclays Observe platform via gRPC OTLP as the 'detox.pipeline_run' event (fields become detox.* labels), batched together with the run's granular events at pipeline end. NOTE: four local fields are NOT exported as Observe labels (unchanged from the prior exporter): 'ended_at' becomes the record timestamp; 'started_at', 'ci_job_id', 'retries_total', and 'project_path' are retained locally but not sent. This schema remains the primary definition for a database materialisation of the local record.",
+  "type": "object",
+  "required": [
+    "job_id",
+    "command",
+    "started_at",
+    "ended_at",
+    "status",
+    "user_name",
+    "repo_name",
+    "plugin_version"
+  ],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "Unique pipeline run identifier (8 hex characters). Primary key.",
+      "pattern": "^[a-f0-9]{8}$",
+      "examples": ["a1b2c3d4"]
+    },
+    "command": {
+      "type": "string",
+      "description": "The Detox command that was invoked.",
+      "enum": ["remediate", "scan", "validate", "report", "document-infra", "usage"],
+      "examples": ["remediate"]
+    },
+    "started_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Pipeline start timestamp (ISO 8601 UTC).",
+      "examples": ["2026-09-14T10:00:00Z"]
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Pipeline end timestamp (ISO 8601 UTC).",
+      "examples": ["2026-09-14T10:12:30Z"]
+    },
+    "total_duration_ms": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Total pipeline duration in milliseconds. Computed: ended_at - started_at.",
+      "examples": [750000]
+    },
+    "status": {
+      "type": "string",
+      "description": "Final pipeline outcome.",
+      "enum": ["completed", "failed"],
+      "examples": ["completed"]
+    },
+
+    "user_name": {
+      "type": "string",
+      "description": "Developer or CI user who triggered the pipeline. Resolved from CI env vars > git config > $USER.",
+      "examples": ["Devesh Kumar"]
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Developer email. Resolved from CI env vars > git config. May be empty string.",
+      "examples": ["devesh.kumar@barclays.com"]
+    },
+    "cio": {
+      "type": ["string", "null"],
+      "description": "Barclays CIO of the user who ran the pipeline (barclays_cio from the mandatory Claude Code user setup, ~/.claude/settings.json). Used for adoption attribution by CIO. Null if setup incomplete.",
+      "examples": ["DIGITAL", "BB", "CDAO"]
+    },
+    "ci_job_id": {
+      "type": ["string", "null"],
+      "description": "CI job identifier. Populated only for CI runs (GitLab CI_JOB_ID / Jenkins BUILD_NUMBER / GitHub GITHUB_RUN_ID). Null for local runs.",
+      "examples": ["12345", null]
+    },
+    "model": {
+      "type": "string",
+      "description": "LLM model used for the pipeline run.",
+      "enum": ["sonnet", "opus", "haiku"],
+      "examples": ["sonnet"]
+    },
+
+    "project_path": {
+      "type": "string",
+      "description": "Absolute filesystem path to the target repository on the machine that ran the pipeline.",
+      "examples": ["/home/user/repos/my-service"]
+    },
+    "repo_name": {
+      "type": "string",
+      "description": "Short repository name. Extracted from git remote URL or directory name.",
+      "examples": ["payments-gateway"]
+    },
+    "severity_filter": {
+      "type": "string",
+      "description": "Which vulnerability severities were included in this run.",
+      "enum": ["all", "critical", "high", "medium", "low"],
+      "default": "all",
+      "examples": ["all"]
+    },
+    "dry_run": {
+      "type": "boolean",
+      "description": "True if the pipeline ran in preview mode (no actual code changes).",
+      "default": false,
+      "examples": [false]
+    },
+
+    "vulns_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of vulnerabilities parsed from input reports.",
+      "examples": [12]
+    },
+    "vulns_by_severity": {
+      "type": "object",
+      "description": "Vulnerability count grouped by severity level.",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "examples": [{"critical": 2, "high": 5, "medium": 4, "low": 1}]
+    },
+    "vulns_by_type": {
+      "type": "object",
+      "description": "Vulnerability count grouped by remediation type.",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "examples": [{"code_fix": 10, "infra_config": 1, "dependency": 1}]
+    },
+    "cwes_targeted": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^CWE-[0-9]+$"
+      },
+      "description": "Sorted list of unique CWE IDs addressed in this run.",
+      "examples": [["CWE-79", "CWE-89", "CWE-798"]]
+    },
+
+    "fixes_attempted": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of CWE fix attempts (total = succeeded + failed + skipped).",
+      "examples": [12]
+    },
+    "fixes_succeeded": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of fixes that were successfully applied and committed.",
+      "examples": [10]
+    },
+    "fixes_failed": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of fixes that failed to apply.",
+      "examples": [1]
+    },
+    "fixes_skipped": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of fixes skipped (e.g., file not found, not applicable).",
+      "examples": [1]
+    },
+    "retries_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total retry attempts across all fix operations.",
+      "examples": [3]
+    },
+
+    "fixes_validated_clean": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Fixes that passed BOTH stages: the edit applied (status=success) AND the post-fix re-scan confirmed the vulnerability is gone (validation_passed=true). The 'verified fixed' count — distinct from fixes_succeeded, which only means the edit was applied.",
+      "examples": [1]
+    },
+
+    "vulns_deferred": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Vulnerabilities found but never attempted (deferred to manual review / major upgrade / out of auto-remediation scope). Reconciles the total: vulns_total = fixes_attempted + vulns_deferred.",
+      "examples": [5]
+    },
+
+    "vulns_deferred_by_reason": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "description": "Count of Stage 8 state.unresolved_items bucketed by remediation_type (partially_addressed, out_of_repo, manual, hybrid, not_applicable, likely_unexploitable). Items without a remediation_type count as \"unspecified\". Does NOT reconcile to vulns_deferred (hybrid/manual-review items were attempted fixes) and is {} if the run aborts before Stage 8.",
+      "examples": [{ "manual": 3, "hybrid": 1, "out_of_repo": 2 }]
+    },
+
+    "fixes_unverified_by_reason": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "description": "WHY attempted fixes are not verified-clean — count bucketed by reason (still_detected = re-scan still flags it; fix_failed; skipped; not_validated; unknown_status). Sums to (fixes_attempted - fixes_validated_clean).",
+      "examples": [{ "still_detected": 1, "fix_failed": 1 }]
+    },
+
+    "unresolved_vulns": {
+      "type": "array",
+      "description": "One entry per in-scope finding not fixed (excludes dry runs and severity-filtered findings). Exported on the detox.pipeline_run event as detox.unresolved_vulns (JSON string) plus detox.unresolved_vulns_count (export-only label, not stored locally), and each entry also as its own detox.vuln_unresolved event. reason is the LLM's unfixed_reason verbatim (credentials redacted), or \"LLM didn't give a reason for not fixing this\" when none was given.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "vuln_id": { "type": ["string", "null"] },
+          "cwe_id": { "type": ["string", "null"] },
+          "severity": { "type": ["string", "null"] },
+          "remediation_type": { "type": ["string", "null"] },
+          "reason": { "type": "string" }
+        },
+        "required": ["reason"]
+      },
+      "examples": [[{ "vuln_id": "wiz-abc123", "cwe_id": "CWE-89", "severity": "high", "remediation_type": "code_fix", "reason": "Query is built in a stored procedure outside this repo" }]]
+    },
+
+    "verified_remediation_rate": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Share of all found vulnerabilities fixed AND verified clean (0.0-1.0). Null if no vulnerabilities. Computed: fixes_validated_clean / vulns_total. The strictest, most defensible success measure.",
+      "examples": [0.125]
+    },
+
+    "validation_pass_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of fixes that passed Semgrep re-scan validation.",
+      "examples": [9]
+    },
+    "validation_fail_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of fixes that failed Semgrep re-scan validation.",
+      "examples": [1]
+    },
+    "remediation_rate": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Share of all found vulnerabilities actually fixed (0.0-1.0). Null if no vulnerabilities. Computed: fixes_succeeded / vulns_total.",
+      "examples": [0.25]
+    },
+
+    "fix_success_rate": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Success rate among attempted fixes (0.0-1.0). Null if none attempted. Computed: fixes_succeeded / fixes_attempted.",
+      "examples": [0.667]
+    },
+
+    "fix_failure_rate": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Failure rate among attempted fixes (0.0-1.0). Null if none attempted. Computed: fixes_failed / fixes_attempted.",
+      "examples": [0.0]
+    },
+
+    "deferral_rate": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Share of found vulnerabilities not attempted (left for manual review) (0.0-1.0). Null if no vulnerabilities. Computed: (vulns_total - fixes_attempted) / vulns_total.",
+      "examples": [0.625]
+    },
+
+    "validation_pass_rate": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Validation pass rate (0.0-1.0). Null if no validations were performed. Computed: pass / (pass + fail).",
+      "examples": [0.9]
+    },
+
+    "tests_generated": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of security regression test files generated.",
+      "examples": [8]
+    },
+    "tests_passed": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of generated tests that passed execution.",
+      "examples": [7]
+    },
+    "tests_failed": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of generated tests that failed execution.",
+      "examples": [1]
+    },
+
+    "test_pass_rate": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Pass rate of executed generated tests (0.0-1.0). Null if none executed. Computed: tests_passed / (tests_passed + tests_failed).",
+      "examples": [1.0]
+    },
+
+    "pr_created": {
+      "type": "boolean",
+      "description": "Whether a merge request was created in GitLab.",
+      "examples": [true]
+    },
+    "pr_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "URL of the created merge request. Null if no MR was created.",
+      "examples": ["https://app.gitlab.barcapint.com/group/repo/-/merge_requests/42", null]
+    },
+
+    "agent_invocations": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of LLM agent invocations during the pipeline run.",
+      "examples": [15]
+    },
+
+    "flags_raised": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Governance flags raised during the run (e.g., manual_review_needed). Added by run_recorder.py: 'state_incomplete' (a PR or fix results recorded but no findings — counts were lost; banner shows a warning instead of a green tick) and 'state_file_missing' (no state file for this job could be read; counts come only from the state passed in).",
+      "examples": [["manual_review_needed"], ["state_incomplete", "state_file_missing"]]
+    },
+    "self_check_passed": {
+      "type": "boolean",
+      "description": "Whether the agent self-check at pipeline end passed all criteria.",
+      "examples": [true]
+    },
+
+    "phases": {
+      "type": "object",
+      "description": "Per-phase timing and status. Keys are phase numbers (1-9) as strings.",
+      "patternProperties": {
+        "^[1-9]$": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["pending", "in_progress", "completed", "failed", "skipped"],
+              "description": "Final status of this phase."
+            },
+            "started_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Phase start timestamp (ISO 8601 UTC). Auto-injected by pipeline_state.py."
+            },
+            "ended_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Phase end timestamp (ISO 8601 UTC). Auto-injected by pipeline_state.py."
+            },
+            "duration_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Phase duration in milliseconds. Computed: ended_at - started_at."
+            }
+          },
+          "required": ["status"]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [{
+        "1": {"status": "completed", "started_at": "2026-09-14T10:00:05Z", "ended_at": "2026-09-14T10:00:30Z", "duration_ms": 25000},
+        "2": {"status": "completed", "started_at": "2026-09-14T10:00:30Z", "ended_at": "2026-09-14T10:01:00Z", "duration_ms": 30000},
+        "3": {"status": "completed", "started_at": "2026-09-14T10:01:00Z", "ended_at": "2026-09-14T10:01:15Z", "duration_ms": 15000},
+        "4": {"status": "completed", "started_at": "2026-09-14T10:01:15Z", "ended_at": "2026-09-14T10:05:00Z", "duration_ms": 225000},
+        "5": {"status": "completed", "started_at": "2026-09-14T10:05:00Z", "ended_at": "2026-09-14T10:07:00Z", "duration_ms": 120000},
+        "6": {"status": "completed", "started_at": "2026-09-14T10:07:00Z", "ended_at": "2026-09-14T10:09:00Z", "duration_ms": 120000},
+        "7": {"status": "skipped"},
+        "8": {"status": "completed", "started_at": "2026-09-14T10:09:00Z", "ended_at": "2026-09-14T10:10:00Z", "duration_ms": 60000},
+        "9": {"status": "completed", "started_at": "2026-09-14T10:10:00Z", "ended_at": "2026-09-14T10:12:30Z", "duration_ms": 150000}
+      }]
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phase": {
+            "type": "string",
+            "description": "Phase number where the error occurred."
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message from the failed phase."
+          }
+        },
+        "required": ["phase", "error"]
+      },
+      "description": "List of errors from failed phases. Empty array if no failures.",
+      "examples": [[{"phase": "4", "error": "Semgrep not installed"}]]
+    },
+    "plugin_version": {
+      "type": "string",
+      "description": "Detox plugin version that produced this record. Read from .claude-plugin/plugin.json.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "examples": ["2.6.2"]
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "phase_names": {
+      "description": "Reference: mapping of phase numbers to pipeline stage names.",
+      "type": "object",
+      "properties": {
+        "1": {"const": "Setup Repo"},
+        "2": {"const": "Parse Reports"},
+        "3": {"const": "Classify Findings"},
+        "4": {"const": "Apply Fixes"},
+        "5": {"const": "Validate"},
+        "6": {"const": "Generate Tests"},
+        "7": {"const": "Document Infra"},
+        "8": {"const": "Generate Report"},
+        "9": {"const": "Create MR"}
+      }
+    },
+    "severity_levels": {
+      "description": "Reference: valid vulnerability severity levels.",
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "remediation_types": {
+      "description": "Reference: valid vulnerability remediation types.",
+      "type": "string",
+      "enum": ["code_fix", "infra_config", "dependency", "manual"]
+    }
+  }
+}

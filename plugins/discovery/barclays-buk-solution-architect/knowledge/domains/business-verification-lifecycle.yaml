@@ -1,0 +1,23 @@
+schema_version: '1.0'
+domain:
+  id: dom.business-verification-lifecycle
+  name: Business Verification and Lifecycle
+  description: The Business Verification and Lifecycle domain manages the onboarding of the Business and the initial and enduring verification and assessment of its legal existence, commercial safety, and regulatory health of the Business during the Banking relationship.
+  owner: bb
+  sub_domains:
+    - id: sub.bsl.business-customer-due-diligence-sd
+      name: Business Customer Due Diligence
+      description: The Business Customer Due Diligence sub domain encompasses capabilities for Business Customer risk rating assessment, management of a golden source of Know Your Business (KYB) Customer Data through the full customer lifecycle, monitoring of KYB data (internal and trusted third party data) and customer behaviour as Triggers for a refresh/update and reporting and controls to ensure regulatory compliance. This sub domain is explicitly concerned with the due diligence of the business entity (Know Your Business (KYB)), which is quite different to the due diligence of individuals (Know Your Customer (KYC)). In some circumstances Business Banking CDD journeys will need to consume both KYB and KYC capabilities from the relevant domain.
+      capabilities:
+        - id: cap.bsl.business-customer-due-diligence-events
+          name: Manage Customer Due Diligence Events
+          description: The ability to identify, create, assess, and manage Customer Due Diligence (CDD) events triggered by changes in customer behaviour, risk profile, or circumstances. This capability ensures material events are assessed, routed, and actioned in line with regulatory and policy requirements, enabling timely initiation of partial or full CDD reviews and maintaining an auditable decision trail.
+        - id: cap.bsl.business-customer-know-your-business-review
+          name: Process Business Customer Know Your Business (KYB) Review
+          description: End-to-end process for conducting a full Know Your Business (KYB) review of an existing business customer, “triggered” either due to a time based event (e.g. periodic Know Your Business review),  in response to a change to one of the in scope KYB data points, a behavioural change or an increase in risk rating to High.
+        - id: cap.bsl.business-customer-manage-risk-rating
+          name: Manage Business Customer Risk Rating
+          description: The ability to calculate, assign, review, and maintain a Business customer's financial crime risk rating based on defined risk factors such as geography, industry, ownership structure, products, and behaviour. This capability supports both automated and manual risk assessment, enables justified risk rating changes, and ensures the correct level of due diligence is applied throughout the customer lifecycle.
+        - id: cap.bsl.maintain-business-customer-cohort
+          name: Maintain Business Banking customer cohort
+          description: Encompasses the definition and maintenance of the Business Banking (BB) population. Capability enables consistent execution of BB customer outcomes and provides auditable control across the lifecycle.

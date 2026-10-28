@@ -1,0 +1,120 @@
+# Barclays OAS Spectral Ruleset
+# Optional manual linting: spectral lint openapi.yaml --ruleset barclays-oas-rules.yaml
+# This ruleset checks Barclays-specific conventions not covered by standard OAS validators.
+
+extends: [[spectral:oas, off]]
+
+rules:
+  # Correlation-ID header must be present on all operations
+  barclays-correlation-id:
+    description: "All operations must include Correlation-ID header parameter"
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete]"
+    then:
+      field: parameters
+      function: schema
+      functionOptions:
+        schema:
+          type: array
+          contains:
+            type: object
+            properties:
+              name:
+                const: Correlation-ID
+            required: [name]
+
+  # operationId must be camelCase
+  barclays-operation-id-format:
+    description: "operationId must be camelCase (no hyphens, underscores, or PascalCase)"
+    severity: warn
+    given: "$.paths[*][get,post,put,patch,delete].operationId"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^[a-z][a-zA-Z0-9]*$"
+
+  # Standard error responses must be present
+  barclays-standard-responses-400:
+    description: "All operations must include 400 Bad Request response"
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete].responses"
+    then:
+      field: "400"
+      function: truthy
+
+  barclays-standard-responses-401:
+    description: "All operations must include 401 Unauthorized response"
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete].responses"
+    then:
+      field: "401"
+      function: truthy
+
+  barclays-standard-responses-500:
+    description: "All operations must include 500 Internal Server Error response"
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete].responses"
+    then:
+      field: "500"
+      function: truthy
+
+  barclays-standard-responses-403:
+    description: "All operations must include 403 Forbidden response"
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete].responses"
+    then:
+      field: "403"
+      function: truthy
+
+  barclays-standard-responses-404:
+    description: "All operations must include 404 Not Found response"
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete].responses"
+    then:
+      field: "404"
+      function: truthy
+
+  barclays-standard-responses-429:
+    description: "All operations must include 429 Too Many Requests response"
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete].responses"
+    then:
+      field: "429"
+      function: truthy
+
+  barclays-standard-responses-503:
+    description: "All operations must include 503 Service Unavailable response"
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete].responses"
+    then:
+      field: "503"
+      function: truthy
+
+  # Security scheme must be defined
+  barclays-security-scheme:
+    description: "Security scheme InternalTiaaUsRopcAuth must be defined"
+    severity: warn
+    given: "$.components.securitySchemes"
+    then:
+      field: InternalTiaaUsRopcAuth
+      function: truthy
+
+  # Path items must have summary
+  barclays-path-summary:
+    description: "Path items must have a summary field"
+    severity: warn
+    given: "$.paths[*]"
+    then:
+      field: summary
+      function: truthy
+
+  # No format: email allowed
+  barclays-no-format-email:
+    description: "Do not use format: email — use pattern with CSO-approved regex instead"
+    severity: error
+    given: "$..[?(@.type=='string')]"
+    then:
+      field: format
+      function: pattern
+      functionOptions:
+        notMatch: "^email$"

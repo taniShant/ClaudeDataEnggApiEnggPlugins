@@ -1,0 +1,34 @@
+{
+    "name": "barclays-buk-<name>",
+    "description": "One sentence describing what this plugin does and who would use it.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}
+
+// NOTES (remove before use):
+//
+// name:
+//   Must be "buk-<name>", lowercase hyphens only.
+//   Match the directory name exactly.
+//
+// description:
+//   One sentence. Who uses it and what it produces.
+//   Under 256 characters.
+//
+// version:
+//   Start at "0.1.0" for drafts, "1.0.0" when production ready.
+//
+// dependencies:
+//   Always include "barclays-buk-standards" unless your plugin has no agents
+//   that enforce shared standards (rare).
+//   Add other buk-* plugins your agents depend on:
+//   e.g. "dependencies": ["barclays-buk-standards", "barclays-buk-ui-engineer"]
+//
+// agents / skills / commands fields:
+//   Do NOT add these. Claude Code auto-discovers from the
+//   agents/, skills/, and commands/ directories automatically.
+//   Only add explicit paths if you have a non-standard layout.

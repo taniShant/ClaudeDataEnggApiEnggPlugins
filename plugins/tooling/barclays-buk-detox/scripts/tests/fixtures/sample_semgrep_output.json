@@ -1,0 +1,32 @@
+{
+  "results": [
+    {
+      "check_id": "python-sqlalchemy-raw-query",
+      "start": {"line": 42, "col": 5},
+      "end": {"line": 42, "col": 60},
+      "extra": {
+        "message": "Raw SQL query with string formatting detected",
+        "severity": "WARNING",
+        "metadata": {
+          "cwe": ["CWE-89: SQL Injection"],
+          "confidence": "HIGH"
+        }
+      }
+    },
+    {
+      "check_id": "python-logging-format-string",
+      "start": {"line": 55, "col": 1},
+      "end": {"line": 55, "col": 40},
+      "extra": {
+        "message": "Format string in logging call",
+        "severity": "INFO",
+        "metadata": {
+          "cwe": ["CWE-117: Log Injection"],
+          "confidence": "MEDIUM"
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "version": "1.60.0"
+}

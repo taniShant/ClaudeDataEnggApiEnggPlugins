@@ -1,0 +1,65 @@
+schema_version: '1.0'
+domain:
+  id: dom.business-secured-lending
+  name: Business Secured Lending
+  description: The Business Secured Lending domain, is dedicated to providing customers with reliable and comprehensive mortgage solutions. This domain encompasses the processes and tools required to manage secure applications, approvals (decision-in-principle), and servicing. It includes capabilities for assessing customer eligibility, verifying property details, and calculating loan amounts based on various factors such as income, credit history, and property value. The Secured Lending domain ensures that customers receive competitive interest rates, flexible repayment options, and personalized support throughout the Product lifecycle.
+  owner: bb
+  bian_links:
+    - title: Mortgage Loan
+      url: https://bian.org/servicelandscape-12-0-0/object_21.html?object=31825
+  sub_domains:
+  - id: sub.bsl.secured-business-loan-fulfilment
+    name: Secured Business Loan Fulfilment
+    description: Activities associated with post-approval operational execution to release funds, complete mandatory checks, and activate the secured lending facilities.
+    capabilities:
+    - id: cap.bsl.execute-secured-business-loan-fulfilment
+      name: Execute Secured Business Loan Fulfilment
+      description: Determination of asset value and suitability as lending security using appropriate valuation approaches, encompassing physical inspections and automated models, enabling accurate loan sizing and security adequacy decisions.
+  - id: sub.bsl.secured-business-loan-origination
+    name: Secured Business Loan Origination
+    description: Activities associated with collection, evaluation, and approval of secured lending applications through underwriting and fulfilment processes.
+    capabilities:
+    - id: cap.bsl.collect-secured-business-loan-application-information
+      name: Collect Secured Business Loan Application Information
+      description: Collection of customer,business, property, financial, and product information required to assess a secured lending application, enabling comprehensive evaluation of applicant creditworthiness and security suitability.
+    - id: cap.bsl.manage-secured-business-loan-products
+      name: Manage Secured Business Loan Products
+      description: Definition and lifecycle management of secured lending products including pricing, fees, eligibility criteria, and market availability, enabling consistent product delivery and competitive positioning.
+    - id: cap.bsl.assess-secured-business-loan-applicant-affordability
+      name: Assess Secured Business Loan Applicant Affordability
+      description: Evaluation of applicant ability to sustain loan repayments based on verified income, expenditure, and existing credit commitments, encompassing stress testing and joint assessments, enabling responsible lending decisions.
+    - id: cap.bsl.authorize-secured-business-loan-underwriting
+      name: Authorize Secured Business Loan Underwriting
+      description: Assessment of creditworthiness, affordability, property suitability, and overall lending risk to approve, amend, or decline a loan application, encompassing automated and manual review processes, enabling informed credit decisions. 
+    - id: cap.bsl.manage-secured-business-loan-application-documents
+      name: Manage Secured Business Loan Application Documents
+      description: Creation, receipt, and lifecycle management of loan application documents ensuring auditability and regulatory compliance throughout the origination process.
+    - id: cap.bsl.manage-secured-business-loan-application-documents-fees
+      name: Manage Secured Business Loan Application Fees
+      description: Collection, allocation, and refund of application, valuation, and product-related fees in accordance with product terms and regulatory requirements.
+    - id: cap.bsl.manage-secured-business-loan-intermediary-relationships
+      name: Manage Secured Business Loan Intermediary Relationships
+      description: Support for lending intermediaries (brokers, advisors) to submit applications, track status, and obtain product and policy information, enabling efficient distribution channels.
+  - id: sub.bsl.secured-business-loan-servicing
+    name: Secured Business Loan Servicing
+    description: Activities supporting ongoing management of an secured loan, including payments, account changes, documentation, and interactions with external parties.
+    capabilities:
+    - id: cap.bsl.process-additional-secured-business-loan-payments
+      name: Process Additional Secured Business Loan Payments
+      description: Processing of voluntary payments, applying funds according to product rules, updating balances, and recalculating repayments where applicable.
+    - id: cap.bsl.manage-secured-business-loan-solicitor-collaboration
+      name: Manage Secured Business Loan Solicitor Collaboration
+      description: Support and governance of information exchange with solicitors, including document submission, provision of statements, and confirmations required for completion and redemption activities.
+  - id: sub.bsl.collateral-management
+    name: Collateral Management
+    description: Activities associated with assessment, valuation, registration, and release of assets used to secure business lending products.
+    capabilities:
+    - id: cap.bsl.assess-collateral-value
+      name: Assess Collateral Value
+      description: Determination of asset value and suitability as lending security using appropriate valuation approaches, encompassing physical inspections and automated models, enabling accurate loan sizing and security adequacy decisions.
+    - id: cap.bsl.register-collateral
+      name: Register Collateral
+      description: The ability to register and document new assets offered as security during secured lending origination, encompassing legal registration with appropriate authorities and internal documentation, enabling security enforcement and regulatory compliance.
+    - id: cap.bsl.release-collateral
+      name: Release Collateral
+      description: Removal of collateral registration and discharge of security once a secured lending facility has matured, been fully repaid, or is otherwise terminated, encompassing regulatory filing and documentation, enabling customer asset release and account closure.

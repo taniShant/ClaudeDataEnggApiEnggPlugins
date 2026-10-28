@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "iceberg_ddl_rules.json",
+  "title": "Iceberg DDL Validation Rules",
+  "description": "Structural rules for validating generated Databricks Iceberg DDL SQL files. Applied by iceberg-ddl-validator.",
+  "type": "object",
+  "required": ["rules"],
+  "properties": {
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/rule"
+      }
+    }
+  },
+  "definitions": {
+    "rule": {
+      "type": "object",
+      "required": ["id", "description", "check_type", "fail_action"],
+      "properties": {
+        "id": {"type": "string"},
+        "description": {"type": "string"},
+        "check_type": {
+          "type": "string",
+          "enum": ["contains", "not_contains", "regex_match", "count_match", "column_present"]
+        },
+        "fail_action": {
+          "type": "string",
+          "enum": ["DRAFT_UNVALIDATED", "HALT"]
+        }
+      }
+    }
+  },
+  "rules": [
+    {
+      "id": "R01",
+      "description": "DDL must contain CREATE TABLE IF NOT EXISTS",
+      "check_type": "contains",
+      "pattern": "CREATE TABLE IF NOT EXISTS",
+      "fail_action": "DRAFT_UNVALIDATED"
+    },
+    {
+      "id": "R02",
+      "description": "Table name must use three-part Unity Catalog format: catalog.schema.table",
+      "check_type": "regex_match",
+      "pattern": "CREATE TABLE IF NOT EXISTS\\s+[\\w]+\\.[\\w]+\\.[\\w]+",
+      "fail_action": "DRAFT_UNVALIDATED"
+    },
+    {
+      "id": "R03",
+      "description": "DDL must specify USING iceberg",
+      "check_type": "contains",
+      "pattern": "USING iceberg",
+      "fail_action": "DRAFT_UNVALIDATED"
+    },
+    {
+      "id": "R04",
+      "description": "Column count must match mapping Excel column count",
+      "check_type": "count_match",
+      "source": "mapping_excel.columns",
+      "fail_action": "DRAFT_UNVALIDATED"
+    },
+    {
+      "id": "R05",
+      "description": "Partition column must be a declared target column",
+      "check_type": "column_present",
+      "source": "intent_identification.partition_key_columns",
+      "fail_action": "DRAFT_UNVALIDATED"
+    },
+    {
+      "id": "R06",
+      "description": "DDL must not contain destructive operations: DROP, TRUNCATE, ALTER TABLE",
+      "check_type": "not_contains",
+      "patterns": ["DROP TABLE", "TRUNCATE TABLE", "ALTER TABLE"],
+      "fail_action": "DRAFT_UNVALIDATED"
+    }
+  ]
+}

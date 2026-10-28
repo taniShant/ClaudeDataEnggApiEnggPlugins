@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EvidenceLedger",
+  "description": "Schema for the evidence ledger. Records each external source, standard, or observation consulted during agent execution, capturing access results, authority status, and content currency to support auditability and traceability.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "evidence_id",
+      "source_url",
+      "source_title",
+      "version_or_date",
+      "retrieved_at",
+      "access_result",
+      "authority_status",
+      "content_status",
+      "owner"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "evidence_id": {
+        "type": "string",
+        "description": "Unique identifier for this evidence entry."
+      },
+      "source_url": {
+        "type": "string",
+        "description": "URL or URI of the evidence source."
+      },
+      "source_title": {
+        "type": "string",
+        "description": "Human-readable title of the evidence source."
+      },
+      "version_or_date": {
+        "type": "string",
+        "description": "Version number or publication date of the source document."
+      },
+      "retrieved_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO 8601 timestamp when the evidence was retrieved or last accessed."
+      },
+      "access_result": {
+        "type": "string",
+        "description": "Result of the attempt to access the evidence source.",
+        "enum": [
+          "accessible",
+          "denied",
+          "not_found",
+          "timeout"
+        ]
+      },
+      "authority_status": {
+        "type": "string",
+        "description": "Classification of the authority level of this evidence.",
+        "enum": [
+          "VERIFIED_STANDARD",
+          "VERIFIED_SOURCE",
+          "RUNTIME_OBSERVATION",
+          "USER_SUPPLIED",
+          "INFERRED_CANDIDATE",
+          "ASSUMPTION",
+          "UNKNOWN"
+        ]
+      },
+      "content_status": {
+        "type": "string",
+        "description": "Currency and approval state of the evidence content.",
+        "enum": [
+          "current_approved",
+          "draft",
+          "expired",
+          "archived",
+          "informal",
+          "unconfirmed"
+        ]
+      },
+      "owner": {
+        "type": "string",
+        "description": "Team or individual responsible for maintaining this evidence source."
+      },
+      "notes": {
+        "type": "string",
+        "description": "Optional notes regarding the evidence, access issues, or caveats."
+      }
+    }
+  }
+}

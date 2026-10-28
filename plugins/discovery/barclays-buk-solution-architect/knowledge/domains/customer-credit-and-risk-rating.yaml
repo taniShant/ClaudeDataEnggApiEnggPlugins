@@ -1,0 +1,135 @@
+schema_version: '1.0'
+domain:
+  id: dom.customer-credit-and-risk-rating
+  name: "Customer Credit & Risk Rating"
+  description: "The Customer Credit and Risk Rating domain encompasses the end-to-end management of credit risk assessment, affordability assessment, creditworthiness evaluation, and risk profile management for Personal and Business customers. This domain provides capabilities for evaluating, monitoring, and managing credit risk across the customer lifecycle, enabling responsible lending and prudent portfolio oversight across lending products, customer types, business performance, affordability, collateral, and exposure considerations."
+  owner: capl
+  bian_links:
+    -
+      title: Credit Risk Models
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=46456"
+    -
+      title: Customer Credit Rating
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=43153"
+  sub_domains:
+    -
+      id: sub.ccrr.affordability-assessment
+      name: Affordability Assessment
+      description: "The Affordability Assessment capability group provides assessment of customer affordability encompassing income, expenditure, trading income, operating costs, cashflow generation, repayment obligations, disposable income, and repayment capacity, enabling responsible lending decisions and sustainable customer outcomes."
+      capabilities:
+        -
+          id: cap.ccrr.assess-existing-customer-affordability
+          name: Assess Existing Customer Affordability
+          description: "Assessment of existing customer affordability encompassing updated financial circumstances, trading performance, exposure changes, exposure levels, and financial position, enabling responsible decisions for additional lending, limit actions, restructuring, assistance, or support."
+        -
+          id: cap.ccrr.assess-new-lending-affordability
+          name: Assess New Lending Affordability
+          description: "Assessment of affordability for new lending applications encompassing income, expenditure, turnover, cashflow variability, repayment obligations, and policy constraints, enabling sustainable lending decisions across secured and unsecured products."
+        -
+          id: cap.ccrr.calculate-business-turnover
+          name: Calculate Business Turnover
+          description: "Calculation of Business Customer turnover covering aggregation of credit and debit turnover across trading activities, enabling accurate understanding of business earnings to support reliable affordability and credit risk assessments."
+        -
+          id: cap.ccrr.calculate-customer-income
+          name: Calculate Customer Income
+          description: "Calculation of customer income when direct verification is unavailable or incomplete, enabling affordability assessments for customers with limited documentation or non-traditional income sources."
+        -
+          id: cap.ccrr.manage-affordability-questions-and-responses
+          name: Manage Affordability Questions and Responses
+          description: "Management of affordability and eligibility questions encompassing question governance, captured responses, qualitative assessment inputs, and response lifecycle maintenance, enabling consistent evidence capture and reusable decision inputs across lending assessments."
+        -
+          id: cap.ccrr.resolve-affordability-assessment-exceptions
+          name: Resolve Affordability Assessment Exceptions
+          description: "Resolution of exceptions arising from affordability assessments encompassing incomplete inputs, inconsistent evidence, and out-of-policy results, enabling controlled completion of applications and improved decision quality and governance."
+        -
+          id: cap.ccrr.validate-customer-income
+          name: Validate Customer Income
+          description: "Validation of customer-declared income encompassing consistency, reasonableness, and evidence sufficiency checks, enabling accurate affordability assessments and responsible lending decisions with reduced downstream remediation."
+    -
+      id: sub.ccrr.bureau-data-processing
+      name: Bureau Data Processing
+      description: "Management of credit bureau data encompassing acquisition, integration, interpretation, external credit records, bureau-derived indicators, and associated individual and Business credit information, enabling accurate credit assessments and consistent lending decisions."
+      capabilities:
+        -
+          id: cap.ccrr.provide-credit-bureau-assessments
+          name: Provide Credit Bureau Assessments
+          description: "Provision of credit bureau assessment outputs encompassing bureau-derived indicators, summaries, business credit records, and associated individual credit indicators, enabling timely and consistent credit decisions."
+        -
+          id: cap.ccrr.report-credit-account-information
+          name: Report Credit Account Information
+          description: "Reporting of customer credit account information to credit bureaus encompassing account status and repayment data, enabling accurate external credit reporting and consistent fulfilment of agreed data exchange obligations."
+    -
+      id: sub.ccrr.credit-risk-assessment
+      name: Credit Risk Assessment
+      description: "The Credit Risk Assessment capability group provides assessment of Customer Credit Risk encompassing Creditworthiness, likelihood of defaulting, Credit history, Repayment behaviour, Financial performance, Cashflow characteristics, Collateral position and related risk indicators, enabling informed lending, onboarding, pricing, and portfolio risk decisions."
+      capabilities:
+        -
+          id: cap.ccrr.determine-credit-risk-outcomes-for-applications
+          name: Determine Credit Risk Outcomes for Applications
+          description: "Determination of customer credit risk outcomes encompassing approval, decline, and referral decisions, enabling consistent lending and onboarding outcomes aligned to creditworthiness, business performance, credit history, collateral position, and risk policy considerations."
+        -
+          id: cap.ccrr.determine-customer-credit-limits
+          name: Determine Customer Credit Limits
+          description: "Determination of eligibility and appropriate credit limits for unsecured lending products including loans, overdrafts, and credit cards, based on customer risk profiles, exposure context and account performance enabling responsible and consistent lending decisions at the point of application."
+        -
+          id: cap.ccrr.provide-credit-quotations
+          name: Provide Credit Quotations
+          description: "Provision of credit quotations encompassing indicative terms, repayment profiles, alternative offers, and counter-offer options, enabling informed customer decisions and lending outcomes aligned to affordability, risk profile, and commercial appetite."
+        -
+          id: cap.ccrr.resolve-credit-risk-assessment-exceptions
+          name: Resolve Credit Risk Assessment Exceptions
+          description: "Resolution of credit risk assessment exceptions encompassing incomplete evidence, incomplete financial information, policy conflicts, policy deviations, threshold breaches, and out-of-tolerance results, enabling controlled application progression and consistent, auditable decisions."
+    -
+      id: sub.ccrr.risk-and-affordability-model-management
+      name: Risk and Affordability Model Management
+      description: "The Risk and Affordability Model Management capability group enables management of Credit Risk and Affordability models encompassing model lifecycle maintenance, validation, monitoring, recalibration, governance, versioning, and documentation, enabling accurate, explainable, and consistent risk and affordability assessment inputs."
+      capabilities:
+        -
+          id: cap.ccrr.maintain-affordability-models
+          name: Maintain Affordability Models
+          description: "Maintenance of affordability model assets encompassing lifecycle updates, controlled versioning, assessment logic, customer-type considerations, income, and cashflow dynamics, enabling consistent and transparent affordability assessments."
+        -
+          id: cap.ccrr.maintain-credit-risk-models
+          name: Maintain Credit Risk Models
+          description: "Maintenance of credit risk model assets encompassing lifecycle updates, recalibration, controlled versioning, and model documentation, enabling consistent and explainable risk assessment inputs and stable decision outcomes."
+    -
+      id: sub.ccrr.risk-profile-management
+      name: Risk Profile Management
+      description: "The Risk Profile Management capability group enables Management of Credit Risk Profiles for the customer across customer segments and products by establishing standardized risk categorization frameworks. This capability supports portfolio management, limit/exposure management and regulatory reporting through accurate risk classification."
+      capabilities:
+        -
+          id: cap.ccrr.determine-authorisation-risk-for-revolving-credit
+          name: Determine Authorisation Risk for Revolving Credit
+          description: "Determination of transaction authorisation risk for revolving credit encompassing account status, available credit, and risk indicators, enabling consistent approve/decline outcomes and controlled exposure at the point of transaction."
+        -
+          id: cap.ccrr.determine-payment-hold-decisions
+          name: Determine Payment Hold Decisions
+          description: "Determination of payment hold decisions encompassing customer and account risk indicators and relevant policy constraints, enabling appropriate application and release of holds while supporting compliant customer treatment and loss prevention outcomes."
+        -
+          id: cap.ccrr.determine-product-swap-eligibility
+          name: Determine Product Swap Eligibility
+          description: "Determination of customer eligibility for product swaps encompassing risk profile, account history, and product suitability constraints, enabling controlled product transitions and consistent customer treatment across lifecycle servicing actions."
+        -
+          id: cap.ccrr.manage-business-customer-lending-limits
+          name: Manage Business Customer Lending Limits
+          description: "Management of pre-assessed credit limits for business customer lending products encompassing controlled headroom adjustments based on affordability, risk profile, connected exposure context, and collateral position, enabling responsible exposure management across the customer lifecycle."
+        -
+          id: cap.ccrr.manage-business-customer-risk-profiles
+          name: Manage Business Customer Risk Profiles
+          description: "Maintain Business customer credit risk profiles using key indicators like PD, Risk Grade, Severity/LTV and HRAM that provide view of financial performance, credit behaviour, sector exposure, and collateral characteristics, enabling consistent risk-based decisioning across lending activities."
+        -
+          id: cap.ccrr.manage-product-specific-customer-risk-profiles
+          name: Manage Product-Specific Customer Risk Profiles
+          description: "Management of product-specific customer risk profile attributes encompassing maintained risk indicators, exposure context, and applicable risk constraints, enabling consistent product-level risk treatment decisions and controlled lifecycle actions."
+        -
+          id: cap.ccrr.manage-retail-customer-provisional-credit-limits
+          name: Manage Retail Customer Provisional Credit Limits
+          description: "Management of Retail customer's provisional credit limits encompassing lifecycle reviews and controlled limit adjustments in response to risk and affordability changes, enabling responsible exposure management and consistent customer treatment over the account lifecycle."
+        -
+          id: cap.ccrr.manage-retail-customer-risk-profiles
+          name: Manage Retail Customer Risk Profiles
+          description: "Management of customer risk profiles encompassing capture, maintenance, and lifecycle updates of key risk attributes, enabling consistent risk-based decisioning and ongoing exposure oversight across unsecured lending products."
+        -
+          id: cap.ccrr.provide-financial-hardship-interventions
+          name: Provide Financial Hardship Interventions
+          description: "Provision of financial hardship interventions encompassing tailored support actions and treatment options aligned to hardship policies, enabling improved customer outcomes while maintaining prudent credit risk management and consistent servicing decisions."

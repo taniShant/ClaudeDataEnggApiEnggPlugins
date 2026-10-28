@@ -1,0 +1,21 @@
+# Product Details
+GROUP_ID=com.barclays.api
+VERSION={VERSION}
+ARTIFACT_ID={ARTIFACT_ID}
+IMPLEMENTATION_TITLE={IMPLEMENTATION_TITLE}
+
+# SDK3
+SDK3_VERSION=1.12.007
+
+# OAS Generation - disabled as project does not use barclaysApiGenerate
+DISABLE_OAS_GENERATION=true
+
+# JaCoCo Coverage Configuration
+jacocoCoverageExclusions=com.barclays.api.Application,com.barclays.api.config.*,com.barclays.api.exception.*,com.barclays.api.model.*
+jacocoReportExclusions=**/com/barclays/api/Application.class,**/com/barclays/api/config/**,**/com/barclays/api/exception/**,**/com/barclays/api/model/**
+
+org.gradle.jvmargs=--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
+  --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
+  --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED \
+  --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED \
+  --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED

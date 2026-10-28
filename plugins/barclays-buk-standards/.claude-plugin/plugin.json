@@ -1,0 +1,9 @@
+{
+    "name": "barclays-buk-standards",
+    "description": "Shared standards for BUK plugins — accessibility, security, consumer-duty, vulnerable-customers, customer-engagement, api-design, testing, governance, ux, brand, performance, observability, data, mobile, infrastructure, adr",
+    "version": "0.1.0",
+    "author": {
+        "name": "Barclays BUK",
+        "email": "barclaysai@barclays.com"
+    }
+}

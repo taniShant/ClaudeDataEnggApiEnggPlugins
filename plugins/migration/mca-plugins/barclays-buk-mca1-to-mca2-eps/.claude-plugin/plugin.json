@@ -1,0 +1,10 @@
+{
+    "name": "barclays-buk-mca1-to-mca2-eps",
+    "description": "MCA1 to MCA2 migration toolkit: fully replaces all MCA1 patterns with MCA2 equivalents including context propagation, service dispatch, response handling, and package renaming.",
+    "version": "1.1.0",
+    "author": {
+        "name": "MCA Core Engineering",
+        "email": "mcaplatform@barclays.com"
+    },
+    "dependencies": ["barclays-buk-standards"]
+}

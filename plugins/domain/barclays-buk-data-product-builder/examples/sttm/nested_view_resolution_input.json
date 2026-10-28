@@ -1,0 +1,13 @@
+{
+  "description": "Nested view resolution — view_a references view_b which references base table",
+  "source_sql": [
+    "REPLACE VIEW work_db.base_accounts_v AS SELECT acct.account_id, acct.account_name, acct.status FROM s_acctdb.account_master acct WHERE acct.status != 'CLOSED';",
+    "REPLACE VIEW work_db.active_accounts_v AS SELECT bav.account_id, bav.account_name FROM work_db.base_accounts_v bav WHERE bav.status = 'ACTIVE';",
+    "SELECT aav.account_id, aav.account_name, tx.total_amount FROM work_db.active_accounts_v aav INNER JOIN e_txndb.transaction_summary tx ON aav.account_id = tx.account_id;"
+  ],
+  "schema_dict": {
+    "s_acctdb.account_master": ["account_id", "account_name", "status"],
+    "e_txndb.transaction_summary": ["account_id", "total_amount"]
+  },
+  "target_table": "fdp_uk_mortgage_db.active_account_transactions"
+}

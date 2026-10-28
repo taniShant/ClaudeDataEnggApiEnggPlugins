@@ -1,0 +1,37 @@
+schema_version: '1.0'
+domain:
+  id: dom.customer-case-management
+  name: Customer Case Management
+  description: "Customer Case Management domain would be the service domain responsible for handling and resolving customer‑initiated or bank‑initiated cases — complaints, inquiries, disputes, service requests, and complex investigations. It acts as an orchestration domain, coordinating multiple product, operations, and party‑related service domains."
+  owner: cc
+  bian_links:
+    -
+      title: Customer Case Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_20.html?object=42150"
+    -
+      title: Customer Case
+      url: "https://bian.org/servicelandscape-12-0-0/object_22.html?object=47339"
+    -
+      title: Open Item Management
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=31686"
+    -
+      title: Card Case
+      url: "https://bian.org/servicelandscape-12-0-0/object_21.html?object=30796"
+  sub_domains:
+    -
+      id: sub.ccm.customer-case-oversight
+      name: Customer Case Oversight
+      description: "Customer Case Oversight governs the end-to-end administration and control of customer service cases, ensuring cases are supported through their lifecycle, progressed within defined service timelines, and monitored through consistent analytics and reporting to support effective resolution, service quality, and operational transparency."
+      capabilities:
+        -
+          id: cap.ccm.monitor-case-timeliness
+          name: Monitor Case Timeliness
+          description: "Monitors adherence to defined time commitments and statutory obligations for cases, enabling visibility of case progress, early identification of potential delays, and informed decision-making to support timely, compliant case resolution across the organisation."
+        -
+          id: cap.ccm.provide-case-analytics-and-reporting
+          name: Provide Case Analytics and Reporting
+          description: "Provides insights derived from case data to support operational oversight, regulatory reporting, and continuous improvement, enabling identification of trends, recurring issues, performance bottlenecks, and opportunities to improve service quality and case outcomes across the organisation."
+        -
+          id: cap.ccm.support-case-management
+          name: Support Case Management
+          description: "Supports the structured management of cases from initiation to closure, enabling consistent oversight, accountability, and resolution outcomes while improving service quality, operational efficiency, and compliance through clear case status, ownership, and auditability."

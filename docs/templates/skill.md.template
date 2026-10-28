@@ -1,0 +1,87 @@
+---
+name: <skill-name>
+description: >
+    One sentence describing what this skill covers and when an agent should
+    load it. Be specific — this description is used to decide relevance.
+user-invocable: false
+---
+
+# BUK [Domain] Standards
+
+> **Source:** [Document name and version, e.g. "Barclays API Design Standards v2.1 (March 2026)"]
+> **Owner:** [Team or role, e.g. "BUK Platform Engineering"]
+> **Review trigger:** [When this should be reviewed, e.g. "Annual, or on regulatory change"]
+> **Status:** [Placeholder | Draft | Reviewed]
+> Source documents are [classification, e.g. "Restricted — Internal"].
+
+---
+
+## 1. [Core principle or overview section]
+
+[Lead with the most important rule or principle. One paragraph. State what this
+standard requires and why it exists.]
+
+---
+
+## 2. [Main standards section]
+
+[The substantive content. Use tables for rules with multiple attributes.
+Use numbered lists for ordered processes. Use bullet lists for unordered rules.]
+
+### 2.1 [Subsection]
+
+| Rule | Requirement | Rationale |
+|---|---|---|
+| Example rule | Must/Must not... | Why this rule exists |
+
+---
+
+## 3. [Additional sections as needed]
+
+[Repeat section pattern. Aim for 3–8 top-level sections depending on scope.]
+
+---
+
+## Agent Self-Check
+
+When applying this skill, confirm:
+
+- [ ] [Specific, verifiable check — e.g. "Target market defined and documented"]
+- [ ] [Specific, verifiable check]
+- [ ] [Specific, verifiable check]
+- [ ] [Add one check per significant rule above — minimum 5 items]
+
+---
+
+## Areas for Specialist Extension
+
+This skill covers the BUK baseline. The following areas need extension by the relevant teams:
+
+- **[Team name]** — [what they should add]
+- **[Team name]** — [what they should add]
+
+<!-- TEMPLATE NOTES (remove this section before use):
+
+1. user-invocable: false
+   Standards skills are loaded by agents via the skills: frontmatter field.
+   They are not invoked directly by users. Set user-invocable: false.
+
+2. Source attribution header is mandatory (Principle 6).
+   Every skill must have a named owner and a review trigger.
+   A skill without a source is a hallucination risk.
+
+3. Self-check checklist is mandatory.
+   Agents use this to verify they have applied the skill correctly.
+   Each item should be binary — either done or not done.
+
+4. Placeholder skills:
+   If the source document is not yet available, keep the sections above
+   as "Areas to Cover" bullet lists and mark Status as "Placeholder".
+   Agents loading placeholder skills must declare this in their output
+   (Principle 5 — transparent about what they know and don't know).
+
+5. Cross-referencing other skills:
+   Use backtick syntax: `barclays-buk-standards:consumer-duty`
+   Do not duplicate content from other skills — reference them instead.
+
+-->

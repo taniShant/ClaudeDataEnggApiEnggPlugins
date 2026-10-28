@@ -1,0 +1,10 @@
+{
+  "name": "barclays-buk-torch",
+  "description": "Approved organisation capability discovery for Claude Code. Provides the /torch:on skill for task-driven selection of permitted BUK workflows.",
+  "version": "0.3.2",
+  "author": {
+    "name": "Sarthak Nalawade",
+    "email": "sarthak.nalawade@barclays.com"
+  },
+  "_install_note": "Run setup.py after installing: python3 setup.py (macOS/Linux) or python setup.py (Windows). See README.md."
+}
